@@ -263,16 +263,53 @@ $recentAttendance = $recentStmt->get_result();
     <!-- Action Buttons -->
     <div class="row mt-4">
         <div class="col-md-12">
-            <div class="d-flex gap-2 justify-content-end">
-                <a href="edit_employee.php?id=<?= $employee['employee_id'] ?>" class="btn btn-primary btn-sm">
-                    <i class="bi bi-pencil"></i> Edit Employee
-                </a>
-                <a href="attendance_preview.php?employee_id=<?= $employee['employee_id'] ?>" class="btn btn-info btn-sm">
-                    <i class="bi bi-calendar-check"></i> View Attendance
-                </a>
-                <a href="payroll_report.php?employee_id=<?= $employee['employee_id'] ?>" class="btn btn-success btn-sm">
-                    <i class="bi bi-currency-rupee"></i> Payroll Details
-                </a>
+            <h6 class="mb-3">Quick Actions</h6>
+            
+            <!-- Primary Actions -->
+            <div class="d-flex gap-2 justify-content-center mb-3 flex-wrap">
+                <button type="button" class="btn btn-primary" 
+                        onclick="openEditEmployee(<?= $employee['employee_id'] ?>)">
+                    <i class="bi bi-pencil me-2"></i> Edit Employee
+                </button>
+                <button type="button" class="btn btn-info" 
+                        onclick="openAttendancePreview(<?= $employee['employee_id'] ?>)">
+                    <i class="bi bi-calendar-check me-2"></i> View Attendance
+                </button>
+                <button type="button" class="btn btn-success" 
+                        onclick="openPayrollReport(<?= $employee['employee_id'] ?>)">
+                    <i class="bi bi-currency-rupee me-2"></i> Payroll Details
+                </button>
+            </div>
+            
+            <!-- Secondary Actions -->
+            <div class="d-flex gap-2 justify-content-center flex-wrap">
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-primary btn-sm" 
+                            onclick="openEditEmployeeNewTab(<?= $employee['employee_id'] ?>)">
+                        <i class="bi bi-box-arrow-up-right me-1"></i> Edit (New Tab)
+                    </button>
+                    <button type="button" class="btn btn-outline-info btn-sm" 
+                            onclick="openAttendancePreviewNewTab(<?= $employee['employee_id'] ?>)">
+                        <i class="bi bi-box-arrow-up-right me-1"></i> Attendance (New Tab)
+                    </button>
+                    <button type="button" class="btn btn-outline-success btn-sm" 
+                            onclick="openPayrollReportNewTab(<?= $employee['employee_id'] ?>)">
+                        <i class="bi bi-box-arrow-up-right me-1"></i> Payroll (New Tab)
+                    </button>
+                </div>
+                
+                <button type="button" class="btn btn-outline-danger btn-sm" 
+                        onclick="confirmDeleteEmployee(<?= $employee['employee_id'] ?>)">
+                    <i class="bi bi-trash me-1"></i> Delete Employee
+                </button>
+            </div>
+            
+            <hr class="my-3">
+            <div class="text-center">
+                <small class="text-muted">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Click main buttons to navigate in current tab, or use "New Tab" buttons to keep this modal open
+                </small>
             </div>
         </div>
     </div>
@@ -293,3 +330,103 @@ $recentAttendance = $recentStmt->get_result();
     border-color: #dee2e6 !important;
 }
 </style>
+
+<script>
+// Detect if we're in a subdirectory and adjust paths accordingly
+function getBasePath() {
+    const currentPath = window.location.pathname;
+    if (currentPath.includes('/pages/')) {
+        return '../../';
+    }
+    return './';
+}
+
+// Function to open edit employee page
+function openEditEmployee(employeeId) {
+    // Show loading state
+    const button = event.target.closest('button');
+    const originalContent = button.innerHTML;
+    button.innerHTML = '<i class="bi bi-hourglass-split me-2"></i> Loading...';
+    button.disabled = true;
+    
+    // Close the modal first
+    const modal = bootstrap.Modal.getInstance(document.getElementById('employeeModal'));
+    if (modal) {
+        modal.hide();
+    }
+    
+    // Navigate to edit page after modal closes
+    setTimeout(() => {
+        window.location.href = getBasePath() + 'edit_employee.php?id=' + employeeId;
+    }, 300);
+}
+
+// Function to open attendance preview
+function openAttendancePreview(employeeId) {
+    // Show loading state
+    const button = event.target.closest('button');
+    const originalContent = button.innerHTML;
+    button.innerHTML = '<i class="bi bi-hourglass-split me-2"></i> Loading...';
+    button.disabled = true;
+    
+    // Close the modal first
+    const modal = bootstrap.Modal.getInstance(document.getElementById('employeeModal'));
+    if (modal) {
+        modal.hide();
+    }
+    
+    // Navigate to attendance preview after modal closes
+    setTimeout(() => {
+        window.location.href = getBasePath() + 'attendance_preview.php?employee_id=' + employeeId;
+    }, 300);
+}
+
+// Function to open payroll report
+function openPayrollReport(employeeId) {
+    // Show loading state
+    const button = event.target.closest('button');
+    const originalContent = button.innerHTML;
+    button.innerHTML = '<i class="bi bi-hourglass-split me-2"></i> Loading...';
+    button.disabled = true;
+    
+    // Close the modal first
+    const modal = bootstrap.Modal.getInstance(document.getElementById('employeeModal'));
+    if (modal) {
+        modal.hide();
+    }
+    
+    // Navigate to payroll report after modal closes
+    setTimeout(() => {
+        window.location.href = getBasePath() + 'payroll_report.php?employee_id=' + employeeId;
+    }, 300);
+}
+
+// Function to confirm employee deletion
+function confirmDeleteEmployee(employeeId) {
+    if (confirm('Are you sure you want to delete this employee? This action cannot be undone.')) {
+        // Close the modal first
+        const modal = bootstrap.Modal.getInstance(document.getElementById('employeeModal'));
+        if (modal) {
+            modal.hide();
+        }
+        
+        // Navigate to delete after modal closes
+        setTimeout(() => {
+            window.location.href = getBasePath() + 'delete_employee.php?id=' + employeeId;
+        }, 300);
+    }
+}
+
+// Alternative functions for opening in new tab (if preferred)
+function openEditEmployeeNewTab(employeeId) {
+    window.open(getBasePath() + 'edit_employee.php?id=' + employeeId, '_blank');
+}
+
+function openAttendancePreviewNewTab(employeeId) {
+    window.open(getBasePath() + 'attendance_preview.php?employee_id=' + employeeId, '_blank');
+}
+
+function openPayrollReportNewTab(employeeId) {
+    window.open(getBasePath() + 'payroll_report.php?employee_id=' + employeeId, '_blank');
+}
+</script>
