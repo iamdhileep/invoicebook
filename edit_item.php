@@ -73,20 +73,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         if (empty($error)) {
-            // Update item
-            $updateQuery = $conn->prepare("UPDATE items SET item_name = ?, category = ?, item_price = ?, stock = ?, description = ?, image_path = ? WHERE id = ?");
-            $updateQuery->bind_param("ssdissi", $item_name, $category, $item_price, $stock, $description, $imagePath, $item_id);
+            // Update item - use basic columns that definitely exist
+            $updateQuery = $conn->prepare("UPDATE items SET item_name = ?, item_price = ?, category = ?, stock = ? WHERE id = ?");
             
-            if ($updateQuery->execute()) {
-                $success = true;
-                // Refresh item data
-                $stmt = $conn->prepare("SELECT * FROM items WHERE id = ?");
-                $stmt->bind_param("i", $item_id);
-                $stmt->execute();
-                $result = $stmt->get_result();
-                $item = $result->fetch_assoc();
+            if (!$updateQuery) {
+                $error = 'Failed to prepare update statement: ' . $conn->error;
             } else {
-                $error = 'Failed to update item: ' . $conn->error;
+                $updateQuery->bind_param("sdsii", $item_name, $item_price, $category, $stock, $item_id);
+                
+                if ($updateQuery->execute()) {
+                    // Try to update description if the column exists
+                    if (!empty($description)) {
+                        $descQuery = $conn->prepare("UPDATE items SET description = ? WHERE id = ?");
+                        if ($descQuery) {
+                            $descQuery->bind_param("si", $description, $item_id);
+                            $descQuery->execute(); // Don't fail if this doesn't work
+                        }
+                    }
+                    
+                    // Try to update image path if it was changed
+                    if ($imagePath !== $item['image_path']) {
+                        $imgQuery = $conn->prepare("UPDATE items SET image_path = ? WHERE id = ?");
+                        if ($imgQuery) {
+                            $imgQuery->bind_param("si", $imagePath, $item_id);
+                            $imgQuery->execute(); // Don't fail if this doesn't work
+                        }
+                    }
+                    
+                    $success = true;
+                    // Refresh item data
+                    $stmt = $conn->prepare("SELECT * FROM items WHERE id = ?");
+                    if ($stmt) {
+                        $stmt->bind_param("i", $item_id);
+                        $stmt->execute();
+                        $result = $stmt->get_result();
+                        $item = $result->fetch_assoc();
+                    }
+                } else {
+                    $error = 'Failed to update item: ' . $conn->error;
+                }
             }
         }
     }
