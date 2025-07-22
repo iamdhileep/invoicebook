@@ -1,135 +1,253 @@
 <?php
-include 'db.php';
-$success = false;
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name = $_POST['item_name'];
-    $price = $_POST['item_price'];
-    $stock = $_POST['stock'];
-    $category = $_POST['category'];
-    $imagePath = '';
-
-    // ✅ Step 1: Handle image upload
-    if (!empty($_FILES['item_image']['name'])) {
-        $imageName = time() . '_' . basename($_FILES['item_image']['name']);
-        $targetPath = 'uploads/' . $imageName;
-        move_uploaded_file($_FILES['item_image']['tmp_name'], $targetPath);
-        $imagePath = $imageName;
-    }
-
-    // ✅ Step 2: Insert into database
-    $stmt = $conn->prepare("INSERT INTO items (item_name, item_price, stock, category, image_path) VALUES (?, ?, ?, ?, ?)");
-    $stmt->bind_param("sdiss", $name, $price, $stock, $category, $imagePath);
-    $stmt->execute();
-
-    // ✅ Step 3: Redirect
-    header("Location: item-full-list.php?success=1");
+session_start();
+if (!isset($_SESSION['admin'])) {
+    header("Location: login.php");
     exit;
 }
 
+include 'db.php';
+$page_title = 'Add Product';
+
+// Handle form submission
+$success = false;
+$error = '';
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $item_name = trim($_POST['item_name']);
+    $item_price = floatval($_POST['item_price']);
+    $category = trim($_POST['category']);
+    $stock = intval($_POST['stock'] ?? 0);
+    $description = trim($_POST['description'] ?? '');
+    
+    if (empty($item_name) || $item_price <= 0) {
+        $error = 'Please provide valid item name and price.';
+    } else {
+        // Check if item already exists
+        $checkQuery = $conn->prepare("SELECT id FROM items WHERE item_name = ?");
+        $checkQuery->bind_param("s", $item_name);
+        $checkQuery->execute();
+        $result = $checkQuery->get_result();
+        
+        if ($result->num_rows > 0) {
+            $error = 'An item with this name already exists.';
+        } else {
+            $insertQuery = $conn->prepare("INSERT INTO items (item_name, item_price, category, stock, description, created_at) VALUES (?, ?, ?, ?, ?, NOW())");
+            $insertQuery->bind_param("sdsss", $item_name, $item_price, $category, $stock, $description);
+            
+            if ($insertQuery->execute()) {
+                $success = true;
+            } else {
+                $error = 'Failed to add item: ' . $conn->error;
+            }
+        }
+    }
+}
+
+// Get categories for dropdown
+$categories = $conn->query("SELECT DISTINCT category FROM items WHERE category IS NOT NULL AND category != '' ORDER BY category");
+
+include 'layouts/header.php';
+include 'layouts/sidebar.php';
 ?>
 
+<div class="main-content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">Add New Product</h1>
+            <p class="text-muted">Add a new product to your inventory</p>
+        </div>
+        <div>
+            <a href="pages/products/products.php" class="btn btn-outline-primary">
+                <i class="bi bi-list"></i> View All Products
+            </a>
+        </div>
+    </div>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Add New Item</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    body {
-      background-color: #f8f9fa;
-    }
-    .container {
-      max-width: 600px;
-      background-color: #fff;
-      margin-top: 60px;
-      padding: 30px;
-      border-radius: 15px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.1);
-    }
-    .btn {
-      border-radius: 10px;
-    }
-  </style>
-</head>
-<body>
+    <?php if ($success): ?>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-2"></i>Product added successfully!
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    <?php endif; ?>
 
-<div class="container">
-  <h4 class="mb-4">➕ Add New Item</h4>
+    <?php if ($error): ?>
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i><?= htmlspecialchars($error) ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    <?php endif; ?>
 
-  <form method="POST" onsubmit="return validateForm();">
-    <div class="mb-3">
-  <label class="form-label">Item Image</label>
-  <input type="file" name="item_image" class="form-control" accept="image/*">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-plus-circle me-2"></i>Product Information</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Product Name *</label>
+                                <input type="text" name="item_name" class="form-control" 
+                                       placeholder="Enter product name" 
+                                       value="<?= htmlspecialchars($_POST['item_name'] ?? '') ?>" required>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label">Price (₹) *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">₹</span>
+                                    <input type="number" name="item_price" class="form-control" 
+                                           placeholder="0.00" step="0.01" min="0.01"
+                                           value="<?= htmlspecialchars($_POST['item_price'] ?? '') ?>" required>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label">Category</label>
+                                <div class="input-group">
+                                    <select name="category" class="form-select" id="categorySelect">
+                                        <option value="">-- Select or Add Category --</option>
+                                        <?php if ($categories && mysqli_num_rows($categories) > 0): ?>
+                                            <?php while ($cat = $categories->fetch_assoc()): ?>
+                                                <option value="<?= htmlspecialchars($cat['category']) ?>"
+                                                        <?= (($_POST['category'] ?? '') === $cat['category']) ? 'selected' : '' ?>>
+                                                    <?= htmlspecialchars($cat['category']) ?>
+                                                </option>
+                                            <?php endwhile; ?>
+                                        <?php endif; ?>
+                                        <option value="__new__">+ Add New Category</option>
+                                    </select>
+                                    <input type="text" name="new_category" class="form-control" 
+                                           placeholder="Enter new category" style="display: none;" id="newCategoryInput">
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label">Initial Stock</label>
+                                <input type="number" name="stock" class="form-control" 
+                                       placeholder="0" min="0"
+                                       value="<?= htmlspecialchars($_POST['stock'] ?? '0') ?>">
+                                <div class="form-text">Leave blank or 0 if not tracking stock</div>
+                            </div>
+                            
+                            <div class="col-12">
+                                <label class="form-label">Description (Optional)</label>
+                                <textarea name="description" class="form-control" rows="3" 
+                                          placeholder="Enter product description..."><?= htmlspecialchars($_POST['description'] ?? '') ?></textarea>
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save"></i> Add Product
+                            </button>
+                            <button type="reset" class="btn btn-secondary">
+                                <i class="bi bi-arrow-clockwise"></i> Reset
+                            </button>
+                            <a href="pages/products/products.php" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Back to Products
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="pages/products/products.php" class="btn btn-outline-primary">
+                            <i class="bi bi-list"></i> View All Products
+                        </a>
+                        <a href="item-stock.php" class="btn btn-outline-warning">
+                            <i class="bi bi-boxes"></i> Manage Stock
+                        </a>
+                        <a href="item-full-list.php" class="btn btn-outline-info">
+                            <i class="bi bi-table"></i> Full Product List
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0">Tips</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0 small">
+                        <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>Use clear, descriptive product names</li>
+                        <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>Set competitive prices</li>
+                        <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>Categorize products for better organization</li>
+                        <li><i class="bi bi-check-circle text-success me-2"></i>Add descriptions to help customers</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
-    <div class="mb-3">
-      <label class="form-label">Item Name</label>
-      <input type="text" name="item_name" id="item_name" class="form-control" required>
-    </div>
-
-    <div class="mb-3">
-  <label class="form-label">Category</label>
-  <div class="input-group">
-    <select name="category" class="form-select" required>
-      <option value="">-- Select Category --</option>
-      <?php
-      $catResult = mysqli_query($conn, "SELECT name FROM categories ORDER BY name ASC");
-      while ($cat = mysqli_fetch_assoc($catResult)) {
-          echo "<option value=\"" . htmlspecialchars($cat['name']) . "\">" . htmlspecialchars($cat['name']) . "</option>";
-      }
-      ?>
-    </select>
-    <a href="manage_categories.php" class="btn btn-outline-secondary">⚙ Manage</a>
-  </div>
-</div>
-    <div class="mb-3">
-      <label class="form-label">Item Price (₹)</label>
-      <input type="number" step="0.01" name="item_price" id="item_price" class="form-control" required>
-    </div>
-
-    <div class="mb-4">
-      <label class="form-label">Stock Quantity</label>
-      <input type="number" name="stock" id="stock" class="form-control" required>
-    </div>
-
-    <div class="d-flex justify-content-between">
-      <a href="item-stock.php" class="btn btn-secondary">← Back</a>
-      <button type="submit" class="btn btn-success">💾 Save</button>
-    </div>
-  </form>
-</div>
-
-<!-- Toast Message -->
-<?php if ($success): ?>
-<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
-  <div class="toast show align-items-center text-bg-success border-0" role="alert">
-    <div class="d-flex">
-      <div class="toast-body">
-        ✅ Item added successfully!
-      </div>
-      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-    </div>
-  </div>
-</div>
-<?php endif; ?>
-
-<!-- Scripts -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-function validateForm() {
-  const name = document.getElementById('item_name').value.trim();
-  const price = document.getElementById('item_price').value;
-  const stock = document.getElementById('stock').value;
+$(document).ready(function() {
+    // Handle category selection
+    $('#categorySelect').change(function() {
+        if (this.value === '__new__') {
+            $('#newCategoryInput').show().attr('name', 'category').focus();
+            $(this).hide().attr('name', '');
+        }
+    });
 
-  if (!name || price <= 0 || stock < 0) {
-    alert('⚠ Please enter valid item name, price, and stock.');
-    return false;
-  }
-  return true;
+    // Allow going back to select from dropdown
+    $('#newCategoryInput').blur(function() {
+        if ($(this).val() === '') {
+            $(this).hide().attr('name', '');
+            $('#categorySelect').show().attr('name', 'category').val('');
+        }
+    });
+
+    // Form validation
+    $('form').on('submit', function(e) {
+        const itemName = $('input[name="item_name"]').val().trim();
+        const itemPrice = parseFloat($('input[name="item_price"]').val());
+
+        if (!itemName) {
+            e.preventDefault();
+            showAlert('Please enter a product name', 'warning');
+            $('input[name="item_name"]').focus();
+            return false;
+        }
+
+        if (!itemPrice || itemPrice <= 0) {
+            e.preventDefault();
+            showAlert('Please enter a valid price', 'warning');
+            $('input[name="item_price"]').focus();
+            return false;
+        }
+    });
+
+    // Auto-dismiss success alerts
+    setTimeout(function() {
+        $('.alert-success').fadeOut();
+    }, 3000);
+});
+
+function showAlert(message, type) {
+    const alertDiv = $(`
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `);
+    $('.main-content').prepend(alertDiv);
+    
+    setTimeout(() => {
+        alertDiv.fadeOut();
+    }, 5000);
 }
 </script>
 
-</body>
-</html>
+<?php include 'layouts/footer.php'; ?>
