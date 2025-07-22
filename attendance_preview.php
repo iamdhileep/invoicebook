@@ -348,16 +348,33 @@ include 'layouts/sidebar.php';
                                         <?php endif; ?>
                                     </td>
                                     <td>
-                                        <?php if ($row['work_duration']): ?>
+                                        <?php if ($row['work_duration'] && $row['work_duration'] != '00:00:00'): ?>
                                             <?php
+                                            // Parse time duration (format: HH:MM:SS)
                                             $duration = $row['work_duration'];
-                                            $hours = floor($duration / 10000);
-                                            $minutes = floor(($duration % 10000) / 100);
+                                            $timeParts = explode(':', $duration);
+                                            
+                                            // Ensure we have valid time parts
+                                            if (count($timeParts) >= 2) {
+                                                $hours = intval($timeParts[0]);
+                                                $minutes = intval($timeParts[1]);
+                                                
+                                                // Display duration
+                                                if ($hours > 0 || $minutes > 0) {
+                                                    echo '<div class="text-info">';
+                                                    echo '<i class="bi bi-stopwatch me-1"></i>';
+                                                    echo '<strong>';
+                                                    if ($hours > 0) echo $hours . 'h ';
+                                                    if ($minutes > 0) echo $minutes . 'm';
+                                                    echo '</strong>';
+                                                    echo '</div>';
+                                                } else {
+                                                    echo '<span class="text-muted">0h 0m</span>';
+                                                }
+                                            } else {
+                                                echo '<span class="text-muted">Invalid</span>';
+                                            }
                                             ?>
-                                            <div class="text-info">
-                                                <i class="bi bi-stopwatch me-1"></i>
-                                                <strong><?= $hours ?>h <?= $minutes ?>m</strong>
-                                            </div>
                                         <?php else: ?>
                                             <span class="text-muted">N/A</span>
                                         <?php endif; ?>
