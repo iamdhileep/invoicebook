@@ -22,15 +22,31 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (empty($item_name) || $item_price <= 0) {
         $error = 'Please provide valid item name and price.';
     } else {
-        // Check if item already exists
+        // Check if item already exists with fallback for different column names
         $checkQuery = $conn->prepare("SELECT id FROM items WHERE item_name = ?");
-        $checkQuery->bind_param("s", $item_name);
-        $checkQuery->execute();
-        $result = $checkQuery->get_result();
         
-        if ($result->num_rows > 0) {
-            $error = 'An item with this name already exists.';
-        } else {
+        if (!$checkQuery) {
+            // Fallback: try with different column names
+            $checkQuery = $conn->prepare("SELECT id FROM items WHERE name = ?");
+            
+            if (!$checkQuery) {
+                $error = 'Database error: Could not check item name - ' . $conn->error;
+            }
+        }
+        
+        if (!empty($error)) {
+            // Skip the check if there was an error
+        } elseif ($checkQuery) {
+            $checkQuery->bind_param("s", $item_name);
+            $checkQuery->execute();
+            $result = $checkQuery->get_result();
+            
+            if ($result->num_rows > 0) {
+                $error = 'An item with this name already exists.';
+            }
+        }
+        
+        if (empty($error)) {
             // Try modern schema first, then fallback to basic schema
             $insertQuery = $conn->prepare("INSERT INTO items (item_name, item_price, category, stock, description, created_at) VALUES (?, ?, ?, ?, ?, NOW())");
             

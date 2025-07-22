@@ -24,15 +24,36 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add'])) {
     if (empty($name) || empty($code) || empty($position) || $monthly_salary <= 0 || empty($phone) || empty($address)) {
         $error = 'Please fill all required fields with valid data.';
     } else {
-        // Check if employee code already exists
-        $checkQuery = $conn->prepare("SELECT id FROM employees WHERE employee_code = ?");
-        $checkQuery->bind_param("s", $code);
-        $checkQuery->execute();
-        $result = $checkQuery->get_result();
+        // Check if employee code already exists with fallback for different column names
+        $checkQuery = $conn->prepare("SELECT employee_id FROM employees WHERE employee_code = ?");
         
-        if ($result->num_rows > 0) {
-            $error = 'An employee with this code already exists.';
-        } else {
+        if (!$checkQuery) {
+            // Fallback: try with different column names
+            $checkQuery = $conn->prepare("SELECT id FROM employees WHERE employee_code = ?");
+            
+            if (!$checkQuery) {
+                // Fallback: try with 'code' column name
+                $checkQuery = $conn->prepare("SELECT id FROM employees WHERE code = ?");
+                
+                if (!$checkQuery) {
+                    $error = 'Database error: Could not check employee code - ' . $conn->error;
+                }
+            }
+        }
+        
+        if (!empty($error)) {
+            // Skip the check if there was an error
+        } elseif ($checkQuery) {
+            $checkQuery->bind_param("s", $code);
+            $checkQuery->execute();
+            $result = $checkQuery->get_result();
+            
+            if ($result->num_rows > 0) {
+                $error = 'An employee with this code already exists.';
+            }
+        }
+        
+        if (empty($error)) {
             // Handle photo upload
             $photoPath = '';
             if (!empty($_FILES['photo']['name'])) {
@@ -51,14 +72,86 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add'])) {
                 }
             }
             
+            // Try modern schema first, then fallback to basic schema
             $insertQuery = $conn->prepare("INSERT INTO employees (employee_name, employee_code, position, monthly_salary, phone, address, email, photo, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())");
-            $insertQuery->bind_param("sssdssss", $name, $code, $position, $monthly_salary, $phone, $address, $email, $photoPath);
             
-            if ($insertQuery->execute()) {
-                $success = true;
+            if (!$insertQuery) {
+                // Fallback 1: Try with 'name' instead of 'employee_name'
+                $insertQuery = $conn->prepare("INSERT INTO employees (name, employee_code, position, monthly_salary, phone, address, email, photo, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())");
+                
+                if (!$insertQuery) {
+                    // Fallback 2: Try without created_at column
+                    $insertQuery = $conn->prepare("INSERT INTO employees (name, employee_code, position, monthly_salary, phone, address, email, photo) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+                    
+                    if (!$insertQuery) {
+                        // Fallback 3: Try minimal schema (core columns only)
+                        $insertQuery = $conn->prepare("INSERT INTO employees (name, employee_code, position, monthly_salary) VALUES (?, ?, ?, ?)");
+                        
+                        if (!$insertQuery) {
+                            // Fallback 4: Try most basic schema
+                            $insertQuery = $conn->prepare("INSERT INTO employees (name, employee_code) VALUES (?, ?)");
+                            if (!$insertQuery) {
+                                $error = 'Database error: Failed to prepare insert statement - ' . $conn->error;
+                            } else {
+                                $insertQuery->bind_param("ss", $name, $code);
+                            }
+                        } else {
+                            $insertQuery->bind_param("sssd", $name, $code, $position, $monthly_salary);
+                        }
+                    } else {
+                        $insertQuery->bind_param("sssdssss", $name, $code, $position, $monthly_salary, $phone, $address, $email, $photoPath);
+                    }
+                } else {
+                    $insertQuery->bind_param("sssdssss", $name, $code, $position, $monthly_salary, $phone, $address, $email, $photoPath);
+                }
             } else {
-                $error = 'Failed to add employee: ' . $conn->error;
+                $insertQuery->bind_param("sssdssss", $name, $code, $position, $monthly_salary, $phone, $address, $email, $photoPath);
             }
+            
+            // Execute the insert if we have a valid statement
+            if (empty($error) && $insertQuery && $insertQuery->execute()) {
+                $success = true;
+                
+                // Try to update additional columns if the basic insert succeeded
+                $employeeId = $conn->insert_id;
+                
+                // Try to add optional fields if they weren't included in the main insert
+                if (!empty($phone) && $employeeId) {
+                    $phoneQuery = $conn->prepare("UPDATE employees SET phone = ? WHERE id = ? OR employee_id = ?");
+                    if ($phoneQuery) {
+                        $phoneQuery->bind_param("sii", $phone, $employeeId, $employeeId);
+                        $phoneQuery->execute();
+                    }
+                }
+                
+                if (!empty($address) && $employeeId) {
+                    $addressQuery = $conn->prepare("UPDATE employees SET address = ? WHERE id = ? OR employee_id = ?");
+                    if ($addressQuery) {
+                        $addressQuery->bind_param("sii", $address, $employeeId, $employeeId);
+                        $addressQuery->execute();
+                    }
+                }
+                
+                if (!empty($email) && $employeeId) {
+                    $emailQuery = $conn->prepare("UPDATE employees SET email = ? WHERE id = ? OR employee_id = ?");
+                    if ($emailQuery) {
+                        $emailQuery->bind_param("sii", $email, $employeeId, $employeeId);
+                        $emailQuery->execute();
+                    }
+                }
+                
+                if (!empty($photoPath) && $employeeId) {
+                    $photoQuery = $conn->prepare("UPDATE employees SET photo = ? WHERE id = ? OR employee_id = ?");
+                    if ($photoQuery) {
+                        $photoQuery->bind_param("sii", $photoPath, $employeeId, $employeeId);
+                        $photoQuery->execute();
+                    }
+                }
+                
+            } elseif (empty($error)) {
+                $error = 'Failed to add employee: ' . ($insertQuery ? $conn->error : 'Could not prepare statement');
+            }
+        }
         }
     }
 }
