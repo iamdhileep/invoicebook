@@ -158,6 +158,12 @@ if (strpos($_SERVER['SCRIPT_NAME'], '/pages/') === false) {
             <div class="nav-section-title">Reports</div>
         </div>
         <div class="nav-item">
+            <a href="<?= $basePath ?>summary_dashboard.php" class="nav-link <?= $current_page === 'summary_dashboard' ? 'active' : '' ?>">
+                <i class="bi bi-bar-chart-line"></i>
+                Summary by Date Range
+            </a>
+        </div>
+        <div class="nav-item">
             <a href="<?= $basePath ?>reports.php" class="nav-link <?= $current_page === 'reports' ? 'active' : '' ?>">
                 <i class="bi bi-graph-up"></i>
                 Business Reports
