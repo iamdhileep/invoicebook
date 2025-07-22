@@ -6,266 +6,274 @@ if (!isset($_SESSION['admin'])) {
 }
 
 include '../../db.php';
-$page_title = 'Payroll Management';
+$page_title = 'Payroll';
 
 include '../../layouts/header.php';
 include '../../layouts/sidebar.php';
+
+// Get current month and year
+$currentMonth = date('Y-m');
+$monthName = date('F Y');
+
+// Get all employees with their salary details
+$employees = $conn->query("SELECT * FROM employees ORDER BY employee_name ASC");
 ?>
 
 <div class="main-content">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h1 class="h3 mb-0">Payroll Management</h1>
-            <p class="text-muted">Manage employee salaries and payroll processing</p>
+            <p class="text-muted">Manage employee salaries and payroll for <?= $monthName ?></p>
         </div>
         <div>
-            <a href="../../payroll_report.php" class="btn btn-outline-primary me-2">
-                <i class="bi bi-file-earmark-text"></i> Payroll Report
-            </a>
-            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#processPayrollModal">
-                <i class="bi bi-play-circle"></i> Process Payroll
+            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#payrollModal">
+                <i class="bi bi-currency-rupee"></i> Process Payroll
             </button>
         </div>
     </div>
 
-    <!-- Payroll Summary -->
-    <?php
-    $currentMonth = date('Y-m');
-    $totalSalaries = 0;
-    $processedPayroll = 0;
-    $pendingPayroll = 0;
-    $totalEmployees = 0;
-
-    // Get total employees and salaries
-    $result = mysqli_query($conn, "SELECT COUNT(*) as total, SUM(monthly_salary) as total_salary FROM employees");
-    if ($result) {
-        $row = mysqli_fetch_assoc($result);
-        $totalEmployees = $row['total'] ?? 0;
-        $totalSalaries = $row['total_salary'] ?? 0;
-    }
-
-    // Get processed payroll for current month
-    $result = mysqli_query($conn, "SELECT SUM(net_salary) as processed FROM payroll WHERE DATE_FORMAT(pay_date, '%Y-%m') = '$currentMonth'");
-    if ($result) {
-        $row = mysqli_fetch_assoc($result);
-        $processedPayroll = $row['processed'] ?? 0;
-    }
-
-    $pendingPayroll = $totalSalaries - $processedPayroll;
-    ?>
-
-    <div class="row g-4 mb-4">
-        <div class="col-md-3">
-            <div class="card bg-primary text-white">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-people me-2"></i>Employee Salary Details</h5>
+                </div>
                 <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="card-title mb-0">Total Employees</h6>
-                            <h2 class="mb-0"><?= $totalEmployees ?></h2>
-                        </div>
-                        <div class="fs-1 opacity-75">
-                            <i class="bi bi-people"></i>
-                        </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped" id="payrollTable">
+                            <thead>
+                                <tr>
+                                    <th>Employee</th>
+                                    <th>Position</th>
+                                    <th>Monthly Salary</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if ($employees && mysqli_num_rows($employees) > 0): ?>
+                                    <?php while ($employee = $employees->fetch_assoc()): ?>
+                                        <?php
+                                        // Check if payroll already processed for current month
+                                        $payrollQuery = $conn->prepare("SELECT * FROM payroll WHERE employee_id = ? AND month = ?");
+                                        $payrollQuery->bind_param("is", $employee['id'], $currentMonth);
+                                        $payrollQuery->execute();
+                                        $payrollRecord = $payrollQuery->get_result()->fetch_assoc();
+                                        $isProcessed = !empty($payrollRecord);
+                                        ?>
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <?php if (!empty($employee['photo']) && file_exists('../../' . $employee['photo'])): ?>
+                                                        <img src="../../<?= htmlspecialchars($employee['photo']) ?>" 
+                                                             class="rounded-circle me-2" 
+                                                             style="width: 40px; height: 40px; object-fit: cover;">
+                                                    <?php else: ?>
+                                                        <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center me-2" 
+                                                             style="width: 40px; height: 40px;">
+                                                            <i class="bi bi-person text-white"></i>
+                                                        </div>
+                                                    <?php endif; ?>
+                                                    <div>
+                                                        <strong><?= htmlspecialchars($employee['employee_name']) ?></strong>
+                                                        <br><small class="text-muted"><?= htmlspecialchars($employee['employee_code']) ?></small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td><?= htmlspecialchars($employee['position']) ?></td>
+                                            <td class="text-success fw-bold">₹<?= number_format($employee['monthly_salary'], 2) ?></td>
+                                            <td>
+                                                <?php if ($isProcessed): ?>
+                                                    <span class="badge bg-success">Processed</span>
+                                                <?php else: ?>
+                                                    <span class="badge bg-warning">Pending</span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    <?php if ($isProcessed): ?>
+                                                        <button class="btn btn-outline-info view-payroll" 
+                                                                data-employee-id="<?= $employee['id'] ?>"
+                                                                data-employee-name="<?= htmlspecialchars($employee['employee_name']) ?>">
+                                                            <i class="bi bi-eye"></i> View
+                                                        </button>
+                                                        <button class="btn btn-outline-primary reprocess-payroll" 
+                                                                data-employee-id="<?= $employee['id'] ?>"
+                                                                data-salary="<?= $employee['monthly_salary'] ?>">
+                                                            <i class="bi bi-arrow-clockwise"></i> Reprocess
+                                                        </button>
+                                                    <?php else: ?>
+                                                        <button class="btn btn-outline-success process-individual" 
+                                                                data-employee-id="<?= $employee['id'] ?>"
+                                                                data-employee-name="<?= htmlspecialchars($employee['employee_name']) ?>"
+                                                                data-salary="<?= $employee['monthly_salary'] ?>">
+                                                            <i class="bi bi-currency-rupee"></i> Process
+                                                        </button>
+                                                    <?php endif; ?>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <?php endwhile; ?>
+                                <?php else: ?>
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted py-4">
+                                            No employees found. <a href="../employees/employees.php">Add employees</a> first.
+                                        </td>
+                                    </tr>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-md-3">
-            <div class="card bg-success text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="card-title mb-0">Monthly Payroll</h6>
-                            <h2 class="mb-0">₹ <?= number_format($totalSalaries, 0) ?></h2>
-                        </div>
-                        <div class="fs-1 opacity-75">
-                            <i class="bi bi-currency-rupee"></i>
-                        </div>
-                    </div>
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Payroll Summary</h6>
                 </div>
-            </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="card bg-info text-white">
                 <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="card-title mb-0">Processed This Month</h6>
-                            <h2 class="mb-0">₹ <?= number_format($processedPayroll, 0) ?></h2>
-                        </div>
-                        <div class="fs-1 opacity-75">
-                            <i class="bi bi-check-circle"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="card bg-warning text-dark">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="card-title mb-0">Pending Payment</h6>
-                            <h2 class="mb-0">₹ <?= number_format($pendingPayroll, 0) ?></h2>
-                        </div>
-                        <div class="fs-1 opacity-75">
-                            <i class="bi bi-clock-history"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Employee Payroll Table -->
-    <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">Employee Payroll - <?= date('F Y') ?></h5>
-            <div>
-                <select id="monthFilter" class="form-select form-select-sm" style="width: auto;">
                     <?php
-                    for ($i = 0; $i < 12; $i++) {
-                        $month = date('Y-m', strtotime("-$i months"));
-                        $monthName = date('F Y', strtotime("-$i months"));
-                        $selected = ($month === $currentMonth) ? 'selected' : '';
-                        echo "<option value='$month' $selected>$monthName</option>";
-                    }
-                    ?>
-                </select>
-            </div>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table id="payrollTable" class="table table-striped data-table">
-                    <thead>
-                        <tr>
-                            <th>Employee</th>
-                            <th>Code</th>
-                            <th>Position</th>
-                            <th>Base Salary</th>
-                            <th>Attendance</th>
-                            <th>Deductions</th>
-                            <th>Net Salary</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php
-                        // Get employee payroll data
-                        $query = "SELECT e.employee_id, e.name, e.code, e.position, e.monthly_salary,
-                                 p.gross_salary, p.deductions, p.net_salary, p.pay_date, p.status, p.payroll_id,
-                                 (SELECT COUNT(*) FROM attendance a WHERE a.employee_id = e.employee_id 
-                                  AND DATE_FORMAT(a.attendance_date, '%Y-%m') = '$currentMonth' 
-                                  AND a.status IN ('Present', 'Late', 'Half Day')) as working_days
-                                 FROM employees e
-                                 LEFT JOIN payroll p ON e.employee_id = p.employee_id 
-                                 AND DATE_FORMAT(p.pay_date, '%Y-%m') = '$currentMonth'
-                                 ORDER BY e.name ASC";
-                        
-                        $result = mysqli_query($conn, $query);
-                        if ($result) {
-                            while ($row = mysqli_fetch_assoc($result)) {
-                                $workingDays = $row['working_days'] ?? 0;
-                                $totalWorkingDays = date('t'); // Total days in current month
-                                $attendancePercentage = $totalWorkingDays > 0 ? round(($workingDays / $totalWorkingDays) * 100, 1) : 0;
-                                
-                                $baseSalary = $row['monthly_salary'];
-                                $grossSalary = $row['gross_salary'] ?? $baseSalary;
-                                $deductions = $row['deductions'] ?? 0;
-                                $netSalary = $row['net_salary'] ?? ($grossSalary - $deductions);
-                                
-                                $status = $row['status'] ?? 'Pending';
-                                $statusClass = '';
-                                switch ($status) {
-                                    case 'Paid': $statusClass = 'bg-success'; break;
-                                    case 'Pending': $statusClass = 'bg-warning'; break;
-                                    case 'Processing': $statusClass = 'bg-info'; break;
-                                    default: $statusClass = 'bg-secondary';
-                                }
+                    $totalEmployees = 0;
+                    $totalSalary = 0;
+                    $processedCount = 0;
+                    $totalProcessed = 0;
 
-                                echo "<tr>";
-                                echo "<td><strong>" . htmlspecialchars($row['name']) . "</strong></td>";
-                                echo "<td><span class='badge bg-secondary'>" . htmlspecialchars($row['code']) . "</span></td>";
-                                echo "<td>" . htmlspecialchars($row['position']) . "</td>";
-                                echo "<td><strong class='text-primary'>₹ " . number_format($baseSalary, 2) . "</strong></td>";
-                                echo "<td>";
-                                echo "<span class='badge bg-light text-dark'>{$workingDays}/{$totalWorkingDays} days</span><br>";
-                                echo "<small class='text-muted'>{$attendancePercentage}%</small>";
-                                echo "</td>";
-                                echo "<td><span class='text-danger'>₹ " . number_format($deductions, 2) . "</span></td>";
-                                echo "<td><strong class='text-success'>₹ " . number_format($netSalary, 2) . "</strong></td>";
-                                echo "<td><span class='badge {$statusClass}'>{$status}</span></td>";
-                                echo "<td>";
-                                echo "<div class='btn-group btn-group-sm'>";
-                                
-                                if ($row['payroll_id']) {
-                                    echo "<a href='../../generate_payslip.php?id={$row['payroll_id']}' class='btn btn-outline-primary' data-bs-toggle='tooltip' title='View Payslip'>";
-                                    echo "<i class='bi bi-file-earmark-text'></i>";
-                                    echo "</a>";
-                                    if ($status !== 'Paid') {
-                                        echo "<button class='btn btn-outline-success mark-paid' data-id='{$row['payroll_id']}' data-bs-toggle='tooltip' title='Mark as Paid'>";
-                                        echo "<i class='bi bi-check-circle'></i>";
-                                        echo "</button>";
-                                    }
-                                } else {
-                                    echo "<button class='btn btn-outline-primary process-individual' data-employee-id='{$row['employee_id']}' data-bs-toggle='tooltip' title='Process Payroll'>";
-                                    echo "<i class='bi bi-play-circle'></i>";
-                                    echo "</button>";
-                                }
-                                
-                                echo "</div>";
-                                echo "</td>";
-                                echo "</tr>";
-                            }
-                        }
-                        ?>
-                    </tbody>
-                </table>
+                    $result = $conn->query("SELECT COUNT(*) as count, SUM(monthly_salary) as total_salary FROM employees");
+                    if ($result && $row = $result->fetch_assoc()) {
+                        $totalEmployees = $row['count'] ?? 0;
+                        $totalSalary = $row['total_salary'] ?? 0;
+                    }
+
+                    $result = $conn->query("SELECT COUNT(*) as count, SUM(net_salary) as total_processed FROM payroll WHERE month = '$currentMonth'");
+                    if ($result && $row = $result->fetch_assoc()) {
+                        $processedCount = $row['count'] ?? 0;
+                        $totalProcessed = $row['total_processed'] ?? 0;
+                    }
+
+                    $pendingCount = $totalEmployees - $processedCount;
+                    $pendingSalary = $totalSalary - $totalProcessed;
+                    ?>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span>Total Employees:</span>
+                            <strong><?= $totalEmployees ?></strong>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span>Processed:</span>
+                            <strong class="text-success"><?= $processedCount ?></strong>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span>Pending:</span>
+                            <strong class="text-warning"><?= $pendingCount ?></strong>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span>Total Payroll:</span>
+                            <strong class="text-primary">₹<?= number_format($totalSalary, 2) ?></strong>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span>Processed Amount:</span>
+                            <strong class="text-success">₹<?= number_format($totalProcessed, 2) ?></strong>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>Pending Amount:</span>
+                            <strong class="text-warning">₹<?= number_format($pendingSalary, 2) ?></strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0">Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-success" onclick="processAllPayroll()">
+                            Process All Pending
+                        </button>
+                        <a href="../../payroll_report.php" class="btn btn-outline-primary">
+                            Generate Report
+                        </a>
+                        <a href="../employees/employees.php" class="btn btn-outline-secondary">
+                            Manage Employees
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0">Month Selection</h6>
+                </div>
+                <div class="card-body">
+                    <form method="GET">
+                        <div class="mb-3">
+                            <label class="form-label">Select Month</label>
+                            <input type="month" name="month" class="form-control" value="<?= $currentMonth ?>" onchange="this.form.submit()">
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
 <!-- Process Payroll Modal -->
-<div class="modal fade" id="processPayrollModal" tabindex="-1">
+<div class="modal fade" id="payrollModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Process Monthly Payroll</h5>
+                <h5 class="modal-title">Process Payroll</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form id="processPayrollForm">
+            <form action="../../process_payroll.php" method="POST">
                 <div class="modal-body">
+                    <input type="hidden" name="month" value="<?= $currentMonth ?>">
+                    <input type="hidden" name="employee_id" id="modal_employee_id">
+                    
                     <div class="mb-3">
-                        <label class="form-label">Pay Date</label>
-                        <input type="date" name="pay_date" class="form-control" value="<?= date('Y-m-d') ?>" required>
+                        <label class="form-label">Employee</label>
+                        <input type="text" id="modal_employee_name" class="form-control" readonly>
                     </div>
                     
                     <div class="mb-3">
-                        <label class="form-label">Pay Period</label>
-                        <input type="month" name="pay_period" class="form-control" value="<?= date('Y-m') ?>" required>
+                        <label class="form-label">Basic Salary</label>
+                        <div class="input-group">
+                            <span class="input-group-text">₹</span>
+                            <input type="number" name="basic_salary" id="modal_basic_salary" class="form-control" step="0.01" required>
+                        </div>
                     </div>
                     
                     <div class="mb-3">
-                        <label class="form-label">Global Deductions (Optional)</label>
-                        <input type="number" name="global_deductions" class="form-control" placeholder="0.00" step="0.01">
-                        <div class="form-text">This will be applied to all employees</div>
+                        <label class="form-label">Allowances</label>
+                        <div class="input-group">
+                            <span class="input-group-text">₹</span>
+                            <input type="number" name="allowances" class="form-control" step="0.01" value="0">
+                        </div>
                     </div>
                     
                     <div class="mb-3">
-                        <label class="form-label">Bonus/Incentive (Optional)</label>
-                        <input type="number" name="global_bonus" class="form-control" placeholder="0.00" step="0.01">
-                        <div class="form-text">This will be added to all employees</div>
+                        <label class="form-label">Deductions</label>
+                        <div class="input-group">
+                            <span class="input-group-text">₹</span>
+                            <input type="number" name="deductions" class="form-control" step="0.01" value="0">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Bonus</label>
+                        <div class="input-group">
+                            <span class="input-group-text">₹</span>
+                            <input type="number" name="bonus" class="form-control" step="0.01" value="0">
+                        </div>
                     </div>
                     
                     <div class="alert alert-info">
-                        <i class="bi bi-info-circle"></i>
-                        This will process payroll for all employees for the selected period. 
-                        Salary calculations will be based on attendance records.
+                        <small><strong>Net Salary</strong> will be calculated as: Basic Salary + Allowances + Bonus - Deductions</small>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -277,161 +285,53 @@ include '../../layouts/sidebar.php';
     </div>
 </div>
 
-<!-- Individual Payroll Modal -->
-<div class="modal fade" id="individualPayrollModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Process Individual Payroll</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form id="individualPayrollForm">
-                <div class="modal-body">
-                    <input type="hidden" id="individual_employee_id" name="employee_id">
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Pay Date</label>
-                        <input type="date" name="pay_date" class="form-control" value="<?= date('Y-m-d') ?>" required>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Gross Salary</label>
-                        <input type="number" id="individual_gross_salary" name="gross_salary" class="form-control" step="0.01" required>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Deductions</label>
-                        <input type="number" name="deductions" class="form-control" placeholder="0.00" step="0.01">
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Bonus/Incentive</label>
-                        <input type="number" name="bonus" class="form-control" placeholder="0.00" step="0.01">
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Notes</label>
-                        <textarea name="notes" class="form-control" rows="3" placeholder="Optional notes"></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Process</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<?php
-$additional_scripts = '
 <script>
-    $(document).ready(function() {
-        // Initialize DataTable
-        const table = $("#payrollTable").DataTable({
-            pageLength: 25,
-            lengthMenu: [10, 25, 50, 100],
-            responsive: true,
-            order: [[0, "asc"]],
-            columnDefs: [
-                { orderable: false, targets: [8] }
-            ]
-        });
-
-        // Month filter
-        $("#monthFilter").change(function() {
-            const selectedMonth = this.value;
-            // Reload page with selected month
-            window.location.href = "?month=" + selectedMonth;
-        });
-
-        // Process all payroll
-        $("#processPayrollForm").submit(function(e) {
-            e.preventDefault();
-            
-            if (confirm("Are you sure you want to process payroll for all employees? This action cannot be undone.")) {
-                const formData = $(this).serialize();
-                
-                $.post("../../process_payroll.php", formData + "&process_all=1", function(response) {
-                    if (response.success) {
-                        showAlert("Payroll processed successfully for " + response.processed_count + " employees", "success");
-                        setTimeout(() => location.reload(), 2000);
-                    } else {
-                        showAlert("Error processing payroll: " + response.message, "danger");
-                    }
-                }, "json").fail(function() {
-                    showAlert("Error occurred while processing payroll", "danger");
-                });
-                
-                $("#processPayrollModal").modal("hide");
-            }
-        });
-
-        // Process individual payroll
-        $(".process-individual").click(function() {
-            const employeeId = $(this).data("employee-id");
-            const row = $(this).closest("tr");
-            const baseSalary = row.find("td:nth-child(4)").text().replace(/[₹,]/g, "").trim();
-            
-            $("#individual_employee_id").val(employeeId);
-            $("#individual_gross_salary").val(baseSalary);
-            $("#individualPayrollModal").modal("show");
-        });
-
-        $("#individualPayrollForm").submit(function(e) {
-            e.preventDefault();
-            
-            const formData = $(this).serialize();
-            
-            $.post("../../process_payroll.php", formData, function(response) {
-                if (response.success) {
-                    showAlert("Individual payroll processed successfully", "success");
-                    setTimeout(() => location.reload(), 1500);
-                } else {
-                    showAlert("Error processing payroll: " + response.message, "danger");
-                }
-            }, "json").fail(function() {
-                showAlert("Error occurred while processing payroll", "danger");
-            });
-            
-            $("#individualPayrollModal").modal("hide");
-        });
-
-        // Mark as paid
-        $(".mark-paid").click(function() {
-            const payrollId = $(this).data("id");
-            const row = $(this).closest("tr");
-            
-            if (confirm("Mark this payroll as paid?")) {
-                $.post("../../update_payroll_status.php", {
-                    payroll_id: payrollId,
-                    status: "Paid"
-                }, function(response) {
-                    if (response.success) {
-                        showAlert("Payroll marked as paid", "success");
-                        setTimeout(() => location.reload(), 1500);
-                    } else {
-                        showAlert("Error updating payroll status: " + response.message, "danger");
-                    }
-                }, "json").fail(function() {
-                    showAlert("Error occurred while updating status", "danger");
-                });
-            }
-        });
-
-        // Calculate net salary in individual form
-        $("#individualPayrollForm input[name=gross_salary], #individualPayrollForm input[name=deductions], #individualPayrollForm input[name=bonus]").on("input", function() {
-            const grossSalary = parseFloat($("#individualPayrollForm input[name=gross_salary]").val()) || 0;
-            const deductions = parseFloat($("#individualPayrollForm input[name=deductions]").val()) || 0;
-            const bonus = parseFloat($("#individualPayrollForm input[name=bonus]").val()) || 0;
-            const netSalary = grossSalary - deductions + bonus;
-            
-            // Show calculated net salary (you can add a field to display this)
-            console.log("Net Salary:", netSalary);
-        });
+// Process individual payroll
+document.querySelectorAll('.process-individual').forEach(button => {
+    button.addEventListener('click', function() {
+        const employeeId = this.dataset.employeeId;
+        const employeeName = this.dataset.employeeName;
+        const salary = this.dataset.salary;
+        
+        document.getElementById('modal_employee_id').value = employeeId;
+        document.getElementById('modal_employee_name').value = employeeName;
+        document.getElementById('modal_basic_salary').value = salary;
+        
+        new bootstrap.Modal(document.getElementById('payrollModal')).show();
     });
-</script>
-';
+});
 
-include '../../layouts/footer.php';
-?>
+// Process all payroll
+function processAllPayroll() {
+    if (confirm('Are you sure you want to process payroll for all pending employees?')) {
+        // This would need to be implemented with proper backend logic
+        alert('Process all payroll functionality will be implemented.');
+    }
+}
+
+// View payroll details
+document.querySelectorAll('.view-payroll').forEach(button => {
+    button.addEventListener('click', function() {
+        const employeeId = this.dataset.employeeId;
+        const employeeName = this.dataset.employeeName;
+        
+        // This would show detailed payroll information
+        alert(`View payroll details for ${employeeName} - Feature to be implemented`);
+    });
+});
+
+// Reprocess payroll
+document.querySelectorAll('.reprocess-payroll').forEach(button => {
+    button.addEventListener('click', function() {
+        const employeeId = this.dataset.employeeId;
+        const salary = this.dataset.salary;
+        
+        if (confirm('Are you sure you want to reprocess this employee\'s payroll?')) {
+            // This would reprocess the payroll
+            alert('Reprocess payroll functionality will be implemented.');
+        }
+    });
+});
+</script>
+
+<?php include '../../layouts/footer.php'; ?>
