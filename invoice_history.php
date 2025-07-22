@@ -240,7 +240,12 @@ $(document).ready(function() {
         order: [[2, "desc"]], // Sort by date
         columnDefs: [
             { orderable: false, targets: [0, 6] }
-        ]
+        ],
+        drawCallback: function() {
+            // Reinitialize tooltips after table redraw
+            $('[data-bs-toggle="tooltip"]').tooltip();
+            console.log('Invoice DataTable redrawn, tooltips reinitialized');
+        }
     });
 
     // Select all functionality
@@ -276,25 +281,38 @@ $(document).ready(function() {
         }
     });
 
-    // Delete individual invoice
-    $('.delete-invoice').click(function() {
+    // Delete individual invoice - using event delegation for DataTables compatibility
+    $(document).on('click', '.delete-invoice', function() {
+        console.log('Delete invoice button clicked');
         const invoiceId = $(this).data('id');
         const row = $(this).closest('tr');
+        const button = $(this);
+        
+        console.log('Invoice ID:', invoiceId);
         
         if (confirm('Are you sure you want to delete this invoice? This action cannot be undone.')) {
+            console.log('User confirmed deletion');
+            // Show loading state
+            const originalContent = button.html();
+            button.html('<i class="bi bi-hourglass-split"></i>').prop('disabled', true);
+
             $.post('delete_invoice.php', {id: invoiceId}, function(response) {
+                console.log('Delete response:', response);
                 if (response.success) {
                     row.fadeOut(300, function() {
                         $(this).remove();
                         // Reload page to update totals
                         setTimeout(() => location.reload(), 500);
                     });
-                    showAlert('Invoice deleted successfully', 'success');
+                    showAlert(response.message || 'Invoice deleted successfully', 'success');
                 } else {
                     showAlert('Failed to delete invoice: ' + (response.message || 'Unknown error'), 'danger');
+                    button.html(originalContent).prop('disabled', false);
                 }
-            }, 'json').fail(function() {
-                showAlert('Error occurred while deleting invoice', 'danger');
+            }, 'json').fail(function(xhr, status, error) {
+                console.error('Delete request failed:', xhr.responseText);
+                showAlert('Error occurred while deleting invoice: ' + error, 'danger');
+                button.html(originalContent).prop('disabled', false);
             });
         }
     });

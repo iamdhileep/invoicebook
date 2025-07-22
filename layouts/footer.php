@@ -83,8 +83,8 @@
             // Auto-hide alerts after 5 seconds
             $('.alert').delay(5000).fadeOut(300);
 
-            // Confirm delete actions
-            $('.btn-delete, .delete-btn').click(function(e) {
+            // Confirm delete actions - using event delegation for DataTables compatibility
+            $(document).on('click', '.btn-delete, .delete-btn', function(e) {
                 if (!confirm('Are you sure you want to delete this item? This action cannot be undone.')) {
                     e.preventDefault();
                 }
