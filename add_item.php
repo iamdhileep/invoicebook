@@ -294,14 +294,6 @@ include 'layouts/sidebar.php';
 
 <script>
 $(document).ready(function() {
-    // Initialize category dropdown with dynamic updates
-    loadCategoriesFromStorage();
-    
-    // Listen for category updates from manage_categories.php
-    window.addEventListener('categoriesUpdated', function(e) {
-        updateCategoryDropdown(e.detail);
-    });
-
     // Handle category selection
     $('#categorySelect').change(function() {
         if (this.value === '__new__') {
@@ -375,52 +367,13 @@ function updateCategoryPreview() {
     }
 }
 
-function loadCategoriesFromStorage() {
-    const storedCategories = localStorage.getItem('categories');
-    if (storedCategories) {
-        try {
-            const categories = JSON.parse(storedCategories);
-            updateCategoryDropdown(categories);
-        } catch (e) {
-            console.log('Error parsing stored categories:', e);
-        }
-    }
-}
-
-function updateCategoryDropdown(categories) {
-    const select = $('#categorySelect');
-    const currentValue = select.val();
-    
-    // Clear existing options except default and "add new"
-    select.find('option').not(':first').not(':last').remove();
-    
-    // Add updated categories
-    categories.forEach(function(category) {
-        const option = $('<option></option>')
-            .val(category.name)
-            .text(category.name)
-            .attr('data-color', category.color || '#007bff')
-            .attr('data-icon', category.icon || 'bi-tag');
-            
-        select.find('option:last').before(option);
-    });
-    
-    // Restore selection if it still exists
-    if (currentValue && select.find(`option[value="${currentValue}"]`).length > 0) {
-        select.val(currentValue);
-        updateCategoryPreview();
-    }
-    
-    console.log('Category dropdown updated with', categories.length, 'categories');
-}
-
 function showAlert(message, type) {
-    const alertDiv = $(`
-        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+    const alertDiv = $(
+        `<div class="alert alert-${type} alert-dismissible fade show" role="alert">
             <i class="bi bi-exclamation-triangle me-2"></i>${message}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    `);
+        </div>`
+    );
     $('.main-content').prepend(alertDiv);
     
     setTimeout(() => {
