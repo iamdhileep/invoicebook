@@ -64,9 +64,22 @@ $revenueQuery = $conn->prepare("
     FROM invoices 
     WHERE invoice_date BETWEEN ? AND ?
 ");
-$revenueQuery->bind_param("ss", $dateFrom, $dateTo);
-$revenueQuery->execute();
-$revenueData = $revenueQuery->get_result()->fetch_assoc();
+
+if ($revenueQuery) {
+    $revenueQuery->bind_param("ss", $dateFrom, $dateTo);
+    $revenueQuery->execute();
+    $revenueData = $revenueQuery->get_result()->fetch_assoc();
+} else {
+    // Fallback data if query fails
+    $revenueData = [
+        'total_invoices' => 0,
+        'total_revenue' => 0,
+        'avg_invoice_value' => 0,
+        'highest_invoice' => 0,
+        'lowest_invoice' => 0
+    ];
+    error_log("Revenue query failed: " . $conn->error);
+}
 
 // Expense Summary
 $expenseQuery = $conn->prepare("
@@ -78,9 +91,21 @@ $expenseQuery = $conn->prepare("
     FROM expenses 
     WHERE expense_date BETWEEN ? AND ?
 ");
-$expenseQuery->bind_param("ss", $dateFrom, $dateTo);
-$expenseQuery->execute();
-$expenseData = $expenseQuery->get_result()->fetch_assoc();
+
+if ($expenseQuery) {
+    $expenseQuery->bind_param("ss", $dateFrom, $dateTo);
+    $expenseQuery->execute();
+    $expenseData = $expenseQuery->get_result()->fetch_assoc();
+} else {
+    // Fallback data if query fails
+    $expenseData = [
+        'total_expenses' => 0,
+        'total_amount' => 0,
+        'avg_expense' => 0,
+        'highest_expense' => 0
+    ];
+    error_log("Expense query failed: " . $conn->error);
+}
 
 // Employee & Attendance Summary
 $employeeQuery = $conn->prepare("
@@ -98,9 +123,25 @@ $employeeQuery = $conn->prepare("
         AND a.date BETWEEN ? AND ?
     WHERE e.status = 'active'
 ");
-$employeeQuery->bind_param("ss", $dateFrom, $dateTo);
-$employeeQuery->execute();
-$employeeData = $employeeQuery->get_result()->fetch_assoc();
+
+if ($employeeQuery) {
+    $employeeQuery->bind_param("ss", $dateFrom, $dateTo);
+    $employeeQuery->execute();
+    $employeeData = $employeeQuery->get_result()->fetch_assoc();
+} else {
+    // Fallback data if query fails
+    $employeeData = [
+        'total_employees' => 0,
+        'total_salary_cost' => 0,
+        'avg_salary' => 0,
+        'employees_with_attendance' => 0,
+        'total_present_days' => 0,
+        'total_absent_days' => 0,
+        'total_work_hours' => 0,
+        'total_overtime_hours' => 0
+    ];
+    error_log("Employee query failed: " . $conn->error);
+}
 
 // Items & Inventory Summary
 $itemsQuery = $conn->prepare("
@@ -114,8 +155,22 @@ $itemsQuery = $conn->prepare("
     FROM items 
     WHERE status = 'active'
 ");
-$itemsQuery->execute();
-$itemsData = $itemsQuery->get_result()->fetch_assoc();
+
+if ($itemsQuery) {
+    $itemsQuery->execute();
+    $itemsData = $itemsQuery->get_result()->fetch_assoc();
+} else {
+    // Fallback data if query fails
+    $itemsData = [
+        'total_items' => 0,
+        'total_stock' => 0,
+        'total_inventory_value' => 0,
+        'avg_item_price' => 0,
+        'low_stock_items' => 0,
+        'out_of_stock_items' => 0
+    ];
+    error_log("Items query failed: " . $conn->error);
+}
 
 // Calculate key metrics
 $profit = $revenueData['total_revenue'] - $expenseData['total_amount'];
@@ -138,9 +193,17 @@ $topCategoriesQuery = $conn->prepare("
     ORDER BY total_revenue DESC
     LIMIT 10
 ");
-$topCategoriesQuery->bind_param("ss", $dateFrom, $dateTo);
-$topCategoriesQuery->execute();
-$topCategories = $topCategoriesQuery->get_result();
+
+if ($topCategoriesQuery) {
+    $topCategoriesQuery->bind_param("ss", $dateFrom, $dateTo);
+    $topCategoriesQuery->execute();
+    $topCategories = $topCategoriesQuery->get_result();
+} else {
+    // Create empty result set if query fails
+    $topCategories = new stdClass();
+    $topCategories->num_rows = 0;
+    error_log("Top categories query failed: " . $conn->error);
+}
 
 // Daily Trends
 $dailyTrendsQuery = $conn->prepare("
@@ -154,9 +217,17 @@ $dailyTrendsQuery = $conn->prepare("
     GROUP BY DATE(invoice_date)
     ORDER BY date ASC
 ");
-$dailyTrendsQuery->bind_param("ss", $dateFrom, $dateTo);
-$dailyTrendsQuery->execute();
-$dailyTrends = $dailyTrendsQuery->get_result();
+
+if ($dailyTrendsQuery) {
+    $dailyTrendsQuery->bind_param("ss", $dateFrom, $dateTo);
+    $dailyTrendsQuery->execute();
+    $dailyTrends = $dailyTrendsQuery->get_result();
+} else {
+    // Create empty result set if query fails
+    $dailyTrends = new stdClass();
+    $dailyTrends->num_rows = 0;
+    error_log("Daily trends query failed: " . $conn->error);
+}
 
 // Recent Transactions
 $recentTransactionsQuery = $conn->prepare("
@@ -168,9 +239,17 @@ $recentTransactionsQuery = $conn->prepare("
     ORDER BY date DESC
     LIMIT 10
 ");
-$recentTransactionsQuery->bind_param("ssss", $dateFrom, $dateTo, $dateFrom, $dateTo);
-$recentTransactionsQuery->execute();
-$recentTransactions = $recentTransactionsQuery->get_result();
+
+if ($recentTransactionsQuery) {
+    $recentTransactionsQuery->bind_param("ssss", $dateFrom, $dateTo, $dateFrom, $dateTo);
+    $recentTransactionsQuery->execute();
+    $recentTransactions = $recentTransactionsQuery->get_result();
+} else {
+    // Create empty result set if query fails
+    $recentTransactions = new stdClass();
+    $recentTransactions->num_rows = 0;
+    error_log("Recent transactions query failed: " . $conn->error);
+}
 
 include 'layouts/header.php';
 ?>
@@ -568,10 +647,12 @@ $(document).ready(function() {
     const expenseData = [];
     
     <?php 
-    $dailyTrends->data_seek(0);
     $chartData = [];
-    while ($trend = $dailyTrends->fetch_assoc()) {
-        $chartData[] = $trend;
+    if ($dailyTrends && $dailyTrends->num_rows > 0) {
+        $dailyTrends->data_seek(0);
+        while ($trend = $dailyTrends->fetch_assoc()) {
+            $chartData[] = $trend;
+        }
     }
     ?>
     
