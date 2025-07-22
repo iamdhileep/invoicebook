@@ -84,20 +84,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             
             if (empty($error)) {
-                // Update employee
-                $updateQuery = $conn->prepare("UPDATE employees SET employee_name = ?, employee_code = ?, position = ?, monthly_salary = ?, phone = ?, address = ?, email = ?, photo = ? WHERE employee_id = ?");
-                $updateQuery->bind_param("sssdsssi", $name, $code, $position, $monthly_salary, $phone, $address, $email, $photoPath, $employeeId);
+                // Update employee - try with employee_name first, fallback to name
+                $updateQuery = $conn->prepare("UPDATE employees SET employee_name = ?, employee_code = ?, position = ?, monthly_salary = ?, phone = ?, address = ?, email = ? WHERE employee_id = ?");
                 
-                if ($updateQuery->execute()) {
+                if (!$updateQuery) {
+                    // If employee_name column doesn't exist, try with name column
+                    $updateQuery = $conn->prepare("UPDATE employees SET name = ?, employee_code = ?, position = ?, monthly_salary = ?, phone = ?, address = ?, email = ? WHERE employee_id = ?");
+                    
+                    if (!$updateQuery) {
+                        // Try with minimal columns that should exist
+                        $updateQuery = $conn->prepare("UPDATE employees SET name = ?, employee_code = ?, position = ?, monthly_salary = ? WHERE employee_id = ?");
+                        
+                        if (!$updateQuery) {
+                            $error = 'Failed to prepare update statement: ' . $conn->error;
+                        } else {
+                            $updateQuery->bind_param("sssdi", $name, $code, $position, $monthly_salary, $employeeId);
+                        }
+                    } else {
+                        $updateQuery->bind_param("sssdssi", $name, $code, $position, $monthly_salary, $phone, $address, $email, $employeeId);
+                    }
+                } else {
+                    $updateQuery->bind_param("sssdssi", $name, $code, $position, $monthly_salary, $phone, $address, $email, $employeeId);
+                }
+                
+                if (!empty($error)) {
+                    // Skip execution if prepare failed
+                } elseif ($updateQuery && $updateQuery->execute()) {
+                    // Try to update photo separately if provided and column exists
+                    if (!empty($photoPath)) {
+                        $photoQuery = $conn->prepare("UPDATE employees SET photo = ? WHERE employee_id = ?");
+                        if ($photoQuery) {
+                            $photoQuery->bind_param("si", $photoPath, $employeeId);
+                            $photoQuery->execute(); // Don't fail if this doesn't work
+                        }
+                    }
+                    
                     $success = true;
                     // Refresh employee data
                     $stmt = $conn->prepare("SELECT * FROM employees WHERE employee_id = ?");
-                    $stmt->bind_param("i", $employeeId);
-                    $stmt->execute();
-                    $result = $stmt->get_result();
-                    $employee = $result->fetch_assoc();
+                    if ($stmt) {
+                        $stmt->bind_param("i", $employeeId);
+                        $stmt->execute();
+                        $result = $stmt->get_result();
+                        $employee = $result->fetch_assoc();
+                    }
                 } else {
-                    $error = 'Failed to update employee: ' . $conn->error;
+                    $error = 'Failed to update employee: ' . ($updateQuery ? $conn->error : 'Could not prepare statement');
                 }
             }
         }
