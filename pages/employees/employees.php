@@ -332,24 +332,33 @@ $(document).ready(function() {
         const employeeId = $(this).data('id');
         const employeeName = $(this).data('name');
         const row = $(this).closest('tr');
+        const button = $(this);
         
         if (confirm(`Are you sure you want to delete employee "${employeeName}"? This action cannot be undone.`)) {
-            $.post('../../employee-tabs.php', {
-                ajax_delete: 1,
+            // Show loading state
+            const originalContent = button.html();
+            button.html('<i class="bi bi-hourglass-split"></i>').prop('disabled', true);
+            
+            $.post('../../delete_employee.php', {
                 id: employeeId
             }, function(response) {
-                if (response === 'success') {
+                if (response.success) {
                     row.fadeOut(300, function() {
                         $(this).remove();
                         // Reload page to update totals
                         setTimeout(() => location.reload(), 500);
                     });
-                    showAlert('Employee deleted successfully', 'success');
+                    showAlert(response.message || 'Employee deleted successfully', 'success');
                 } else {
-                    showAlert('Failed to delete employee', 'danger');
+                    showAlert(response.message || 'Failed to delete employee', 'danger');
+                    // Restore button
+                    button.html(originalContent).prop('disabled', false);
                 }
-            }).fail(function() {
-                showAlert('Error occurred while deleting employee', 'danger');
+            }, 'json').fail(function(xhr, status, error) {
+                console.error('Delete request failed:', xhr.responseText);
+                showAlert('Error occurred while deleting employee: ' + error, 'danger');
+                // Restore button
+                button.html(originalContent).prop('disabled', false);
             });
         }
     });
