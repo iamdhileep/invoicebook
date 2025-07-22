@@ -118,12 +118,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             }
             
             // Update category with fallback
-            $updateStmt = $conn->prepare("UPDATE categories SET name = ?, description = ?, color = ?, icon = ? WHERE id = ?");
+            $updateStmt = $conn->prepare("UPDATE categories SET name = ?, description = ?, color = ?, icon = ?, updated_at = NOW() WHERE id = ?");
             if (!$updateStmt) {
-                // Fallback: update only name
-                $updateStmt = $conn->prepare("UPDATE categories SET name = ? WHERE id = ?");
-                if ($updateStmt) {
-                    $updateStmt->bind_param("si", $name, $id);
+                // Fallback: update without updated_at
+                $updateStmt = $conn->prepare("UPDATE categories SET name = ?, description = ?, color = ?, icon = ? WHERE id = ?");
+                if (!$updateStmt) {
+                    // Final fallback: update only name
+                    $updateStmt = $conn->prepare("UPDATE categories SET name = ? WHERE id = ?");
+                    if ($updateStmt) {
+                        $updateStmt->bind_param("si", $name, $id);
+                    }
+                } else {
+                    $updateStmt->bind_param("ssssi", $name, $description, $color, $icon, $id);
                 }
             } else {
                 $updateStmt->bind_param("ssssi", $name, $description, $color, $icon, $id);
