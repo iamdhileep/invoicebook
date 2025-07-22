@@ -239,12 +239,17 @@ $(document).ready(function() {
         ]
     });
 
-    // Delete expense functionality
-    $('.delete-expense').click(function() {
+    // Delete expense functionality - using event delegation for DataTables compatibility
+    $(document).on('click', '.delete-expense', function() {
         const expenseId = $(this).data('id');
         const row = $(this).closest('tr');
+        const button = $(this);
         
         if (confirm('Are you sure you want to delete this expense? This action cannot be undone.')) {
+            // Show loading state
+            const originalContent = button.html();
+            button.html('<i class="bi bi-hourglass-split"></i>').prop('disabled', true);
+            
             $.post('delete_expense.php', {id: expenseId}, function(response) {
                 if (response.success) {
                     row.fadeOut(300, function() {
@@ -252,12 +257,17 @@ $(document).ready(function() {
                         // Reload page to update totals
                         setTimeout(() => location.reload(), 500);
                     });
-                    showAlert('Expense deleted successfully', 'success');
+                    showAlert(response.message || 'Expense deleted successfully', 'success');
                 } else {
                     showAlert('Failed to delete expense: ' + (response.message || 'Unknown error'), 'danger');
+                    // Restore button
+                    button.html(originalContent).prop('disabled', false);
                 }
-            }, 'json').fail(function() {
-                showAlert('Error occurred while deleting expense', 'danger');
+            }, 'json').fail(function(xhr, status, error) {
+                console.error('Delete request failed:', xhr.responseText);
+                showAlert('Error occurred while deleting expense: ' + error, 'danger');
+                // Restore button
+                button.html(originalContent).prop('disabled', false);
             });
         }
     });
