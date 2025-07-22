@@ -117,12 +117,18 @@ if (strpos($_SERVER['SCRIPT_NAME'], '/pages/') === false) {
                 Add Employee
             </a>
         </div>
-        <div class="nav-item">
-            <a href="<?= $basePath ?>pages/attendance/attendance.php" class="nav-link <?= $current_page === 'attendance' ? 'active' : '' ?>">
-                <i class="bi bi-calendar-check"></i>
-                Mark Attendance
-            </a>
-        </div>
+                        <div class="nav-item">
+                    <a href="<?= $basePath ?>pages/attendance/attendance.php" class="nav-link <?= $current_page === 'attendance' ? 'active' : '' ?>">
+                        <i class="bi bi-calendar-check"></i>
+                        Mark Attendance
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="<?= $basePath ?>advanced_attendance.php" class="nav-link <?= $current_page === 'advanced_attendance' ? 'active' : '' ?>">
+                        <i class="bi bi-clock-history"></i>
+                        Advanced Attendance
+                    </a>
+                </div>
         <div class="nav-item">
             <a href="<?= $basePath ?>attendance-calendar.php" class="nav-link <?= $current_page === 'attendance-calendar' ? 'active' : '' ?>">
                 <i class="bi bi-calendar3"></i>
