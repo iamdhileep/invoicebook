@@ -14,9 +14,20 @@ include '../../layouts/sidebar.php';
 // Get recent expenses
 $today = date('Y-m-d');
 $recentExpenses = $conn->query("SELECT * FROM expenses WHERE DATE(created_at) = '$today' ORDER BY created_at DESC");
+
+// Check for success message
+$success = isset($_GET['success']) && $_GET['success'] == '1';
 ?>
 
 <div class="main-content">
+    <?php if ($success): ?>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-2"></i>
+            Expense added successfully!
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    <?php endif; ?>
+    
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h1 class="h3 mb-0">Daily Expenses</h1>
@@ -193,7 +204,7 @@ $recentExpenses = $conn->query("SELECT * FROM expenses WHERE DATE(created_at) = 
                             <tr>
                                 <td><?= date('H:i', strtotime($expense['created_at'])) ?></td>
                                 <td><?= htmlspecialchars($expense['category']) ?></td>
-                                <td><?= htmlspecialchars($expense['description']) ?></td>
+                                <td><?= htmlspecialchars($expense['description'] ?? $expense['note'] ?? '') ?></td>
                                 <td class="text-danger fw-bold">₹<?= number_format($expense['amount'], 2) ?></td>
                                 <td><?= htmlspecialchars($expense['payment_method'] ?? 'Cash') ?></td>
                             </tr>
