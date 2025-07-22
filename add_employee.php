@@ -152,7 +152,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add'])) {
                 $error = 'Failed to add employee: ' . ($insertQuery ? $conn->error : 'Could not prepare statement');
             }
         }
-        }
     }
 }
 
