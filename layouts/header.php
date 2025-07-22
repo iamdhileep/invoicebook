@@ -289,15 +289,17 @@
             <i class="bi bi-list"></i>
         </button>
         <?php
-        // Simple path calculation for dashboard link
-        $dashboardPath = '';
-        if (strpos($_SERVER['REQUEST_URI'], '/pages/') !== false) {
-            $dashboardPath = '../../pages/dashboard/dashboard.php';
+        // Simple and reliable base path calculation (same as sidebar)
+        $basePath = '';
+        if (strpos(dirname($_SERVER['SCRIPT_NAME']), '/pages/') !== false) {
+            // We're in pages subdirectory, go back to root
+            $basePath = '../../';
         } else {
-            $dashboardPath = 'pages/dashboard/dashboard.php';
+            // We're in root directory
+            $basePath = './';
         }
         ?>
-        <a href="<?= $dashboardPath ?>" class="header-brand">
+        <a href="<?= $basePath ?>pages/dashboard/dashboard.php" class="header-brand">
             <i class="bi bi-building"></i>
             Business Manager
         </a>
@@ -310,7 +312,7 @@
                     <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>Profile</a></li>
                     <li><a class="dropdown-item" href="#"><i class="bi bi-gear me-2"></i>Settings</a></li>
                     <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item text-danger" href="<?= strpos($_SERVER['REQUEST_URI'], '/pages/') !== false ? '../../logout.php' : 'logout.php' ?>"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+                    <li><a class="dropdown-item text-danger" href="<?= $basePath ?>logout.php"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
                 </ul>
             </div>
         </div>
