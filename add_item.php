@@ -239,33 +239,6 @@ include 'layouts/sidebar.php';
                             </div>
                         </div>
 
-                        <!-- Dynamic Category Browser Section -->
-                        <div class="mt-4">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h6 class="mb-0">
-                                    <i class="bi bi-tags me-2"></i>Available Categories
-                                    <span class="badge bg-primary ms-2" id="categoryCount">0</span>
-                                </h6>
-                                <div class="btn-group btn-group-sm">
-                                    <button type="button" class="btn btn-outline-primary" id="refreshCategoriesBtn">
-                                        <i class="bi bi-arrow-clockwise"></i> Refresh
-                                    </button>
-                                    <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#quickAddCategoryModal">
-                                        <i class="bi bi-plus"></i> Quick Add
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            <div class="row" id="categoryGrid">
-                                <div class="col-12 text-center py-4">
-                                    <div class="spinner-border text-primary" role="status">
-                                        <span class="visually-hidden">Loading categories...</span>
-                                    </div>
-                                    <p class="mt-2 text-muted">Loading categories...</p>
-                                </div>
-                            </div>
-                        </div>
-
                         <div class="mt-4">
                             <button type="submit" class="btn btn-primary">
                                 <i class="bi bi-save"></i> Add Product
@@ -319,85 +292,14 @@ include 'layouts/sidebar.php';
     </div>
 </div>
 
-<!-- Quick Add Category Modal -->
-<div class="modal fade" id="quickAddCategoryModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">
-                    <i class="bi bi-plus-circle me-2"></i>Quick Add Category
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form id="quickAddCategoryForm">
-                <div class="modal-body">
-                    <div class="row g-3">
-                        <div class="col-md-8">
-                            <label for="quickCategoryName" class="form-label">Category Name *</label>
-                            <input type="text" class="form-control" id="quickCategoryName" required placeholder="Enter category name">
-                        </div>
-                        <div class="col-md-4">
-                            <label for="quickCategoryColor" class="form-label">Color</label>
-                            <input type="color" class="form-control form-control-color" id="quickCategoryColor" value="#007bff">
-                        </div>
-                        <div class="col-12">
-                            <label for="quickCategoryIcon" class="form-label">Icon</label>
-                            <select class="form-select" id="quickCategoryIcon">
-                                <option value="bi-tag">🏷️ Tag (Default)</option>
-                                <option value="bi-laptop">💻 Electronics</option>
-                                <option value="bi-house">🏠 Home & Garden</option>
-                                <option value="bi-briefcase">💼 Office Supplies</option>
-                                <option value="bi-car">🚗 Automotive</option>
-                                <option value="bi-book">📚 Books & Education</option>
-                                <option value="bi-cup">☕ Food & Beverages</option>
-                                <option value="bi-bag">👜 Fashion & Clothing</option>
-                                <option value="bi-heart">💊 Health & Beauty</option>
-                                <option value="bi-controller">🎮 Games & Toys</option>
-                                <option value="bi-tools">🔧 Tools & Hardware</option>
-                                <option value="bi-music-note">🎵 Music & Entertainment</option>
-                                <option value="bi-camera">📷 Photography</option>
-                                <option value="bi-gift">🎁 Gifts</option>
-                            </select>
-                        </div>
-                        <div class="col-12">
-                            <label for="quickCategoryDescription" class="form-label">Description (Optional)</label>
-                            <textarea class="form-control" id="quickCategoryDescription" rows="2" placeholder="Brief category description"></textarea>
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label">Preview</label>
-                            <div class="d-flex align-items-center p-3 border rounded bg-light" id="quickCategoryPreview">
-                                <div class="category-icon me-3" style="color: #007bff; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.05); border-radius: 8px;">
-                                    <i class="bi-tag fs-4"></i>
-                                </div>
-                                <div>
-                                    <strong class="preview-name">Category Name</strong>
-                                    <br><small class="text-muted preview-description">Category description will appear here</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-success">
-                        <i class="bi bi-check-circle"></i> Add Category
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
 <script>
 $(document).ready(function() {
-    // Initialize category dropdown and grid with dynamic updates
+    // Initialize category dropdown with dynamic updates
     loadCategoriesFromStorage();
-    loadCategoryGrid();
     
     // Listen for category updates from manage_categories.php
     window.addEventListener('categoriesUpdated', function(e) {
         updateCategoryDropdown(e.detail);
-        updateCategoryGrid(e.detail);
     });
 
     // Handle category selection
@@ -408,10 +310,8 @@ $(document).ready(function() {
             $('#categoryPreview').hide();
         } else if (this.value) {
             updateCategoryPreview();
-            highlightSelectedCategory(this.value);
         } else {
             $('#categoryPreview').hide();
-            clearCategoryHighlight();
         }
     });
 
@@ -421,7 +321,6 @@ $(document).ready(function() {
             $(this).hide().attr('name', '');
             $('#categorySelect').show().attr('name', 'category').val('');
             $('#categoryPreview').hide();
-            clearCategoryHighlight();
         }
     });
 
@@ -430,76 +329,8 @@ $(document).ready(function() {
         window.open('manage_categories.php', '_blank');
     });
 
-    // Refresh categories button
-    $('#refreshCategoriesBtn').click(function() {
-        const btn = $(this);
-        const originalContent = btn.html();
-        btn.html('<i class="bi bi-hourglass-split"></i> Loading...').prop('disabled', true);
-        
-        loadCategoriesFromServer().then(function() {
-            btn.html(originalContent).prop('disabled', false);
-            showAlert('Categories refreshed successfully', 'success');
-        }).catch(function() {
-            btn.html(originalContent).prop('disabled', false);
-            showAlert('Failed to refresh categories', 'danger');
-        });
-    });
-
-    // Quick add category form
-    $('#quickAddCategoryForm').on('submit', function(e) {
-        e.preventDefault();
-        
-        const name = $('#quickCategoryName').val().trim();
-        const color = $('#quickCategoryColor').val();
-        const icon = $('#quickCategoryIcon').val();
-        const description = $('#quickCategoryDescription').val().trim();
-        
-        if (!name) {
-            showAlert('Category name is required', 'danger');
-            return;
-        }
-        
-        const submitBtn = $('#quickAddCategoryForm button[type="submit"]');
-        const originalContent = submitBtn.html();
-        submitBtn.html('<i class="bi bi-hourglass-split"></i> Adding...').prop('disabled', true);
-        
-        // Add category via AJAX
-        $.post('manage_categories.php', {
-            action: 'add',
-            name: name,
-            description: description,
-            color: color,
-            icon: icon
-        }, function(response) {
-            if (response.success) {
-                showAlert(response.message, 'success');
-                $('#quickAddCategoryModal').modal('hide');
-                $('#quickAddCategoryForm')[0].reset();
-                updateQuickPreview(); // Reset preview
-                
-                // Refresh categories and select the new one
-                loadCategoriesFromServer().then(function() {
-                    $('#categorySelect').val(name);
-                    updateCategoryPreview();
-                    highlightSelectedCategory(name);
-                });
-            } else {
-                showAlert(response.message, 'danger');
-            }
-            submitBtn.html(originalContent).prop('disabled', false);
-        }, 'json').fail(function() {
-            showAlert('Error occurred while adding category', 'danger');
-            submitBtn.html(originalContent).prop('disabled', false);
-        });
-    });
-
-    // Quick add category preview
-    $('#quickCategoryName, #quickCategoryDescription, #quickCategoryColor, #quickCategoryIcon').on('input change', function() {
-        updateQuickPreview();
-    });
-
     // Form validation
-    $('form[method="POST"]').on('submit', function(e) {
+    $('form').on('submit', function(e) {
         const itemName = $('input[name="item_name"]').val().trim();
         const itemPrice = parseFloat($('input[name="item_price"]').val());
 
@@ -526,7 +357,6 @@ $(document).ready(function() {
     // Initialize category preview if there's a selected value
     if ($('#categorySelect').val()) {
         updateCategoryPreview();
-        highlightSelectedCategory($('#categorySelect').val());
     }
 });
 
@@ -584,131 +414,6 @@ function updateCategoryDropdown(categories) {
     console.log('Category dropdown updated with', categories.length, 'categories');
 }
 
-function loadCategoryGrid() {
-    const storedCategories = localStorage.getItem('categories');
-    if (storedCategories) {
-        try {
-            const categories = JSON.parse(storedCategories);
-            updateCategoryGrid(categories);
-        } catch (e) {
-            console.log('Error parsing stored categories:', e);
-            loadCategoriesFromServer();
-        }
-    } else {
-        loadCategoriesFromServer();
-    }
-}
-
-function loadCategoriesFromServer() {
-    return new Promise(function(resolve, reject) {
-        $.post('manage_categories.php', {
-            action: 'get_categories_for_dropdown'
-        }, function(response) {
-            if (response.success) {
-                localStorage.setItem('categories', JSON.stringify(response.categories));
-                updateCategoryDropdown(response.categories);
-                updateCategoryGrid(response.categories);
-                resolve(response.categories);
-            } else {
-                reject(response.message);
-            }
-        }, 'json').fail(function() {
-            reject('Failed to load categories');
-        });
-    });
-}
-
-function updateCategoryGrid(categories) {
-    const grid = $('#categoryGrid');
-    const categoryCount = $('#categoryCount');
-    
-    if (!categories || categories.length === 0) {
-        grid.html(`
-            <div class="col-12 text-center py-4">
-                <i class="bi bi-tags fs-1 text-muted"></i>
-                <h5 class="text-muted mt-3">No Categories Found</h5>
-                <p class="text-muted">Create your first category to organize products.</p>
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#quickAddCategoryModal">
-                    <i class="bi bi-plus-circle"></i> Add First Category
-                </button>
-            </div>
-        `);
-        categoryCount.text('0');
-        return;
-    }
-    
-    categoryCount.text(categories.length);
-    
-    let gridHtml = '';
-    categories.forEach(function(category) {
-        const color = category.color || '#007bff';
-        const icon = category.icon || 'bi-tag';
-        const description = category.description || 'No description available';
-        
-        gridHtml += `
-            <div class="col-md-6 col-lg-4 mb-3">
-                <div class="card category-card h-100" data-category="${category.name}" style="cursor: pointer; transition: all 0.3s;">
-                    <div class="card-body d-flex align-items-center">
-                        <div class="category-icon me-3" style="color: ${color}; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; background: ${color}15; border-radius: 10px;">
-                            <i class="${icon} fs-3"></i>
-                        </div>
-                        <div class="flex-grow-1">
-                            <h6 class="card-title mb-1">${category.name}</h6>
-                            <small class="text-muted">${description.substring(0, 50)}${description.length > 50 ? '...' : ''}</small>
-                        </div>
-                        <div class="category-select-indicator" style="display: none;">
-                            <i class="bi bi-check-circle-fill text-success fs-4"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-    });
-    
-    grid.html(gridHtml);
-    
-    // Add click handlers for category cards
-    $('.category-card').on('click', function() {
-        const categoryName = $(this).data('category');
-        $('#categorySelect').val(categoryName);
-        updateCategoryPreview();
-        highlightSelectedCategory(categoryName);
-        
-        // Scroll to category dropdown
-        $('html, body').animate({
-            scrollTop: $('#categorySelect').offset().top - 100
-        }, 500);
-    });
-}
-
-function highlightSelectedCategory(categoryName) {
-    // Remove previous highlights
-    $('.category-card').removeClass('border-success').find('.category-select-indicator').hide();
-    
-    // Highlight selected category
-    $(`.category-card[data-category="${categoryName}"]`)
-        .addClass('border-success')
-        .find('.category-select-indicator')
-        .show();
-}
-
-function clearCategoryHighlight() {
-    $('.category-card').removeClass('border-success').find('.category-select-indicator').hide();
-}
-
-function updateQuickPreview() {
-    const name = $('#quickCategoryName').val() || 'Category Name';
-    const description = $('#quickCategoryDescription').val() || 'Category description will appear here';
-    const color = $('#quickCategoryColor').val();
-    const icon = $('#quickCategoryIcon').val();
-    
-    const preview = $('#quickCategoryPreview');
-    preview.find('.category-icon').css('color', color);
-    preview.find('.category-icon i').attr('class', icon + ' fs-4');
-    preview.find('.preview-name').text(name);
-    preview.find('.preview-description').text(description);
-}
-
 function showAlert(message, type) {
     const alertDiv = $(`
         <div class="alert alert-${type} alert-dismissible fade show" role="alert">
@@ -723,87 +428,5 @@ function showAlert(message, type) {
     }, 5000);
 }
 </script>
-
-<style>
-.category-card {
-    border: 2px solid transparent;
-    transition: all 0.3s ease;
-}
-
-.category-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    border-color: #007bff;
-}
-
-.category-card.border-success {
-    border-color: #28a745 !important;
-    background-color: rgba(40, 167, 69, 0.05);
-}
-
-.category-icon {
-    transition: transform 0.3s ease;
-}
-
-.category-card:hover .category-icon {
-    transform: scale(1.1);
-}
-
-.form-control-color {
-    width: 100%;
-    height: 38px;
-    padding: 0.375rem 0.75rem;
-}
-
-#quickCategoryPreview {
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    border: 2px dashed #dee2e6;
-}
-
-.spinner-border {
-    width: 2rem;
-    height: 2rem;
-}
-
-.badge {
-    font-size: 0.75em;
-    padding: 0.35em 0.65em;
-}
-
-.btn-group-sm > .btn {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.875rem;
-}
-
-@media (max-width: 768px) {
-    .category-card {
-        margin-bottom: 1rem;
-    }
-    
-    .category-icon {
-        width: 35px !important;
-        height: 35px !important;
-    }
-    
-    .category-icon i {
-        font-size: 1.2rem !important;
-    }
-}
-
-/* Loading animation */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.category-card {
-    animation: fadeIn 0.5s ease-out;
-}
-
-/* Smooth scroll behavior */
-html {
-    scroll-behavior: smooth;
-}
-</style>
 
 <?php include 'layouts/footer.php'; ?>
