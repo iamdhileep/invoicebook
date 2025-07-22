@@ -152,6 +152,21 @@
             font-size: 1.1rem;
         }
         
+        /* Navigation sections */
+        .nav-section {
+            margin: 1.5rem 0 0.5rem 0;
+        }
+        
+        .nav-section-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--bs-gray-500);
+            margin: 0 1.5rem 0.5rem 1.5rem;
+            padding-top: 0.5rem;
+        }
+        
         /* Main Content */
         .main-content {
             margin-left: var(--sidebar-width);
