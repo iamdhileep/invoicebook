@@ -31,13 +31,62 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if ($result->num_rows > 0) {
             $error = 'An item with this name already exists.';
         } else {
+            // Try modern schema first, then fallback to basic schema
             $insertQuery = $conn->prepare("INSERT INTO items (item_name, item_price, category, stock, description, created_at) VALUES (?, ?, ?, ?, ?, NOW())");
-            $insertQuery->bind_param("sdsss", $item_name, $item_price, $category, $stock, $description);
             
-            if ($insertQuery->execute()) {
-                $success = true;
+            if (!$insertQuery) {
+                // Fallback 1: Try without created_at column
+                $insertQuery = $conn->prepare("INSERT INTO items (item_name, item_price, category, stock, description) VALUES (?, ?, ?, ?, ?)");
+                
+                if (!$insertQuery) {
+                    // Fallback 2: Try minimal schema (core columns only)
+                    $insertQuery = $conn->prepare("INSERT INTO items (item_name, item_price, category, stock) VALUES (?, ?, ?, ?)");
+                    
+                    if (!$insertQuery) {
+                        // Fallback 3: Try most basic schema
+                        $insertQuery = $conn->prepare("INSERT INTO items (item_name, item_price) VALUES (?, ?)");
+                        if (!$insertQuery) {
+                            $error = 'Database error: Failed to prepare insert statement - ' . $conn->error;
+                        } else {
+                            $insertQuery->bind_param("sd", $item_name, $item_price);
+                        }
+                    } else {
+                        $insertQuery->bind_param("sdsi", $item_name, $item_price, $category, $stock);
+                    }
+                } else {
+                    $insertQuery->bind_param("sdsis", $item_name, $item_price, $category, $stock, $description);
+                }
             } else {
-                $error = 'Failed to add item: ' . $conn->error;
+                $insertQuery->bind_param("sdsis", $item_name, $item_price, $category, $stock, $description);
+            }
+            
+            // Execute the insert if we have a valid statement
+            if (empty($error) && $insertQuery && $insertQuery->execute()) {
+                $success = true;
+                
+                // Try to update additional columns if the basic insert succeeded
+                $itemId = $conn->insert_id;
+                
+                // Try to add description if it wasn't included in the main insert
+                if (!empty($description) && $itemId) {
+                    $descQuery = $conn->prepare("UPDATE items SET description = ? WHERE id = ?");
+                    if ($descQuery) {
+                        $descQuery->bind_param("si", $description, $itemId);
+                        $descQuery->execute();
+                    }
+                }
+                
+                // Try to add category if it wasn't included in the main insert
+                if (!empty($category) && $itemId) {
+                    $catQuery = $conn->prepare("UPDATE items SET category = ? WHERE id = ?");
+                    if ($catQuery) {
+                        $catQuery->bind_param("si", $category, $itemId);
+                        $catQuery->execute();
+                    }
+                }
+                
+            } elseif (empty($error)) {
+                $error = 'Failed to add item: ' . ($insertQuery ? $conn->error : 'Could not prepare statement');
             }
         }
     }
@@ -68,6 +117,12 @@ include 'layouts/sidebar.php';
             <i class="bi bi-check-circle me-2"></i>Product added successfully!
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
+        <script>
+            // Clear form after successful submission
+            setTimeout(function() {
+                document.querySelector('form').reset();
+            }, 1000);
+        </script>
     <?php endif; ?>
 
     <?php if ($error): ?>
