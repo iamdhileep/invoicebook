@@ -24,6 +24,9 @@ if (empty($relativePath)) $relativePath = './';
         </div>
 
         <!-- Invoice Management -->
+        <div class="nav-section">
+            <div class="nav-section-title">Invoice Management</div>
+        </div>
         <div class="nav-item">
             <a href="<?= $relativePath ?>pages/invoice/invoice.php" class="nav-link <?= $current_page === 'invoice' ? 'active' : '' ?>">
                 <i class="bi bi-receipt"></i>
@@ -38,6 +41,9 @@ if (empty($relativePath)) $relativePath = './';
         </div>
 
         <!-- Product Management -->
+        <div class="nav-section">
+            <div class="nav-section-title">Product Management</div>
+        </div>
         <div class="nav-item">
             <a href="<?= $relativePath ?>pages/products/products.php" class="nav-link <?= $current_page === 'products' ? 'active' : '' ?>">
                 <i class="bi bi-box"></i>
@@ -56,8 +62,17 @@ if (empty($relativePath)) $relativePath = './';
                 Stock Management
             </a>
         </div>
+        <div class="nav-item">
+            <a href="<?= $relativePath ?>manage_categories.php" class="nav-link <?= $current_page === 'manage_categories' ? 'active' : '' ?>">
+                <i class="bi bi-tags"></i>
+                Categories
+            </a>
+        </div>
 
         <!-- Expense Management -->
+        <div class="nav-section">
+            <div class="nav-section-title">Expense Management</div>
+        </div>
         <div class="nav-item">
             <a href="<?= $relativePath ?>pages/expenses/expenses.php" class="nav-link <?= $current_page === 'expenses' ? 'active' : '' ?>">
                 <i class="bi bi-cash-stack"></i>
@@ -72,10 +87,19 @@ if (empty($relativePath)) $relativePath = './';
         </div>
 
         <!-- Employee Management -->
+        <div class="nav-section">
+            <div class="nav-section-title">Employee Management</div>
+        </div>
         <div class="nav-item">
             <a href="<?= $relativePath ?>pages/employees/employees.php" class="nav-link <?= $current_page === 'employees' ? 'active' : '' ?>">
                 <i class="bi bi-people"></i>
-                Employee Details
+                All Employees
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="<?= $relativePath ?>add_employee.php" class="nav-link <?= $current_page === 'add_employee' ? 'active' : '' ?>">
+                <i class="bi bi-person-plus"></i>
+                Add Employee
             </a>
         </div>
         <div class="nav-item">
@@ -92,26 +116,36 @@ if (empty($relativePath)) $relativePath = './';
         </div>
 
         <!-- Payroll -->
+        <div class="nav-section">
+            <div class="nav-section-title">Payroll</div>
+        </div>
         <div class="nav-item">
             <a href="<?= $relativePath ?>pages/payroll/payroll.php" class="nav-link <?= $current_page === 'payroll' ? 'active' : '' ?>">
                 <i class="bi bi-currency-rupee"></i>
-                Payroll
+                Payroll Management
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="<?= $relativePath ?>payroll_report.php" class="nav-link <?= $current_page === 'payroll_report' ? 'active' : '' ?>">
+                <i class="bi bi-file-earmark-spreadsheet"></i>
+                Payroll Report
             </a>
         </div>
 
-        <!-- Reports -->
+        <!-- Reports & Analytics -->
+        <div class="nav-section">
+            <div class="nav-section-title">Reports</div>
+        </div>
         <div class="nav-item">
             <a href="<?= $relativePath ?>reports.php" class="nav-link <?= $current_page === 'reports' ? 'active' : '' ?>">
                 <i class="bi bi-graph-up"></i>
-                Reports
+                Business Reports
             </a>
         </div>
-
-        <!-- Settings -->
         <div class="nav-item">
-            <a href="<?= $relativePath ?>manage_categories.php" class="nav-link <?= $current_page === 'manage_categories' ? 'active' : '' ?>">
-                <i class="bi bi-tags"></i>
-                Manage Categories
+            <a href="<?= $relativePath ?>attendance_preview.php" class="nav-link <?= $current_page === 'attendance_preview' ? 'active' : '' ?>">
+                <i class="bi bi-calendar2-week"></i>
+                Attendance Report
             </a>
         </div>
 
