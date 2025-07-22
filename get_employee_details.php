@@ -95,26 +95,26 @@ $recentAttendance = $recentStmt->get_result();
         </div>
         
         <div class="col-md-9">
-            <h4 class="mb-1"><?= htmlspecialchars($employee['name']) ?></h4>
-            <p class="text-muted mb-2"><?= htmlspecialchars($employee['position']) ?></p>
+            <h4 class="mb-1"><?= htmlspecialchars($employee['name'] ?? 'N/A') ?></h4>
+            <p class="text-muted mb-2"><?= htmlspecialchars($employee['position'] ?? 'N/A') ?></p>
             
             <div class="row g-3">
                 <div class="col-sm-6">
                     <div class="border rounded p-2">
                         <small class="text-muted">Employee Code</small>
-                        <div class="fw-bold"><?= htmlspecialchars($employee['employee_code']) ?></div>
+                        <div class="fw-bold"><?= htmlspecialchars($employee['employee_code'] ?? 'N/A') ?></div>
                     </div>
                 </div>
                 <div class="col-sm-6">
                     <div class="border rounded p-2">
                         <small class="text-muted">Monthly Salary</small>
-                        <div class="fw-bold text-success">₹<?= number_format($employee['monthly_salary'], 2) ?></div>
+                        <div class="fw-bold text-success">₹<?= number_format($employee['monthly_salary'] ?? 0, 2) ?></div>
                     </div>
                 </div>
                 <div class="col-sm-6">
                     <div class="border rounded p-2">
                         <small class="text-muted">Phone</small>
-                        <div class="fw-bold"><?= htmlspecialchars($employee['phone']) ?></div>
+                        <div class="fw-bold"><?= htmlspecialchars($employee['phone'] ?? 'N/A') ?></div>
                     </div>
                 </div>
                 <div class="col-sm-6">
@@ -174,21 +174,21 @@ $recentAttendance = $recentStmt->get_result();
                 <table class="table table-sm">
                     <tr>
                         <td><strong>Full Name:</strong></td>
-                        <td><?= htmlspecialchars($employee['name']) ?></td>
+                        <td><?= htmlspecialchars($employee['name'] ?? 'N/A') ?></td>
                         <td><strong>Employee Code:</strong></td>
-                        <td><?= htmlspecialchars($employee['employee_code']) ?></td>
+                        <td><?= htmlspecialchars($employee['employee_code'] ?? 'N/A') ?></td>
                     </tr>
                     <tr>
                         <td><strong>Position:</strong></td>
-                        <td><?= htmlspecialchars($employee['position']) ?></td>
+                        <td><?= htmlspecialchars($employee['position'] ?? 'N/A') ?></td>
                         <td><strong>Phone:</strong></td>
-                        <td><?= htmlspecialchars($employee['phone']) ?></td>
+                        <td><?= htmlspecialchars($employee['phone'] ?? 'N/A') ?></td>
                     </tr>
                     <tr>
                         <td><strong>Email:</strong></td>
                         <td><?= htmlspecialchars($employee['email'] ?? 'N/A') ?></td>
                         <td><strong>Monthly Salary:</strong></td>
-                        <td class="text-success"><strong>₹<?= number_format($employee['monthly_salary'], 2) ?></strong></td>
+                        <td class="text-success"><strong>₹<?= number_format($employee['monthly_salary'] ?? 0, 2) ?></strong></td>
                     </tr>
                     <tr>
                         <td><strong>Address:</strong></td>
@@ -196,7 +196,11 @@ $recentAttendance = $recentStmt->get_result();
                     </tr>
                     <tr>
                         <td><strong>Joining Date:</strong></td>
-                        <td><?= $employee['created_at'] ? date('F j, Y', strtotime($employee['created_at'])) : 'N/A' ?></td>
+                        <td><?= 
+                            ($employee['created_at'] ?? $employee['joining_date'] ?? null) 
+                            ? date('F j, Y', strtotime($employee['created_at'] ?? $employee['joining_date'])) 
+                            : 'N/A' 
+                        ?></td>
                         <td><strong>Employee ID:</strong></td>
                         <td><?= $employee['employee_id'] ?></td>
                     </tr>
