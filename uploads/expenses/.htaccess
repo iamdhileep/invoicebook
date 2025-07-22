@@ -1,0 +1,21 @@
+# Security configuration for expense receipts
+# Prevent PHP execution
+php_flag engine off
+
+# Allow only specific file types
+<FilesMatch "\.(jpg|jpeg|png|gif|pdf)$">
+    Order Allow,Deny
+    Allow from all
+</FilesMatch>
+
+# Deny all other files
+<FilesMatch "\.">
+    Order Deny,Allow
+    Deny from all
+</FilesMatch>
+
+# Additional security headers
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options nosniff
+    Header set X-Frame-Options DENY
+</IfModule>
