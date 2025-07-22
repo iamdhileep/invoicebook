@@ -355,6 +355,8 @@ include 'layouts/sidebar.php';
 
 <script>
 $(document).ready(function() {
+    console.log('Categories page loaded, found buttons:', $('.edit-category, .delete-category').length);
+    
     // Initialize DataTable
     $('#categoriesTable').DataTable({
         pageLength: 25,
@@ -362,13 +364,20 @@ $(document).ready(function() {
         order: [[0, "asc"]],
         columnDefs: [
             { orderable: false, targets: [4] }
-        ]
+        ],
+        drawCallback: function() {
+            // Reinitialize tooltips after table redraw
+            $('[data-bs-toggle="tooltip"]').tooltip();
+        }
     });
 
-    // Edit category
-    $('.edit-category').click(function() {
+    // Edit category - using event delegation for DataTables compatibility
+    $(document).on('click', '.edit-category', function() {
+        console.log('Edit button clicked');
         const categoryId = $(this).data('id');
         const categoryName = $(this).data('name');
+
+        console.log('Category ID:', categoryId, 'Name:', categoryName);
 
         $('#editCategoryId').val(categoryId);
         $('#editCategoryName').val(categoryName);
@@ -376,12 +385,16 @@ $(document).ready(function() {
         new bootstrap.Modal(document.getElementById('editCategoryModal')).show();
     });
 
-    // Delete category
-    $('.delete-category').click(function() {
+    // Delete category - using event delegation for DataTables compatibility
+    $(document).on('click', '.delete-category', function() {
+        console.log('Delete button clicked');
         const categoryId = $(this).data('id');
         const categoryName = $(this).data('name');
 
+        console.log('Category ID:', categoryId, 'Name:', categoryName);
+
         if (confirm(`Are you sure you want to delete the category "${categoryName}"? This action cannot be undone.`)) {
+            console.log('User confirmed deletion, redirecting...');
             window.location.href = `manage_categories.php?delete=${categoryId}`;
         }
     });
