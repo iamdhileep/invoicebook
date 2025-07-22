@@ -15,7 +15,13 @@ $error = '';
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $item_name = trim($_POST['item_name']);
     $item_price = floatval($_POST['item_price']);
-    $category = trim($_POST['category']);
+    // Fix: Use new_category if category is __new__ or empty
+    $category = '';
+    if (isset($_POST['category']) && $_POST['category'] !== '__new__' && $_POST['category'] !== '') {
+        $category = trim($_POST['category']);
+    } elseif (isset($_POST['new_category']) && trim($_POST['new_category']) !== '') {
+        $category = trim($_POST['new_category']);
+    }
     $stock = intval($_POST['stock'] ?? 0);
     $description = trim($_POST['description'] ?? '');
     
@@ -297,12 +303,16 @@ $(document).ready(function() {
     // Handle category selection
     $('#categorySelect').change(function() {
         if (this.value === '__new__') {
-            $('#newCategoryInput').show().attr('name', 'category').focus();
+            $('#newCategoryInput').show().attr('name', 'new_category').focus();
             $(this).hide().attr('name', '');
             $('#categoryPreview').hide();
         } else if (this.value) {
+            $('#newCategoryInput').hide().attr('name', '');
+            $(this).attr('name', 'category');
             updateCategoryPreview();
         } else {
+            $('#newCategoryInput').hide().attr('name', '');
+            $(this).attr('name', 'category');
             $('#categoryPreview').hide();
         }
     });
