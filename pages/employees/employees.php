@@ -303,8 +303,6 @@ include '../../layouts/sidebar.php';
 
 <script>
 $(document).ready(function() {
-    console.log('Document ready - jQuery loaded successfully');
-    console.log('Found delete buttons:', $('.delete-employee').length);
     
     // Initialize DataTable
     $('#employeesTable').DataTable({
@@ -331,31 +329,21 @@ $(document).ready(function() {
     });
 
     // Delete employee - using event delegation for DataTables compatibility
-    console.log('Setting up delete employee handlers for', $('.delete-employee').length, 'buttons');
-    
     $(document).on('click', '.delete-employee', function() {
-        console.log('Delete button clicked');
         const employeeId = $(this).data('id');
         const employeeName = $(this).data('name');
         const row = $(this).closest('tr');
         const button = $(this);
         
-        console.log('Employee ID:', employeeId, 'Name:', employeeName);
-        
         if (confirm(`Are you sure you want to delete employee "${employeeName}"? This action cannot be undone.`)) {
-            console.log('User confirmed deletion');
             // Show loading state
             const originalContent = button.html();
             button.html('<i class="bi bi-hourglass-split"></i>').prop('disabled', true);
             
-            console.log('Making AJAX request to:', '../../delete_employee.php', 'with ID:', employeeId);
-            
             $.post('../../delete_employee.php', {
                 id: employeeId
             }, function(response) {
-                console.log('AJAX response received:', response);
                 if (response.success) {
-                    console.log('Delete successful');
                     row.fadeOut(300, function() {
                         $(this).remove();
                         // Reload page to update totals
@@ -363,18 +351,11 @@ $(document).ready(function() {
                     });
                     showAlert(response.message || 'Employee deleted successfully', 'success');
                 } else {
-                    console.log('Delete failed:', response.message);
                     showAlert(response.message || 'Failed to delete employee', 'danger');
                     // Restore button
                     button.html(originalContent).prop('disabled', false);
                 }
             }, 'json').fail(function(xhr, status, error) {
-                console.error('Delete request failed:', {
-                    status: status,
-                    error: error,
-                    responseText: xhr.responseText,
-                    statusCode: xhr.status
-                });
                 showAlert('Error occurred while deleting employee: ' + error, 'danger');
                 // Restore button
                 button.html(originalContent).prop('disabled', false);
