@@ -1,6 +1,15 @@
 <?php
 // Get current page name for active state
 $current_page = basename($_SERVER['PHP_SELF'], '.php');
+
+// Determine the relative path to root from current location
+$relativePath = '';
+$currentDir = dirname($_SERVER['SCRIPT_NAME']);
+$levels = substr_count(str_replace('/pages', '', $currentDir), '/');
+for ($i = 0; $i < $levels; $i++) {
+    $relativePath .= '../';
+}
+if (empty($relativePath)) $relativePath = './';
 ?>
 
 <!-- Sidebar -->
@@ -8,7 +17,7 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
     <div class="sidebar-nav">
         <!-- Dashboard -->
         <div class="nav-item">
-            <a href="../../pages/dashboard/dashboard.php" class="nav-link <?= $current_page === 'dashboard' ? 'active' : '' ?>">
+            <a href="<?= $relativePath ?>pages/dashboard/dashboard.php" class="nav-link <?= $current_page === 'dashboard' ? 'active' : '' ?>">
                 <i class="bi bi-speedometer2"></i>
                 Dashboard
             </a>
@@ -16,13 +25,13 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
 
         <!-- Invoice Management -->
         <div class="nav-item">
-            <a href="../../pages/invoice/invoice.php" class="nav-link <?= $current_page === 'invoice' ? 'active' : '' ?>">
+            <a href="<?= $relativePath ?>pages/invoice/invoice.php" class="nav-link <?= $current_page === 'invoice' ? 'active' : '' ?>">
                 <i class="bi bi-receipt"></i>
                 Create Invoice
             </a>
         </div>
         <div class="nav-item">
-            <a href="../../invoice_history.php" class="nav-link <?= $current_page === 'invoice_history' ? 'active' : '' ?>">
+            <a href="<?= $relativePath ?>invoice_history.php" class="nav-link <?= $current_page === 'invoice_history' ? 'active' : '' ?>">
                 <i class="bi bi-file-earmark-text"></i>
                 Invoice History
             </a>
@@ -30,19 +39,19 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
 
         <!-- Product Management -->
         <div class="nav-item">
-            <a href="../../pages/products/products.php" class="nav-link <?= $current_page === 'products' ? 'active' : '' ?>">
+            <a href="<?= $relativePath ?>pages/products/products.php" class="nav-link <?= $current_page === 'products' ? 'active' : '' ?>">
                 <i class="bi bi-box"></i>
                 Product List
             </a>
         </div>
         <div class="nav-item">
-            <a href="../../add_item.php" class="nav-link <?= $current_page === 'add_item' ? 'active' : '' ?>">
+            <a href="<?= $relativePath ?>add_item.php" class="nav-link <?= $current_page === 'add_item' ? 'active' : '' ?>">
                 <i class="bi bi-plus-circle"></i>
                 Add Product
             </a>
         </div>
         <div class="nav-item">
-            <a href="../../item-stock.php" class="nav-link <?= $current_page === 'item-stock' ? 'active' : '' ?>">
+            <a href="<?= $relativePath ?>item-stock.php" class="nav-link <?= $current_page === 'item-stock' ? 'active' : '' ?>">
                 <i class="bi bi-boxes"></i>
                 Stock Management
             </a>
@@ -50,13 +59,13 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
 
         <!-- Expense Management -->
         <div class="nav-item">
-            <a href="../../pages/expenses/expenses.php" class="nav-link <?= $current_page === 'expenses' ? 'active' : '' ?>">
+            <a href="<?= $relativePath ?>pages/expenses/expenses.php" class="nav-link <?= $current_page === 'expenses' ? 'active' : '' ?>">
                 <i class="bi bi-cash-stack"></i>
                 Daily Expenses
             </a>
         </div>
         <div class="nav-item">
-            <a href="../../expense_history.php" class="nav-link <?= $current_page === 'expense_history' ? 'active' : '' ?>">
+            <a href="<?= $relativePath ?>expense_history.php" class="nav-link <?= $current_page === 'expense_history' ? 'active' : '' ?>">
                 <i class="bi bi-journal-text"></i>
                 Expense History
             </a>
@@ -64,19 +73,19 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
 
         <!-- Employee Management -->
         <div class="nav-item">
-            <a href="../../pages/employees/employees.php" class="nav-link <?= $current_page === 'employees' ? 'active' : '' ?>">
+            <a href="<?= $relativePath ?>pages/employees/employees.php" class="nav-link <?= $current_page === 'employees' ? 'active' : '' ?>">
                 <i class="bi bi-people"></i>
                 Employee Details
             </a>
         </div>
         <div class="nav-item">
-            <a href="../../pages/attendance/attendance.php" class="nav-link <?= $current_page === 'attendance' ? 'active' : '' ?>">
+            <a href="<?= $relativePath ?>pages/attendance/attendance.php" class="nav-link <?= $current_page === 'attendance' ? 'active' : '' ?>">
                 <i class="bi bi-calendar-check"></i>
                 Mark Attendance
             </a>
         </div>
         <div class="nav-item">
-            <a href="../../attendance-calendar.php" class="nav-link <?= $current_page === 'attendance-calendar' ? 'active' : '' ?>">
+            <a href="<?= $relativePath ?>attendance-calendar.php" class="nav-link <?= $current_page === 'attendance-calendar' ? 'active' : '' ?>">
                 <i class="bi bi-calendar3"></i>
                 Attendance Calendar
             </a>
@@ -84,7 +93,7 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
 
         <!-- Payroll -->
         <div class="nav-item">
-            <a href="../../pages/payroll/payroll.php" class="nav-link <?= $current_page === 'payroll' ? 'active' : '' ?>">
+            <a href="<?= $relativePath ?>pages/payroll/payroll.php" class="nav-link <?= $current_page === 'payroll' ? 'active' : '' ?>">
                 <i class="bi bi-currency-rupee"></i>
                 Payroll
             </a>
@@ -92,7 +101,7 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
 
         <!-- Reports -->
         <div class="nav-item">
-            <a href="reports.php" class="nav-link <?= $current_page === 'reports' ? 'active' : '' ?>">
+            <a href="<?= $relativePath ?>reports.php" class="nav-link <?= $current_page === 'reports' ? 'active' : '' ?>">
                 <i class="bi bi-graph-up"></i>
                 Reports
             </a>
@@ -100,7 +109,7 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
 
         <!-- Settings -->
         <div class="nav-item">
-            <a href="manage_categories.php" class="nav-link <?= $current_page === 'manage_categories' ? 'active' : '' ?>">
+            <a href="<?= $relativePath ?>manage_categories.php" class="nav-link <?= $current_page === 'manage_categories' ? 'active' : '' ?>">
                 <i class="bi bi-tags"></i>
                 Manage Categories
             </a>
@@ -110,7 +119,7 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
 
         <!-- Logout -->
         <div class="nav-item">
-            <a href="logout.php" class="nav-link text-danger">
+            <a href="<?= $relativePath ?>logout.php" class="nav-link text-danger">
                 <i class="bi bi-box-arrow-right"></i>
                 Logout
             </a>

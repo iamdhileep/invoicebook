@@ -273,7 +273,16 @@
         <button class="sidebar-toggle" id="sidebarToggle">
             <i class="bi bi-list"></i>
         </button>
-        <a href="../../pages/dashboard/dashboard.php" class="header-brand">
+        <?php
+        // Simple path calculation for dashboard link
+        $dashboardPath = '';
+        if (strpos($_SERVER['REQUEST_URI'], '/pages/') !== false) {
+            $dashboardPath = '../../pages/dashboard/dashboard.php';
+        } else {
+            $dashboardPath = 'pages/dashboard/dashboard.php';
+        }
+        ?>
+        <a href="<?= $dashboardPath ?>" class="header-brand">
             <i class="bi bi-building"></i>
             Business Manager
         </a>
@@ -286,7 +295,7 @@
                     <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>Profile</a></li>
                     <li><a class="dropdown-item" href="#"><i class="bi bi-gear me-2"></i>Settings</a></li>
                     <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item text-danger" href="logout.php"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+                    <li><a class="dropdown-item text-danger" href="<?= strpos($_SERVER['REQUEST_URI'], '/pages/') !== false ? '../../logout.php' : 'logout.php' ?>"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
                 </ul>
             </div>
         </div>

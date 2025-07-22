@@ -6,300 +6,215 @@ if (!isset($_SESSION['admin'])) {
 }
 
 include '../../db.php';
-$page_title = 'Attendance Management';
+$page_title = 'Mark Attendance';
 
 include '../../layouts/header.php';
 include '../../layouts/sidebar.php';
+
+// Get all employees
+$employees = $conn->query("SELECT * FROM employees ORDER BY employee_name ASC");
+$today = date('Y-m-d');
 ?>
 
 <div class="main-content">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h1 class="h3 mb-0">Attendance Management</h1>
-            <p class="text-muted">Track employee attendance and working hours</p>
+            <h1 class="h3 mb-0">Mark Attendance</h1>
+            <p class="text-muted">Record daily attendance for employees - <?= date('F j, Y') ?></p>
         </div>
         <div>
-            <a href="../../attendance-calendar.php" class="btn btn-outline-primary me-2">
-                <i class="bi bi-calendar3"></i> Attendance Calendar
+            <a href="../../attendance-calendar.php" class="btn btn-outline-primary">
+                <i class="bi bi-calendar3"></i> View Calendar
             </a>
-            <a href="../../attendance_preview.php" class="btn btn-outline-info">
-                <i class="bi bi-eye"></i> View Reports
-            </a>
-        </div>
-    </div>
-
-    <!-- Today's Summary -->
-    <?php
-    $today = date('Y-m-d');
-    $totalEmployees = 0;
-    $presentCount = 0;
-    $absentCount = 0;
-    $lateCount = 0;
-
-    // Get total employees
-    $result = mysqli_query($conn, "SELECT COUNT(*) as total FROM employees");
-    if ($result) {
-        $row = mysqli_fetch_assoc($result);
-        $totalEmployees = $row['total'] ?? 0;
-    }
-
-    // Get today's attendance stats
-    $result = mysqli_query($conn, "SELECT status, COUNT(*) as count FROM attendance WHERE DATE(attendance_date) = '$today' GROUP BY status");
-    $attendanceStats = [];
-    if ($result) {
-        while ($row = mysqli_fetch_assoc($result)) {
-            $attendanceStats[$row['status']] = $row['count'];
-        }
-    }
-    
-    $presentCount = ($attendanceStats['Present'] ?? 0) + ($attendanceStats['Late'] ?? 0);
-    $absentCount = $attendanceStats['Absent'] ?? 0;
-    $lateCount = $attendanceStats['Late'] ?? 0;
-    ?>
-
-    <div class="row g-4 mb-4">
-        <div class="col-md-3">
-            <div class="card bg-info text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="card-title mb-0">Total Employees</h6>
-                            <h2 class="mb-0"><?= $totalEmployees ?></h2>
-                        </div>
-                        <div class="fs-1 opacity-75">
-                            <i class="bi bi-people"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="card bg-success text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="card-title mb-0">Present Today</h6>
-                            <h2 class="mb-0"><?= $presentCount ?></h2>
-                        </div>
-                        <div class="fs-1 opacity-75">
-                            <i class="bi bi-person-check"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="card bg-danger text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="card-title mb-0">Absent Today</h6>
-                            <h2 class="mb-0"><?= $absentCount ?></h2>
-                        </div>
-                        <div class="fs-1 opacity-75">
-                            <i class="bi bi-person-x"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="card bg-warning text-dark">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="card-title mb-0">Late Arrivals</h6>
-                            <h2 class="mb-0"><?= $lateCount ?></h2>
-                        </div>
-                        <div class="fs-1 opacity-75">
-                            <i class="bi bi-clock"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 
     <div class="row">
-        <div class="col-lg-4">
-            <!-- Mark Attendance Form -->
+        <div class="col-lg-8">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="mb-0"><i class="bi bi-person-check me-2"></i>Mark Attendance</h5>
+                    <h5 class="mb-0"><i class="bi bi-calendar-check me-2"></i>Today's Attendance</h5>
                 </div>
                 <div class="card-body">
                     <form action="../../save_attendance.php" method="POST">
-                        <div class="mb-3">
-                            <label class="form-label">Date *</label>
-                            <input type="date" name="attendance_date" class="form-control" value="<?= date('Y-m-d') ?>" required>
+                        <input type="hidden" name="attendance_date" value="<?= $today ?>">
+                        
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Employee</th>
+                                        <th>Status</th>
+                                        <th>Time In</th>
+                                        <th>Time Out</th>
+                                        <th>Notes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php if ($employees && mysqli_num_rows($employees) > 0): ?>
+                                        <?php while ($employee = $employees->fetch_assoc()): ?>
+                                            <?php
+                                            // Check if attendance already marked for today
+                                            $attendanceQuery = $conn->prepare("SELECT * FROM attendance WHERE employee_id = ? AND attendance_date = ?");
+                                            $attendanceQuery->bind_param("is", $employee['id'], $today);
+                                            $attendanceQuery->execute();
+                                            $existingAttendance = $attendanceQuery->get_result()->fetch_assoc();
+                                            ?>
+                                            <tr>
+                                                <td>
+                                                    <div class="d-flex align-items-center">
+                                                        <?php if (!empty($employee['photo']) && file_exists('../../' . $employee['photo'])): ?>
+                                                            <img src="../../<?= htmlspecialchars($employee['photo']) ?>" 
+                                                                 class="rounded-circle me-2" 
+                                                                 style="width: 32px; height: 32px; object-fit: cover;">
+                                                        <?php else: ?>
+                                                            <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center me-2" 
+                                                                 style="width: 32px; height: 32px;">
+                                                                <i class="bi bi-person text-white small"></i>
+                                                            </div>
+                                                        <?php endif; ?>
+                                                        <div>
+                                                            <strong><?= htmlspecialchars($employee['employee_name']) ?></strong>
+                                                            <br><small class="text-muted"><?= htmlspecialchars($employee['employee_code']) ?></small>
+                                                        </div>
+                                                    </div>
+                                                    <input type="hidden" name="employee_id[]" value="<?= $employee['id'] ?>">
+                                                </td>
+                                                <td>
+                                                    <select name="status[]" class="form-select form-select-sm" style="width: 120px;">
+                                                        <option value="Present" <?= ($existingAttendance['status'] ?? '') == 'Present' ? 'selected' : '' ?>>Present</option>
+                                                        <option value="Absent" <?= ($existingAttendance['status'] ?? '') == 'Absent' ? 'selected' : '' ?>>Absent</option>
+                                                        <option value="Late" <?= ($existingAttendance['status'] ?? '') == 'Late' ? 'selected' : '' ?>>Late</option>
+                                                        <option value="Half Day" <?= ($existingAttendance['status'] ?? '') == 'Half Day' ? 'selected' : '' ?>>Half Day</option>
+                                                    </select>
+                                                </td>
+                                                <td>
+                                                    <input type="time" name="time_in[]" class="form-control form-control-sm" 
+                                                           style="width: 120px;" 
+                                                           value="<?= $existingAttendance['time_in'] ?? '09:00' ?>">
+                                                </td>
+                                                <td>
+                                                    <input type="time" name="time_out[]" class="form-control form-control-sm" 
+                                                           style="width: 120px;" 
+                                                           value="<?= $existingAttendance['time_out'] ?? '18:00' ?>">
+                                                </td>
+                                                <td>
+                                                    <input type="text" name="notes[]" class="form-control form-control-sm" 
+                                                           placeholder="Optional notes..." 
+                                                           value="<?= htmlspecialchars($existingAttendance['notes'] ?? '') ?>">
+                                                </td>
+                                            </tr>
+                                        <?php endwhile; ?>
+                                    <?php else: ?>
+                                        <tr>
+                                            <td colspan="5" class="text-center text-muted py-4">
+                                                No employees found. <a href="../employees/employees.php">Add employees</a> first.
+                                            </td>
+                                        </tr>
+                                    <?php endif; ?>
+                                </tbody>
+                            </table>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Employee *</label>
-                            <select name="employee_id" class="form-select" required>
-                                <option value="">-- Select Employee --</option>
-                                <?php
-                                $employees = mysqli_query($conn, "SELECT employee_id, name, code FROM employees ORDER BY name ASC");
-                                while ($emp = mysqli_fetch_assoc($employees)) {
-                                    echo "<option value='{$emp['employee_id']}'>{$emp['name']} ({$emp['code']})</option>";
-                                }
-                                ?>
-                            </select>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Status *</label>
-                            <select name="status" class="form-select" required>
-                                <option value="">-- Select Status --</option>
-                                <option value="Present">Present</option>
-                                <option value="Absent">Absent</option>
-                                <option value="Late">Late</option>
-                                <option value="Half Day">Half Day</option>
-                                <option value="Holiday">Holiday</option>
-                            </select>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Check-in Time</label>
-                            <input type="time" name="check_in_time" class="form-control" value="<?= date('H:i') ?>">
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Check-out Time</label>
-                            <input type="time" name="check_out_time" class="form-control">
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Notes</label>
-                            <textarea name="notes" class="form-control" rows="3" placeholder="Optional notes about attendance"></textarea>
-                        </div>
-
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-save"></i> Mark Attendance
-                            </button>
-                            <button type="button" class="btn btn-outline-secondary" id="markAllPresent">
-                                <i class="bi bi-people-fill"></i> Mark All Present
-                            </button>
-                        </div>
+                        <?php if ($employees && mysqli_num_rows($employees) > 0): ?>
+                            <div class="mt-4">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-save"></i> Save Attendance
+                                </button>
+                                <button type="button" class="btn btn-success" onclick="markAllPresent()">
+                                    <i class="bi bi-check-all"></i> Mark All Present
+                                </button>
+                                <a href="../employees/employees.php" class="btn btn-secondary">
+                                    Manage Employees
+                                </a>
+                            </div>
+                        <?php endif; ?>
                     </form>
                 </div>
             </div>
+        </div>
 
-            <!-- Quick Actions -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Today's Summary</h6>
+                </div>
+                <div class="card-body">
+                    <?php
+                    $totalEmployees = 0;
+                    $presentCount = 0;
+                    $absentCount = 0;
+                    $lateCount = 0;
+
+                    $result = $conn->query("SELECT COUNT(*) as total FROM employees");
+                    if ($result && $row = $result->fetch_assoc()) {
+                        $totalEmployees = $row['total'] ?? 0;
+                    }
+
+                    $result = $conn->query("SELECT status, COUNT(*) as count FROM attendance WHERE attendance_date = '$today' GROUP BY status");
+                    if ($result) {
+                        while ($row = $result->fetch_assoc()) {
+                            switch ($row['status']) {
+                                case 'Present': $presentCount = $row['count']; break;
+                                case 'Absent': $absentCount = $row['count']; break;
+                                case 'Late': $lateCount = $row['count']; break;
+                            }
+                        }
+                    }
+                    ?>
+                    
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <div class="border rounded p-2 mb-2">
+                                <h4 class="text-success mb-0"><?= $presentCount ?></h4>
+                                <small class="text-muted">Present</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="border rounded p-2 mb-2">
+                                <h4 class="text-danger mb-0"><?= $absentCount ?></h4>
+                                <small class="text-muted">Absent</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="border rounded p-2 mb-2">
+                                <h4 class="text-warning mb-0"><?= $lateCount ?></h4>
+                                <small class="text-muted">Late</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="border rounded p-2 mb-2">
+                                <h4 class="text-primary mb-0"><?= $totalEmployees ?></h4>
+                                <small class="text-muted">Total</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="card mt-3">
                 <div class="card-header">
-                    <h6 class="mb-0"><i class="bi bi-lightning me-2"></i>Quick Actions</h6>
+                    <h6 class="mb-0">Quick Actions</h6>
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
-                        <a href="../../attendance-calendar.php" class="btn btn-outline-primary">
-                            <i class="bi bi-calendar3"></i> View Calendar
-                        </a>
-                        <a href="../../attendance_preview.php" class="btn btn-outline-info">
-                            <i class="bi bi-graph-up"></i> Attendance Report
-                        </a>
-                        <button class="btn btn-outline-success" onclick="exportAttendance()">
-                            <i class="bi bi-download"></i> Export Data
-                        </button>
+                        <a href="../../attendance-calendar.php" class="btn btn-outline-primary">View Calendar</a>
+                        <a href="../../attendance_report.php" class="btn btn-outline-success">Generate Report</a>
+                        <a href="../employees/employees.php" class="btn btn-outline-secondary">Manage Employees</a>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div class="col-lg-8">
-            <!-- Today's Attendance -->
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Today's Attendance (<?= date('M d, Y') ?>)</h5>
-                    <div>
-                        <input type="text" id="attendanceSearch" class="form-control form-control-sm" placeholder="Search employees..." style="width: 200px;">
-                    </div>
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0">Legend</h6>
                 </div>
                 <div class="card-body">
-                    <div class="table-responsive">
-                        <table id="attendanceTable" class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>Employee</th>
-                                    <th>Code</th>
-                                    <th>Status</th>
-                                    <th>Check-in</th>
-                                    <th>Check-out</th>
-                                    <th>Hours</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php
-                                // Get all employees with their attendance for today
-                                $query = "SELECT e.employee_id, e.name, e.code, 
-                                         a.status, a.check_in_time, a.check_out_time, a.notes, a.attendance_id
-                                         FROM employees e
-                                         LEFT JOIN attendance a ON e.employee_id = a.employee_id 
-                                         AND DATE(a.attendance_date) = '$today'
-                                         ORDER BY e.name ASC";
-                                
-                                $result = mysqli_query($conn, $query);
-                                if ($result) {
-                                    while ($row = mysqli_fetch_assoc($result)) {
-                                        $status = $row['status'] ?? 'Not Marked';
-                                        $statusClass = '';
-                                        switch ($status) {
-                                            case 'Present': $statusClass = 'bg-success'; break;
-                                            case 'Late': $statusClass = 'bg-warning'; break;
-                                            case 'Absent': $statusClass = 'bg-danger'; break;
-                                            case 'Half Day': $statusClass = 'bg-info'; break;
-                                            case 'Holiday': $statusClass = 'bg-secondary'; break;
-                                            default: $statusClass = 'bg-light text-dark';
-                                        }
-
-                                        $checkIn = $row['check_in_time'] ?? '--';
-                                        $checkOut = $row['check_out_time'] ?? '--';
-                                        
-                                        // Calculate hours worked
-                                        $hoursWorked = '--';
-                                        if ($row['check_in_time'] && $row['check_out_time']) {
-                                            $start = new DateTime($row['check_in_time']);
-                                            $end = new DateTime($row['check_out_time']);
-                                            $diff = $start->diff($end);
-                                            $hoursWorked = $diff->format('%h:%I');
-                                        }
-
-                                        echo "<tr>";
-                                        echo "<td><strong>" . htmlspecialchars($row['name']) . "</strong></td>";
-                                        echo "<td><span class='badge bg-secondary'>" . htmlspecialchars($row['code']) . "</span></td>";
-                                        echo "<td><span class='badge {$statusClass}'>{$status}</span></td>";
-                                        echo "<td>{$checkIn}</td>";
-                                        echo "<td>{$checkOut}</td>";
-                                        echo "<td><strong>{$hoursWorked}</strong></td>";
-                                        echo "<td>";
-                                        
-                                        if ($row['attendance_id']) {
-                                            echo "<div class='btn-group btn-group-sm'>";
-                                            echo "<button class='btn btn-outline-primary edit-attendance' data-id='{$row['attendance_id']}' data-bs-toggle='tooltip' title='Edit'>";
-                                            echo "<i class='bi bi-pencil'></i>";
-                                            echo "</button>";
-                                            echo "<button class='btn btn-outline-danger delete-attendance' data-id='{$row['attendance_id']}' data-bs-toggle='tooltip' title='Delete'>";
-                                            echo "<i class='bi bi-trash'></i>";
-                                            echo "</button>";
-                                            echo "</div>";
-                                        } else {
-                                            echo "<button class='btn btn-sm btn-outline-primary mark-individual' data-employee-id='{$row['employee_id']}'>";
-                                            echo "<i class='bi bi-plus'></i> Mark";
-                                            echo "</button>";
-                                        }
-                                        
-                                        echo "</td>";
-                                        echo "</tr>";
-                                    }
-                                }
-                                ?>
-                            </tbody>
-                        </table>
+                    <div class="small">
+                        <div class="mb-1"><span class="badge bg-success">Present</span> - Employee is present for full day</div>
+                        <div class="mb-1"><span class="badge bg-danger">Absent</span> - Employee is not present</div>
+                        <div class="mb-1"><span class="badge bg-warning">Late</span> - Employee came late</div>
+                        <div class="mb-1"><span class="badge bg-info">Half Day</span> - Employee worked half day</div>
                     </div>
                 </div>
             </div>
@@ -307,147 +222,46 @@ include '../../layouts/sidebar.php';
     </div>
 </div>
 
-<!-- Edit Attendance Modal -->
-<div class="modal fade" id="editAttendanceModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Edit Attendance</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form id="editAttendanceForm">
-                <div class="modal-body">
-                    <input type="hidden" id="edit_attendance_id" name="attendance_id">
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Status</label>
-                        <select id="edit_status" name="status" class="form-select" required>
-                            <option value="Present">Present</option>
-                            <option value="Absent">Absent</option>
-                            <option value="Late">Late</option>
-                            <option value="Half Day">Half Day</option>
-                            <option value="Holiday">Holiday</option>
-                        </select>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Check-in Time</label>
-                        <input type="time" id="edit_check_in" name="check_in_time" class="form-control">
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Check-out Time</label>
-                        <input type="time" id="edit_check_out" name="check_out_time" class="form-control">
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Notes</label>
-                        <textarea id="edit_notes" name="notes" class="form-control" rows="3"></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Update Attendance</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<?php
-$additional_scripts = '
 <script>
-    $(document).ready(function() {
-        // Search functionality
-        $("#attendanceSearch").on("input", function() {
-            const searchTerm = this.value.toLowerCase();
-            $("#attendanceTable tbody tr").each(function() {
-                const text = $(this).text().toLowerCase();
-                $(this).toggle(text.indexOf(searchTerm) > -1);
-            });
-        });
-
-        // Mark all present functionality
-        $("#markAllPresent").click(function() {
-            if (confirm("Are you sure you want to mark all employees as present for today?")) {
-                $.post("../../save_attendance.php", {
-                    mark_all_present: 1,
-                    attendance_date: $("input[name=attendance_date]").val()
-                }, function(response) {
-                    if (response.success) {
-                        showAlert("All employees marked as present", "success");
-                        setTimeout(() => location.reload(), 1500);
-                    } else {
-                        showAlert("Error marking attendance: " + response.message, "danger");
-                    }
-                }, "json");
-            }
-        });
-
-        // Individual mark attendance
-        $(".mark-individual").click(function() {
-            const employeeId = $(this).data("employee-id");
-            const date = $("input[name=attendance_date]").val();
-            
-            $.post("../../save_attendance.php", {
-                employee_id: employeeId,
-                attendance_date: date,
-                status: "Present",
-                check_in_time: new Date().toTimeString().slice(0,5)
-            }, function(response) {
-                if (response.success) {
-                    showAlert("Attendance marked successfully", "success");
-                    setTimeout(() => location.reload(), 1500);
-                } else {
-                    showAlert("Error marking attendance: " + response.message, "danger");
-                }
-            }, "json");
-        });
-
-        // Edit attendance
-        $(".edit-attendance").click(function() {
-            const attendanceId = $(this).data("id");
-            // Load attendance data and show modal
-            $("#editAttendanceModal").modal("show");
-            $("#edit_attendance_id").val(attendanceId);
-        });
-
-        // Delete attendance
-        $(".delete-attendance").click(function() {
-            const attendanceId = $(this).data("id");
-            if (confirm("Are you sure you want to delete this attendance record?")) {
-                $.post("../../delete_attendance.php", {id: attendanceId}, function(response) {
-                    if (response.success) {
-                        showAlert("Attendance record deleted", "success");
-                        setTimeout(() => location.reload(), 1500);
-                    } else {
-                        showAlert("Error deleting attendance: " + response.message, "danger");
-                    }
-                }, "json");
-            }
-        });
-
-        // Auto-set check-out time when status changes
-        $("select[name=status]").change(function() {
-            if (this.value === "Present" || this.value === "Late") {
-                if (!$("input[name=check_out_time]").val()) {
-                    // Set default check-out time (9 hours after check-in)
-                    const checkIn = $("input[name=check_in_time]").val();
-                    if (checkIn) {
-                        const checkInTime = new Date("1970-01-01T" + checkIn + ":00");
-                        checkInTime.setHours(checkInTime.getHours() + 9);
-                        $("input[name=check_out_time]").val(checkInTime.toTimeString().slice(0,5));
-                    }
-                }
-            }
-        });
+function markAllPresent() {
+    document.querySelectorAll('select[name="status[]"]').forEach(select => {
+        select.value = 'Present';
     });
+    
+    document.querySelectorAll('input[name="time_in[]"]').forEach(input => {
+        if (!input.value) input.value = '09:00';
+    });
+    
+    document.querySelectorAll('input[name="time_out[]"]').forEach(input => {
+        if (!input.value) input.value = '18:00';
+    });
+}
 
-    function exportAttendance() {
-        showAlert("Export functionality will be implemented soon", "info");
-    }
+// Auto-disable time inputs for absent employees
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('select[name="status[]"]').forEach(select => {
+        select.addEventListener('change', function() {
+            const row = this.closest('tr');
+            const timeIn = row.querySelector('input[name="time_in[]"]');
+            const timeOut = row.querySelector('input[name="time_out[]"]');
+            
+            if (this.value === 'Absent') {
+                timeIn.disabled = true;
+                timeOut.disabled = true;
+                timeIn.value = '';
+                timeOut.value = '';
+            } else {
+                timeIn.disabled = false;
+                timeOut.disabled = false;
+                if (!timeIn.value) timeIn.value = '09:00';
+                if (!timeOut.value) timeOut.value = '18:00';
+            }
+        });
+        
+        // Trigger change event on page load
+        select.dispatchEvent(new Event('change'));
+    });
+});
 </script>
-';
 
-include '../../layouts/footer.php';
-?>
+<?php include '../../layouts/footer.php'; ?>
