@@ -189,6 +189,36 @@ include 'layouts/header.php';
                         </div>
                     </div>
 
+                    <!-- Debug Panel (remove in production) -->
+                    <div class="card mb-3 border-warning">
+                        <div class="card-header bg-warning text-dark">
+                            <h6 class="mb-0">
+                                <i class="bi bi-bug me-2"></i>
+                                Debug Information (Current Date: <?= $current_date ?>)
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row text-center">
+                                <div class="col-md-3">
+                                    <strong>Total Employees Found:</strong><br>
+                                    <span class="badge bg-info fs-6"><?= count($employees) ?></span>
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>Current Time:</strong><br>
+                                    <span class="badge bg-primary fs-6"><?= date('h:i:s A') ?></span>
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>Database Connection:</strong><br>
+                                    <span class="badge bg-success fs-6">Connected</span>
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>Session Admin:</strong><br>
+                                    <span class="badge bg-success fs-6"><?= $_SESSION['admin'] ? 'Yes' : 'No' ?></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Statistics Cards -->
                     <div class="row mb-4">
                         <div class="col-md-2">
@@ -485,6 +515,21 @@ setInterval(updateLiveClock, 1000);
 
 // Punch In function with AJAX
 async function punchIn(employeeId) {
+    // Validate employee ID
+    if (!employeeId || employeeId <= 0) {
+        showAlert('Error: Invalid Employee ID. Please refresh the page and try again.', 'danger');
+        return;
+    }
+    
+    // Get employee name for confirmation
+    const employeeRow = document.getElementById(`employee-row-${employeeId}`);
+    const employeeName = employeeRow ? employeeRow.querySelector('strong').textContent : 'Employee';
+    
+    // Show confirmation dialog
+    if (!confirm(`Confirm Punch In for ${employeeName}?\n\nEmployee ID: ${employeeId}\nDate: ${currentDate}\nTime: ${new Date().toLocaleTimeString()}`)) {
+        return;
+    }
+    
     const button = document.querySelector(`button[onclick="punchIn(${employeeId})"]`);
     const originalContent = button.innerHTML;
     button.innerHTML = '<i class="bi bi-hourglass-split"></i>';
@@ -498,7 +543,7 @@ async function punchIn(employeeId) {
             },
             body: JSON.stringify({
                 action: 'punch_in',
-                employee_id: employeeId,
+                employee_id: parseInt(employeeId),
                 attendance_date: currentDate
             })
         });
@@ -516,12 +561,23 @@ async function punchIn(employeeId) {
             button.disabled = true;
             document.querySelector(`button[onclick="punchOut(${employeeId})"]`).disabled = false;
             
-            showAlert(result.message, 'success');
+            // Show success notification with detailed info
+            showAlert(`✅ ${result.message}`, 'success');
+            
+            // Log successful punch for debugging
+            console.log('Punch In Success:', {
+                employeeId: employeeId,
+                employeeName: result.employee_name,
+                employeeCode: result.employee_code,
+                time: result.time,
+                date: currentDate
+            });
             
             // Refresh statistics
             setTimeout(refreshStats, 1000);
         } else {
-            showAlert(result.message, 'danger');
+            showAlert(`❌ Punch In Failed: ${result.message}`, 'danger');
+            console.error('Punch In Error:', result);
         }
     } catch (error) {
         showAlert('Error: ' + error.message, 'danger');
@@ -535,6 +591,21 @@ async function punchIn(employeeId) {
 
 // Punch Out function with AJAX
 async function punchOut(employeeId) {
+    // Validate employee ID
+    if (!employeeId || employeeId <= 0) {
+        showAlert('Error: Invalid Employee ID. Please refresh the page and try again.', 'danger');
+        return;
+    }
+    
+    // Get employee name for confirmation
+    const employeeRow = document.getElementById(`employee-row-${employeeId}`);
+    const employeeName = employeeRow ? employeeRow.querySelector('strong').textContent : 'Employee';
+    
+    // Show confirmation dialog
+    if (!confirm(`Confirm Punch Out for ${employeeName}?\n\nEmployee ID: ${employeeId}\nDate: ${currentDate}\nTime: ${new Date().toLocaleTimeString()}`)) {
+        return;
+    }
+    
     const button = document.querySelector(`button[onclick="punchOut(${employeeId})"]`);
     const originalContent = button.innerHTML;
     button.innerHTML = '<i class="bi bi-hourglass-split"></i>';
@@ -548,7 +619,7 @@ async function punchOut(employeeId) {
             },
             body: JSON.stringify({
                 action: 'punch_out',
-                employee_id: employeeId,
+                employee_id: parseInt(employeeId),
                 attendance_date: currentDate
             })
         });
@@ -563,18 +634,28 @@ async function punchOut(employeeId) {
             // Calculate and update duration
             const timeInElement = document.getElementById(`time-in-display-${employeeId}`);
             if (timeInElement.textContent !== '-') {
-                // Calculate duration (simplified - you may want to improve this)
                 updateDuration(employeeId);
             }
             
             button.disabled = true;
             
-            showAlert(result.message, 'success');
+            // Show success notification with detailed info
+            showAlert(`✅ ${result.message}`, 'success');
+            
+            // Log successful punch for debugging
+            console.log('Punch Out Success:', {
+                employeeId: employeeId,
+                employeeName: result.employee_name,
+                employeeCode: result.employee_code,
+                time: result.time,
+                date: currentDate
+            });
             
             // Refresh statistics
             setTimeout(refreshStats, 1000);
         } else {
-            showAlert(result.message, 'danger');
+            showAlert(`❌ Punch Out Failed: ${result.message}`, 'danger');
+            console.error('Punch Out Error:', result);
         }
     } catch (error) {
         showAlert('Error: ' + error.message, 'danger');

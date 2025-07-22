@@ -24,16 +24,38 @@ $action = $input['action'] ?? '';
 $employee_id = intval($input['employee_id'] ?? 0);
 $attendance_date = $input['attendance_date'] ?? date('Y-m-d');
 
+// Enhanced validation
 if (!$employee_id) {
-    echo json_encode(['success' => false, 'message' => 'Employee ID is required']);
+    echo json_encode(['success' => false, 'message' => 'Employee ID is required. Received: ' . ($input['employee_id'] ?? 'null')]);
     exit;
 }
+
+// Verify employee exists
+$empCheckQuery = $conn->prepare("SELECT employee_id, name, employee_code FROM employees WHERE employee_id = ?");
+$empCheckQuery->bind_param("i", $employee_id);
+$empCheckQuery->execute();
+$empCheckResult = $empCheckQuery->get_result();
+
+if ($empCheckResult->num_rows === 0) {
+    echo json_encode(['success' => false, 'message' => "Employee ID {$employee_id} not found in database"]);
+    exit;
+}
+
+$employeeInfo = $empCheckResult->fetch_assoc();
 
 // Validate date format
 if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $attendance_date)) {
     echo json_encode(['success' => false, 'message' => 'Invalid date format']);
     exit;
 }
+
+// Log the request for debugging
+error_log("Punch Request: " . json_encode([
+    'action' => $action,
+    'employee_id' => $employee_id,
+    'attendance_date' => $attendance_date,
+    'employee_info' => $employeeInfo
+]));
 
 try {
     $conn->begin_transaction();
@@ -52,27 +74,30 @@ try {
                 // Update existing record with punch in time
                 $updateQuery = $conn->prepare("UPDATE attendance SET time_in = ?, status = 'Present' WHERE employee_id = ? AND attendance_date = ?");
                 $updateQuery->bind_param("sis", $current_time, $employee_id, $attendance_date);
-                $updateQuery->execute();
+                if ($updateQuery->execute()) {
+                    error_log("Punch In: Updated existing record for employee {$employee_id} on {$attendance_date} at {$current_time}");
+                } else {
+                    error_log("Punch In Update Error: " . $updateQuery->error);
+                }
             } else {
                 // Create new record
                 $insertQuery = $conn->prepare("INSERT INTO attendance (employee_id, attendance_date, status, time_in) VALUES (?, ?, 'Present', ?)");
                 $insertQuery->bind_param("iss", $employee_id, $attendance_date, $current_time);
-                $insertQuery->execute();
+                if ($insertQuery->execute()) {
+                    error_log("Punch In: Created new record for employee {$employee_id} on {$attendance_date} at {$current_time}");
+                } else {
+                    error_log("Punch In Insert Error: " . $insertQuery->error);
+                }
             }
-            
-            // Get employee name for response
-            $empQuery = $conn->prepare("SELECT employee_name, name FROM employees WHERE employee_id = ?");
-            $empQuery->bind_param("i", $employee_id);
-            $empQuery->execute();
-            $employee = $empQuery->get_result()->fetch_assoc();
-            $employee_name = $employee['employee_name'] ?? $employee['name'] ?? 'Employee';
             
             $conn->commit();
             echo json_encode([
                 'success' => true, 
-                'message' => $employee_name . ' punched in successfully at ' . date('h:i A', strtotime($current_time)),
+                'message' => $employeeInfo['name'] . ' (ID: ' . $employee_id . ') punched in successfully at ' . date('h:i A', strtotime($current_time)),
                 'time' => date('h:i A', strtotime($current_time)),
-                'time_24' => $current_time
+                'time_24' => $current_time,
+                'employee_name' => $employeeInfo['name'],
+                'employee_code' => $employeeInfo['employee_code']
             ]);
             break;
             
@@ -89,27 +114,30 @@ try {
                 // Update existing record with punch out time
                 $updateQuery = $conn->prepare("UPDATE attendance SET time_out = ? WHERE employee_id = ? AND attendance_date = ?");
                 $updateQuery->bind_param("sis", $current_time, $employee_id, $attendance_date);
-                $updateQuery->execute();
+                if ($updateQuery->execute()) {
+                    error_log("Punch Out: Updated existing record for employee {$employee_id} on {$attendance_date} at {$current_time}");
+                } else {
+                    error_log("Punch Out Update Error: " . $updateQuery->error);
+                }
             } else {
                 // Create new record with punch out (shouldn't happen, but handle it)
                 $insertQuery = $conn->prepare("INSERT INTO attendance (employee_id, attendance_date, status, time_out) VALUES (?, ?, 'Present', ?)");
                 $insertQuery->bind_param("iss", $employee_id, $attendance_date, $current_time);
-                $insertQuery->execute();
+                if ($insertQuery->execute()) {
+                    error_log("Punch Out: Created new record for employee {$employee_id} on {$attendance_date} at {$current_time}");
+                } else {
+                    error_log("Punch Out Insert Error: " . $insertQuery->error);
+                }
             }
-            
-            // Get employee name for response
-            $empQuery = $conn->prepare("SELECT employee_name, name FROM employees WHERE employee_id = ?");
-            $empQuery->bind_param("i", $employee_id);
-            $empQuery->execute();
-            $employee = $empQuery->get_result()->fetch_assoc();
-            $employee_name = $employee['employee_name'] ?? $employee['name'] ?? 'Employee';
             
             $conn->commit();
             echo json_encode([
                 'success' => true, 
-                'message' => $employee_name . ' punched out successfully at ' . date('h:i A', strtotime($current_time)),
+                'message' => $employeeInfo['name'] . ' (ID: ' . $employee_id . ') punched out successfully at ' . date('h:i A', strtotime($current_time)),
                 'time' => date('h:i A', strtotime($current_time)),
-                'time_24' => $current_time
+                'time_24' => $current_time,
+                'employee_name' => $employeeInfo['name'],
+                'employee_code' => $employeeInfo['employee_code']
             ]);
             break;
             
