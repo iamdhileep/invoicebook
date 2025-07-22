@@ -38,12 +38,11 @@ if (!empty($status_filter)) {
 }
 
 if (!empty($search_filter)) {
-    $where_conditions[] = "(e.employee_name LIKE ? OR e.name LIKE ? OR e.employee_code LIKE ?)";
+    $where_conditions[] = "(e.name LIKE ? OR e.employee_code LIKE ?)";
     $search_param = '%' . $search_filter . '%';
     $params[] = $search_param;
     $params[] = $search_param;
-    $params[] = $search_param;
-    $param_types .= 'sss';
+    $param_types .= 'ss';
 }
 
 $where_clause = '';
@@ -54,10 +53,10 @@ if (!empty($where_conditions)) {
 // Get attendance data
 $query = "
     SELECT 
-        COALESCE(e.employee_name, e.name) as employee_name,
+        e.name as employee_name,
         e.employee_code,
         e.position,
-        e.department,
+        e.position as department,
         e.phone,
         COALESCE(a.status, 'Not Marked') as status,
         COALESCE(a.time_in, '-') as time_in,
@@ -71,7 +70,7 @@ $query = "
     FROM employees e
     LEFT JOIN attendance a ON e.employee_id = a.employee_id AND a.attendance_date = ?
     WHERE 1=1 $where_clause
-    ORDER BY e.employee_name ASC, e.name ASC
+    ORDER BY e.name ASC
 ";
 
 $stmt = $conn->prepare($query);

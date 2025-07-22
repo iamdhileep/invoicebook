@@ -23,7 +23,7 @@ $params = [];
 $param_types = '';
 
 if (!empty($department_filter)) {
-    $where_conditions[] = "e.department = ?";
+    $where_conditions[] = "e.position = ?";
     $params[] = $department_filter;
     $param_types .= 's';
 }
@@ -41,12 +41,11 @@ if (!empty($status_filter)) {
 }
 
 if (!empty($search_filter)) {
-    $where_conditions[] = "(e.employee_name LIKE ? OR e.name LIKE ? OR e.employee_code LIKE ?)";
+    $where_conditions[] = "(e.name LIKE ? OR e.employee_code LIKE ?)";
     $search_param = '%' . $search_filter . '%';
     $params[] = $search_param;
     $params[] = $search_param;
-    $params[] = $search_param;
-    $param_types .= 'sss';
+    $param_types .= 'ss';
 }
 
 $where_clause = '';
@@ -58,13 +57,12 @@ if (!empty($where_conditions)) {
 $query = "
     SELECT 
         e.employee_id,
-        COALESCE(e.employee_name, e.name) as name,
+        e.name,
         e.employee_code,
         e.position,
         e.phone,
         e.monthly_salary,
         e.photo,
-        e.department,
         a.status,
         a.time_in,
         a.time_out,
@@ -82,23 +80,39 @@ $query = "
     FROM employees e
     LEFT JOIN attendance a ON e.employee_id = a.employee_id AND a.attendance_date = ?
     WHERE 1=1 $where_clause
-    ORDER BY e.employee_name ASC, e.name ASC
+    ORDER BY e.name ASC
 ";
 
 $stmt = $conn->prepare($query);
+if (!$stmt) {
+    die("SQL Prepare Error: " . $conn->error . "<br>Query: " . $query);
+}
+
 if (!empty($params)) {
     $all_params = array_merge([$current_date], $params);
     $all_param_types = 's' . $param_types;
-    $stmt->bind_param($all_param_types, ...$all_params);
+    if (!$stmt->bind_param($all_param_types, ...$all_params)) {
+        die("Bind Param Error: " . $stmt->error);
+    }
 } else {
-    $stmt->bind_param('s', $current_date);
+    if (!$stmt->bind_param('s', $current_date)) {
+        die("Bind Param Error: " . $stmt->error);
+    }
 }
 
-$stmt->execute();
-$employees = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+if (!$stmt->execute()) {
+    die("Execute Error: " . $stmt->error);
+}
+
+$result = $stmt->get_result();
+if (!$result) {
+    die("Get Result Error: " . $stmt->error);
+}
+
+$employees = $result->fetch_all(MYSQLI_ASSOC);
 
 // Get filter options
-$departments = $conn->query("SELECT DISTINCT department FROM employees WHERE department IS NOT NULL AND department != '' ORDER BY department")->fetch_all(MYSQLI_ASSOC);
+$departments = $conn->query("SELECT DISTINCT position as department FROM employees WHERE position IS NOT NULL AND position != '' ORDER BY position")->fetch_all(MYSQLI_ASSOC);
 $positions = $conn->query("SELECT DISTINCT position FROM employees ORDER BY position")->fetch_all(MYSQLI_ASSOC);
 
 // Get attendance statistics for the day
@@ -118,14 +132,30 @@ $stats_query = "
 ";
 
 $stats_stmt = $conn->prepare($stats_query);
-if (!empty($params)) {
-    $stats_stmt->bind_param($all_param_types, ...$all_params);
-} else {
-    $stats_stmt->bind_param('s', $current_date);
+if (!$stats_stmt) {
+    die("Stats SQL Prepare Error: " . $conn->error . "<br>Query: " . $stats_query);
 }
 
-$stats_stmt->execute();
-$stats = $stats_stmt->get_result()->fetch_assoc();
+if (!empty($params)) {
+    if (!$stats_stmt->bind_param($all_param_types, ...$all_params)) {
+        die("Stats Bind Param Error: " . $stats_stmt->error);
+    }
+} else {
+    if (!$stats_stmt->bind_param('s', $current_date)) {
+        die("Stats Bind Param Error: " . $stats_stmt->error);
+    }
+}
+
+if (!$stats_stmt->execute()) {
+    die("Stats Execute Error: " . $stats_stmt->error);
+}
+
+$stats_result = $stats_stmt->get_result();
+if (!$stats_result) {
+    die("Stats Get Result Error: " . $stats_stmt->error);
+}
+
+$stats = $stats_result->fetch_assoc();
 
 include 'layouts/header.php';
 ?>
@@ -354,9 +384,6 @@ include 'layouts/header.php';
                                                 </td>
                                                 <td>
                                                     <span class="badge bg-info"><?= htmlspecialchars($emp['position']) ?></span>
-                                                    <?php if (!empty($emp['department'])): ?>
-                                                        <br><small class="text-muted"><?= htmlspecialchars($emp['department']) ?></small>
-                                                    <?php endif; ?>
                                                 </td>
                                                 <td>
                                                     <span class="badge bg-<?= 
