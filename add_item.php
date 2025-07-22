@@ -109,7 +109,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 }
 
 // Get categories for dropdown
-$categories = $conn->query("SELECT DISTINCT category FROM items WHERE category IS NOT NULL AND category != '' ORDER BY category");
+// Get existing categories for dropdown - try categories table first, then fallback
+$categories = null;
+try {
+    // First try to get from categories table
+    $categoryQuery = "SELECT id, name as category, color, icon FROM categories ORDER BY name ASC";
+    $categories = $conn->query($categoryQuery);
+    
+    // If categories table doesn't exist or is empty, fallback to distinct categories from items
+    if (!$categories || $categories->num_rows == 0) {
+        $categoryQuery = "SELECT DISTINCT category FROM items WHERE category IS NOT NULL AND category != '' ORDER BY category ASC";
+        $categories = $conn->query($categoryQuery);
+    }
+} catch (Exception $e) {
+    // Categories query failed - fallback to items
+    $categories = $conn->query("SELECT DISTINCT category FROM items WHERE category IS NOT NULL AND category != '' ORDER BY category ASC");
+}
 
 include 'layouts/header.php';
 include 'layouts/sidebar.php';
@@ -182,15 +197,30 @@ include 'layouts/sidebar.php';
                                         <?php if ($categories && mysqli_num_rows($categories) > 0): ?>
                                             <?php while ($cat = $categories->fetch_assoc()): ?>
                                                 <option value="<?= htmlspecialchars($cat['category']) ?>"
+                                                        data-color="<?= htmlspecialchars($cat['color'] ?? '#007bff') ?>"
+                                                        data-icon="<?= htmlspecialchars($cat['icon'] ?? 'bi-tag') ?>"
                                                         <?= (($_POST['category'] ?? '') === $cat['category']) ? 'selected' : '' ?>>
-                                                    <?= htmlspecialchars($cat['category']) ?>
+                                                    <?php if (isset($cat['icon'])): ?>
+                                                        <?= htmlspecialchars($cat['category']) ?>
+                                                    <?php else: ?>
+                                                        <?= htmlspecialchars($cat['category']) ?>
+                                                    <?php endif; ?>
                                                 </option>
                                             <?php endwhile; ?>
                                         <?php endif; ?>
                                         <option value="__new__">+ Add New Category</option>
                                     </select>
+                                    <button type="button" class="btn btn-outline-secondary" id="manageCategoriesBtn" title="Manage Categories">
+                                        <i class="bi bi-gear"></i>
+                                    </button>
                                     <input type="text" name="new_category" class="form-control" 
                                            placeholder="Enter new category" style="display: none;" id="newCategoryInput">
+                                </div>
+                                <div class="form-text">
+                                    <small id="categoryPreview" style="display: none;">
+                                        <i class="bi-tag me-1"></i>
+                                        <span class="category-name"></span>
+                                    </small>
                                 </div>
                             </div>
                             
@@ -264,11 +294,24 @@ include 'layouts/sidebar.php';
 
 <script>
 $(document).ready(function() {
+    // Initialize category dropdown with dynamic updates
+    loadCategoriesFromStorage();
+    
+    // Listen for category updates from manage_categories.php
+    window.addEventListener('categoriesUpdated', function(e) {
+        updateCategoryDropdown(e.detail);
+    });
+
     // Handle category selection
     $('#categorySelect').change(function() {
         if (this.value === '__new__') {
             $('#newCategoryInput').show().attr('name', 'category').focus();
             $(this).hide().attr('name', '');
+            $('#categoryPreview').hide();
+        } else if (this.value) {
+            updateCategoryPreview();
+        } else {
+            $('#categoryPreview').hide();
         }
     });
 
@@ -277,7 +320,13 @@ $(document).ready(function() {
         if ($(this).val() === '') {
             $(this).hide().attr('name', '');
             $('#categorySelect').show().attr('name', 'category').val('');
+            $('#categoryPreview').hide();
         }
+    });
+
+    // Manage categories button
+    $('#manageCategoriesBtn').click(function() {
+        window.open('manage_categories.php', '_blank');
     });
 
     // Form validation
@@ -304,7 +353,66 @@ $(document).ready(function() {
     setTimeout(function() {
         $('.alert-success').fadeOut();
     }, 3000);
+
+    // Initialize category preview if there's a selected value
+    if ($('#categorySelect').val()) {
+        updateCategoryPreview();
+    }
 });
+
+function updateCategoryPreview() {
+    const selectedOption = $('#categorySelect option:selected');
+    const categoryName = selectedOption.val();
+    const categoryColor = selectedOption.data('color') || '#007bff';
+    const categoryIcon = selectedOption.data('icon') || 'bi-tag';
+    
+    if (categoryName && categoryName !== '__new__') {
+        $('#categoryPreview').show();
+        $('#categoryPreview i').attr('class', categoryIcon + ' me-1').css('color', categoryColor);
+        $('#categoryPreview .category-name').text(categoryName);
+    } else {
+        $('#categoryPreview').hide();
+    }
+}
+
+function loadCategoriesFromStorage() {
+    const storedCategories = localStorage.getItem('categories');
+    if (storedCategories) {
+        try {
+            const categories = JSON.parse(storedCategories);
+            updateCategoryDropdown(categories);
+        } catch (e) {
+            console.log('Error parsing stored categories:', e);
+        }
+    }
+}
+
+function updateCategoryDropdown(categories) {
+    const select = $('#categorySelect');
+    const currentValue = select.val();
+    
+    // Clear existing options except default and "add new"
+    select.find('option').not(':first').not(':last').remove();
+    
+    // Add updated categories
+    categories.forEach(function(category) {
+        const option = $('<option></option>')
+            .val(category.name)
+            .text(category.name)
+            .attr('data-color', category.color || '#007bff')
+            .attr('data-icon', category.icon || 'bi-tag');
+            
+        select.find('option:last').before(option);
+    });
+    
+    // Restore selection if it still exists
+    if (currentValue && select.find(`option[value="${currentValue}"]`).length > 0) {
+        select.val(currentValue);
+        updateCategoryPreview();
+    }
+    
+    console.log('Category dropdown updated with', categories.length, 'categories');
+}
 
 function showAlert(message, type) {
     const alertDiv = $(`
