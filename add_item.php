@@ -117,6 +117,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 // Get categories for dropdown
 // Get existing categories for dropdown - try categories table first, then fallback
 $categories = null;
+$categoriesFromItems = false;
 try {
     // First try to get from categories table
     $categoryQuery = "SELECT id, name as category, color, icon FROM categories ORDER BY name ASC";
@@ -126,10 +127,12 @@ try {
     if (!$categories || $categories->num_rows == 0) {
         $categoryQuery = "SELECT DISTINCT category FROM items WHERE category IS NOT NULL AND category != '' ORDER BY category ASC";
         $categories = $conn->query($categoryQuery);
+        $categoriesFromItems = true;
     }
 } catch (Exception $e) {
     // Categories query failed - fallback to items
     $categories = $conn->query("SELECT DISTINCT category FROM items WHERE category IS NOT NULL AND category != '' ORDER BY category ASC");
+    $categoriesFromItems = true;
 }
 
 include 'layouts/header.php';
@@ -202,16 +205,23 @@ include 'layouts/sidebar.php';
                                         <option value="">-- Select or Add Category --</option>
                                         <?php if ($categories && mysqli_num_rows($categories) > 0): ?>
                                             <?php while ($cat = $categories->fetch_assoc()): ?>
-                                                <option value="<?= htmlspecialchars($cat['category']) ?>"
-                                                        data-color="<?= htmlspecialchars($cat['color'] ?? '#007bff') ?>"
-                                                        data-icon="<?= htmlspecialchars($cat['icon'] ?? 'bi-tag') ?>"
-                                                        <?= (($_POST['category'] ?? '') === $cat['category']) ? 'selected' : '' ?>>
-                                                    <?php if (isset($cat['icon'])): ?>
+                                                <?php if ($categoriesFromItems): ?>
+                                                    <!-- Categories from items table (fallback) -->
+                                                    <option value="<?= htmlspecialchars($cat['category']) ?>"
+                                                            data-color="#007bff"
+                                                            data-icon="bi-tag"
+                                                            <?= (($_POST['category'] ?? '') === $cat['category']) ? 'selected' : '' ?>>
                                                         <?= htmlspecialchars($cat['category']) ?>
-                                                    <?php else: ?>
+                                                    </option>
+                                                <?php else: ?>
+                                                    <!-- Categories from categories table -->
+                                                    <option value="<?= htmlspecialchars($cat['category']) ?>"
+                                                            data-color="<?= htmlspecialchars($cat['color'] ?? '#007bff') ?>"
+                                                            data-icon="<?= htmlspecialchars($cat['icon'] ?? 'bi-tag') ?>"
+                                                            <?= (($_POST['category'] ?? '') === $cat['category']) ? 'selected' : '' ?>>
                                                         <?= htmlspecialchars($cat['category']) ?>
-                                                    <?php endif; ?>
-                                                </option>
+                                                    </option>
+                                                <?php endif; ?>
                                             <?php endwhile; ?>
                                         <?php endif; ?>
                                         <option value="__new__">+ Add New Category</option>
@@ -300,8 +310,13 @@ include 'layouts/sidebar.php';
 
 <script>
 $(document).ready(function() {
+    // Debug: Check if categorySelect exists
+    console.log('Category select found:', $('#categorySelect').length);
+    console.log('Category select options:', $('#categorySelect option').length);
+    
     // Handle category selection
     $('#categorySelect').change(function() {
+        console.log('Category changed to:', this.value);
         if (this.value === '__new__') {
             $('#newCategoryInput').show().attr('name', 'new_category').focus();
             $(this).hide().attr('name', '');
@@ -367,6 +382,12 @@ function updateCategoryPreview() {
     const categoryName = selectedOption.val();
     const categoryColor = selectedOption.data('color') || '#007bff';
     const categoryIcon = selectedOption.data('icon') || 'bi-tag';
+    
+    console.log('Updating category preview:', {
+        categoryName: categoryName,
+        categoryColor: categoryColor,
+        categoryIcon: categoryIcon
+    });
     
     if (categoryName && categoryName !== '__new__') {
         $('#categoryPreview').show();
