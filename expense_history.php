@@ -228,9 +228,6 @@ include 'layouts/sidebar.php';
 
 <script>
 $(document).ready(function() {
-    console.log('Expense History: Document ready, jQuery loaded');
-    console.log('Found delete buttons:', $('.delete-expense').length);
-    
     // Initialize DataTable
     $('#expensesTable').DataTable({
         pageLength: 25,
@@ -244,15 +241,11 @@ $(document).ready(function() {
 
     // Delete expense functionality - using event delegation for DataTables compatibility
     $(document).on('click', '.delete-expense', function() {
-        console.log('Delete button clicked');
         const expenseId = $(this).data('id');
         const row = $(this).closest('tr');
         const button = $(this);
         
-        console.log('Expense ID:', expenseId);
-        
         if (confirm('Are you sure you want to delete this expense? This action cannot be undone.')) {
-            console.log('User confirmed deletion');
             // Show loading state
             const originalContent = button.html();
             button.html('<i class="bi bi-hourglass-split"></i>').prop('disabled', true);

@@ -564,15 +564,6 @@ async function punchIn(employeeId) {
             // Show success notification with detailed info
             showAlert(`✅ ${result.message}`, 'success');
             
-            // Log successful punch for debugging
-            console.log('Punch In Success:', {
-                employeeId: employeeId,
-                employeeName: result.employee_name,
-                employeeCode: result.employee_code,
-                time: result.time,
-                date: currentDate
-            });
-            
             // Refresh statistics
             setTimeout(refreshStats, 1000);
         } else {
@@ -641,15 +632,6 @@ async function punchOut(employeeId) {
             
             // Show success notification with detailed info
             showAlert(`✅ ${result.message}`, 'success');
-            
-            // Log successful punch for debugging
-            console.log('Punch Out Success:', {
-                employeeId: employeeId,
-                employeeName: result.employee_name,
-                employeeCode: result.employee_code,
-                time: result.time,
-                date: currentDate
-            });
             
             // Refresh statistics
             setTimeout(refreshStats, 1000);
