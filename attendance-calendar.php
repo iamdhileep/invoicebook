@@ -279,7 +279,6 @@ document.addEventListener('DOMContentLoaded', function() {
         },
         dateClick: function(info) {
             // Optionally handle date clicks for adding attendance
-            console.log('Date clicked: ' + info.dateStr);
         }
     });
     

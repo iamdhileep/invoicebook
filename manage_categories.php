@@ -786,7 +786,6 @@ $(document).ready(function() {
         drawCallback: function() {
             // Reinitialize tooltips after table redraw
             $('[data-bs-toggle="tooltip"]').tooltip();
-            console.log('Categories DataTable redrawn, tooltips reinitialized');
         },
         language: {
             search: "Search categories:",
@@ -890,17 +889,13 @@ $(document).ready(function() {
 
     // Edit category button click
     $(document).on('click', '.edit-category', function() {
-        console.log('Edit button clicked');
         const categoryId = $(this).data('id');
-
-        console.log('Category ID:', categoryId);
 
         // Get category data
         $.post('manage_categories.php', {
             action: 'get',
             id: categoryId
         }, function(response) {
-            console.log('Get response:', response);
             if (response.success) {
                 const category = response.data;
                 $('#editCategoryId').val(category.id);
@@ -922,15 +917,11 @@ $(document).ready(function() {
 
     // Delete category button click
     $(document).on('click', '.delete-category', function() {
-        console.log('Delete button clicked');
         const categoryId = $(this).data('id');
         const categoryName = $(this).data('name');
         const button = $(this);
 
-        console.log('Category ID:', categoryId, 'Name:', categoryName);
-
         if (confirm(`Are you sure you want to delete the category "${categoryName}"? This action cannot be undone.`)) {
-            console.log('User confirmed deletion');
             const originalContent = button.html();
             button.html('<i class="bi bi-hourglass-split"></i>').prop('disabled', true);
 
@@ -938,7 +929,6 @@ $(document).ready(function() {
                 action: 'delete',
                 id: categoryId
             }, function(response) {
-                console.log('Delete response:', response);
                 if (response.success) {
                     showAlert(response.message, 'success');
                     button.closest('tr').fadeOut(300, function() {
@@ -1152,8 +1142,6 @@ function updateCategoryDropdowns() {
             window.dispatchEvent(new CustomEvent('categoriesUpdated', {
                 detail: response.categories
             }));
-            
-            console.log('Categories updated:', response.categories);
         }
     }, 'json');
 }

@@ -244,7 +244,6 @@ $(document).ready(function() {
         drawCallback: function() {
             // Reinitialize tooltips after table redraw
             $('[data-bs-toggle="tooltip"]').tooltip();
-            console.log('Invoice DataTable redrawn, tooltips reinitialized');
         }
     });
 
@@ -283,21 +282,16 @@ $(document).ready(function() {
 
     // Delete individual invoice - using event delegation for DataTables compatibility
     $(document).on('click', '.delete-invoice', function() {
-        console.log('Delete invoice button clicked');
         const invoiceId = $(this).data('id');
         const row = $(this).closest('tr');
         const button = $(this);
         
-        console.log('Invoice ID:', invoiceId);
-        
         if (confirm('Are you sure you want to delete this invoice? This action cannot be undone.')) {
-            console.log('User confirmed deletion');
             // Show loading state
             const originalContent = button.html();
             button.html('<i class="bi bi-hourglass-split"></i>').prop('disabled', true);
 
             $.post('delete_invoice.php', {id: invoiceId}, function(response) {
-                console.log('Delete response:', response);
                 if (response.success) {
                     row.fadeOut(300, function() {
                         $(this).remove();

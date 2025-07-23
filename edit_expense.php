@@ -416,8 +416,6 @@ $(document).ready(function() {
             
             const fileName = file.name;
             const fileType = file.type;
-            
-            console.log(`Selected file: ${fileName} (${fileSize}MB, ${fileType})`);
         }
     });
 });
