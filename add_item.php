@@ -310,13 +310,8 @@ include 'layouts/sidebar.php';
 
 <script>
 $(document).ready(function() {
-    // Debug: Check if categorySelect exists
-    console.log('Category select found:', $('#categorySelect').length);
-    console.log('Category select options:', $('#categorySelect option').length);
-    
     // Handle category selection
     $('#categorySelect').change(function() {
-        console.log('Category changed to:', this.value);
         if (this.value === '__new__') {
             $('#newCategoryInput').show().attr('name', 'new_category').focus();
             $(this).hide().attr('name', '');
@@ -382,12 +377,6 @@ function updateCategoryPreview() {
     const categoryName = selectedOption.val();
     const categoryColor = selectedOption.data('color') || '#007bff';
     const categoryIcon = selectedOption.data('icon') || 'bi-tag';
-    
-    console.log('Updating category preview:', {
-        categoryName: categoryName,
-        categoryColor: categoryColor,
-        categoryIcon: categoryIcon
-    });
     
     if (categoryName && categoryName !== '__new__') {
         $('#categoryPreview').show();
