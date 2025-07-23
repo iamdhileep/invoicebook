@@ -2,7 +2,7 @@
 $host = "localhost";
 $user = "root";
 $password = "";
-$dbname = "billing";
+$dbname = "billing_demo";
 
 $conn = new mysqli($host, $user, $password, $dbname);
 if ($conn->connect_error) {
