@@ -10,6 +10,166 @@ include 'db.php';
 // Set timezone
 date_default_timezone_set('Asia/Kolkata');
 
+// Handle AJAX requests for punch operations
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    header('Content-Type: application/json');
+    
+    // Get JSON input
+    $input = json_decode(file_get_contents('php://input'), true);
+    
+    $action = $input['action'] ?? '';
+    $current_time = date('Y-m-d H:i:s');
+    $attendance_date = $input['attendance_date'] ?? date('Y-m-d');
+    
+    try {
+        if ($action === 'bulk_punch_in' || $action === 'bulk_punch_out') {
+            // Handle bulk operations
+            $employee_ids = $input['employee_ids'] ?? [];
+            
+            if (empty($employee_ids)) {
+                echo json_encode(['success' => false, 'message' => 'No employees selected']);
+                exit;
+            }
+            
+            $success_count = 0;
+            $errors = [];
+            
+            foreach ($employee_ids as $employee_id) {
+                $employee_id = intval($employee_id);
+                
+                if ($employee_id <= 0) {
+                    $errors[] = "Invalid employee ID: $employee_id";
+                    continue;
+                }
+                
+                if ($action === 'bulk_punch_in') {
+                    // Check if already punched in
+                    $check = $conn->prepare("SELECT * FROM attendance WHERE employee_id = ? AND attendance_date = ?");
+                    $check->bind_param('is', $employee_id, $attendance_date);
+                    $check->execute();
+                    $existing = $check->get_result()->fetch_assoc();
+                    
+                    if ($existing && $existing['time_in']) {
+                        $errors[] = "Employee ID $employee_id already punched in";
+                        continue;
+                    }
+                    
+                    if ($existing) {
+                        $stmt = $conn->prepare("UPDATE attendance SET time_in = ?, status = 'Present' WHERE employee_id = ? AND attendance_date = ?");
+                        $stmt->bind_param('sis', $current_time, $employee_id, $attendance_date);
+                    } else {
+                        $stmt = $conn->prepare("INSERT INTO attendance (employee_id, attendance_date, time_in, status) VALUES (?, ?, ?, 'Present')");
+                        $stmt->bind_param('iss', $employee_id, $attendance_date, $current_time);
+                    }
+                    
+                    // Check if late (assuming 9:00 AM is standard time)
+                    $punch_time = new DateTime($current_time);
+                    $standard_time = new DateTime($attendance_date . ' 09:00:00');
+                    if ($punch_time > $standard_time) {
+                        $stmt = $conn->prepare("UPDATE attendance SET status = 'Late' WHERE employee_id = ? AND attendance_date = ?");
+                        $stmt->bind_param('is', $employee_id, $attendance_date);
+                        $stmt->execute();
+                    }
+                    
+                } elseif ($action === 'bulk_punch_out') {
+                    // Check if punched in first
+                    $check = $conn->prepare("SELECT * FROM attendance WHERE employee_id = ? AND attendance_date = ? AND time_in IS NOT NULL");
+                    $check->bind_param('is', $employee_id, $attendance_date);
+                    $check->execute();
+                    $existing = $check->get_result()->fetch_assoc();
+                    
+                    if (!$existing) {
+                        $errors[] = "Employee ID $employee_id not punched in yet";
+                        continue;
+                    }
+                    
+                    if ($existing['time_out']) {
+                        $errors[] = "Employee ID $employee_id already punched out";
+                        continue;
+                    }
+                    
+                    $stmt = $conn->prepare("UPDATE attendance SET time_out = ? WHERE employee_id = ? AND attendance_date = ?");
+                    $stmt->bind_param('sis', $current_time, $employee_id, $attendance_date);
+                }
+                
+                if ($stmt && $stmt->execute()) {
+                    $success_count++;
+                } else {
+                    $errors[] = "Failed to process employee ID $employee_id: " . $conn->error;
+                }
+            }
+            
+            $message = "$success_count employees processed successfully";
+            if (!empty($errors)) {
+                $message .= ". Errors: " . implode(', ', $errors);
+            }
+            
+            echo json_encode([
+                'success' => $success_count > 0,
+                'message' => $message,
+                'success_count' => $success_count,
+                'error_count' => count($errors)
+            ]);
+            
+        } else {
+            // Handle individual operations
+            $employee_id = intval($input['employee_id'] ?? 0);
+            
+            if ($employee_id <= 0) {
+                echo json_encode(['success' => false, 'message' => 'Invalid employee ID']);
+                exit;
+            }
+            
+            if ($action === 'punch_in') {
+                // Check if already punched in
+                $check = $conn->prepare("SELECT * FROM attendance WHERE employee_id = ? AND attendance_date = ?");
+                $check->bind_param('is', $employee_id, $attendance_date);
+                $check->execute();
+                $existing = $check->get_result()->fetch_assoc();
+                
+                if ($existing && $existing['time_in']) {
+                    echo json_encode(['success' => false, 'message' => 'Already punched in today']);
+                    exit;
+                }
+                
+                if ($existing) {
+                    $stmt = $conn->prepare("UPDATE attendance SET time_in = ?, status = 'Present' WHERE employee_id = ? AND attendance_date = ?");
+                    $stmt->bind_param('sis', $current_time, $employee_id, $attendance_date);
+                } else {
+                    $stmt = $conn->prepare("INSERT INTO attendance (employee_id, attendance_date, time_in, status) VALUES (?, ?, ?, 'Present')");
+                    $stmt->bind_param('iss', $employee_id, $attendance_date, $current_time);
+                }
+                
+                // Check if late
+                $punch_time = new DateTime($current_time);
+                $standard_time = new DateTime($attendance_date . ' 09:00:00');
+                if ($punch_time > $standard_time) {
+                    $stmt = $conn->prepare("UPDATE attendance SET status = 'Late' WHERE employee_id = ? AND attendance_date = ?");
+                    $stmt->bind_param('is', $employee_id, $attendance_date);
+                    $stmt->execute();
+                }
+                
+            } elseif ($action === 'punch_out') {
+                $stmt = $conn->prepare("UPDATE attendance SET time_out = ? WHERE employee_id = ? AND attendance_date = ?");
+                $stmt->bind_param('sis', $current_time, $employee_id, $attendance_date);
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Invalid action']);
+                exit;
+            }
+            
+            if ($stmt && $stmt->execute()) {
+                echo json_encode(['success' => true, 'message' => 'Action completed successfully']);
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Database error: ' . $conn->error]);
+            }
+        }
+        
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    }
+    exit;
+}
+
 // Get current date and filters
 $current_date = $_GET['date'] ?? date('Y-m-d');
 $department_filter = $_GET['department'] ?? '';
@@ -68,8 +228,10 @@ $query = "
         a.time_out,
         a.attendance_date,
         CASE 
-            WHEN a.time_in IS NOT NULL AND a.time_out IS NOT NULL 
+            WHEN a.time_in IS NOT NULL AND a.time_out IS NOT NULL AND a.time_out > a.time_in
             THEN TIMEDIFF(a.time_out, a.time_in)
+            WHEN a.time_in IS NOT NULL AND a.time_out IS NOT NULL AND a.time_out <= a.time_in
+            THEN '00:00:00'
             ELSE NULL
         END as work_duration,
         CASE 
@@ -342,6 +504,9 @@ include 'layouts/header.php';
                                 <button type="button" class="btn btn-success" onclick="bulkPunchIn()">
                                     <i class="bi bi-box-arrow-in-right"></i> Bulk Punch In
                                 </button>
+                                <button type="button" class="btn btn-danger" onclick="bulkPunchOut()">
+                                    <i class="bi bi-box-arrow-right"></i> Bulk Punch Out
+                                </button>
                                 <button type="button" class="btn btn-outline-primary" onclick="selectAllEmployees()">
                                     <i class="bi bi-check-all"></i> Select All
                                 </button>
@@ -450,8 +615,24 @@ include 'layouts/header.php';
                                                     <div id="duration-display-<?= $emp['employee_id'] ?>">
                                                         <?php
                                                         if ($emp['work_duration']) {
-                                                            $duration = new DateTime($emp['work_duration']);
-                                                            echo $duration->format('H:i') . ' hrs';
+                                                            try {
+                                                                // Handle negative durations (which indicate data issues)
+                                                                if (strpos($emp['work_duration'], '-') === 0) {
+                                                                    echo '<span class="text-danger">Invalid duration</span>';
+                                                                } else {
+                                                                    // Convert time format to DateTime
+                                                                    $time_parts = explode(':', $emp['work_duration']);
+                                                                    if (count($time_parts) >= 2) {
+                                                                        $hours = intval($time_parts[0]);
+                                                                        $minutes = intval($time_parts[1]);
+                                                                        echo sprintf('%02d:%02d hrs', $hours, $minutes);
+                                                                    } else {
+                                                                        echo htmlspecialchars($emp['work_duration']);
+                                                                    }
+                                                                }
+                                                            } catch (Exception $e) {
+                                                                echo '<span class="text-warning">Duration error</span>';
+                                                            }
                                                         } else {
                                                             echo '-';
                                                         }
@@ -497,6 +678,7 @@ include 'layouts/header.php';
 <script>
 // Global variables
 let currentDate = '<?= $current_date ?>';
+console.log('Current date set to:', currentDate);
 
 // Live clock update
 function updateLiveClock() {
@@ -536,7 +718,7 @@ async function punchIn(employeeId) {
     button.disabled = true;
     
     try {
-        const response = await fetch('punch_attendance.php', {
+        const response = await fetch('advanced_attendance.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -544,7 +726,7 @@ async function punchIn(employeeId) {
             body: JSON.stringify({
                 action: 'punch_in',
                 employee_id: parseInt(employeeId),
-                attendance_date: currentDate
+                attendance_date: '<?= $current_date ?>'
             })
         });
         
@@ -603,7 +785,7 @@ async function punchOut(employeeId) {
     button.disabled = true;
     
     try {
-        const response = await fetch('punch_attendance.php', {
+        const response = await fetch('advanced_attendance.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -611,7 +793,7 @@ async function punchOut(employeeId) {
             body: JSON.stringify({
                 action: 'punch_out',
                 employee_id: parseInt(employeeId),
-                attendance_date: currentDate
+                attendance_date: '<?= $current_date ?>'
             })
         });
         
@@ -649,13 +831,15 @@ async function punchOut(employeeId) {
     }
 }
 
-// Bulk punch in
-async function bulkPunchIn() {
+// Bulk punch in - Make it global
+window.bulkPunchIn = async function() {
+    console.log('Bulk punch in called');
+    
     const selectedEmployees = Array.from(document.querySelectorAll('.employee-checkbox:checked'))
         .map(cb => cb.value);
     
     if (selectedEmployees.length === 0) {
-        showAlert('Please select employees first', 'warning');
+        showToast('Warning', 'Please select employees first', 'warning');
         return;
     }
     
@@ -663,8 +847,10 @@ async function bulkPunchIn() {
         return;
     }
     
+    console.log('Selected employees for bulk punch in:', selectedEmployees);
+    
     try {
-        const response = await fetch('punch_attendance.php', {
+        const response = await fetch('advanced_attendance.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -672,23 +858,72 @@ async function bulkPunchIn() {
             body: JSON.stringify({
                 action: 'bulk_punch_in',
                 employee_ids: selectedEmployees,
-                attendance_date: currentDate
+                attendance_date: '<?= $current_date ?>'
             })
         });
         
         const result = await response.json();
+        console.log('Bulk punch in response:', result);
         
         if (result.success) {
-            showAlert(result.message, 'success');
-            // Refresh page to update all UI elements
+            showToast('Success', result.message, 'success');
             setTimeout(() => {
                 window.location.reload();
             }, 1500);
         } else {
-            showAlert(result.message, 'danger');
+            showToast('Error', result.message, 'error');
         }
     } catch (error) {
-        showAlert('Error: ' + error.message, 'danger');
+        console.error('Bulk punch in error:', error);
+        showToast('Error', 'Network error: ' + error.message, 'error');
+    }
+}
+
+// Bulk punch out - Make it global
+window.bulkPunchOut = async function() {
+    console.log('Bulk punch out called');
+    
+    const selectedEmployees = Array.from(document.querySelectorAll('.employee-checkbox:checked'))
+        .map(cb => cb.value);
+    
+    if (selectedEmployees.length === 0) {
+        showToast('Warning', 'Please select employees first', 'warning');
+        return;
+    }
+    
+    if (!confirm(`Punch out ${selectedEmployees.length} selected employees?`)) {
+        return;
+    }
+    
+    console.log('Selected employees for bulk punch out:', selectedEmployees);
+    
+    try {
+        const response = await fetch('advanced_attendance.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                action: 'bulk_punch_out',
+                employee_ids: selectedEmployees,
+                attendance_date: '<?= $current_date ?>'
+            })
+        });
+        
+        const result = await response.json();
+        console.log('Bulk punch out response:', result);
+        
+        if (result.success) {
+            showToast('Success', result.message, 'success');
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        } else {
+            showToast('Error', result.message, 'error');
+        }
+    } catch (error) {
+        console.error('Bulk punch out error:', error);
+        showToast('Error', 'Network error: ' + error.message, 'error');
     }
 }
 
@@ -723,18 +958,22 @@ function convertTo24Hour(time12h) {
     return `${hours}:${minutes}:00`;
 }
 
-// Select all employees
-function selectAllEmployees() {
+// Select all employees - Make it global
+window.selectAllEmployees = function() {
     const checkboxes = document.querySelectorAll('.employee-checkbox');
     checkboxes.forEach(cb => cb.checked = true);
-    document.getElementById('selectAll').checked = true;
+    const selectAllBox = document.getElementById('selectAll');
+    if (selectAllBox) selectAllBox.checked = true;
+    console.log('Selected all employees');
 }
 
-// Clear selection
-function clearSelection() {
+// Clear selection - Make it global
+window.clearSelection = function() {
     const checkboxes = document.querySelectorAll('.employee-checkbox');
     checkboxes.forEach(cb => cb.checked = false);
-    document.getElementById('selectAll').checked = false;
+    const selectAllBox = document.getElementById('selectAll');
+    if (selectAllBox) selectAllBox.checked = false;
+    console.log('Cleared all selections');
 }
 
 // Select all checkbox functionality
@@ -784,7 +1023,53 @@ document.addEventListener('DOMContentLoaded', function() {
     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl);
     });
+    
+    // Add Select All checkbox functionality  
+    const selectAllCheckbox = document.getElementById('selectAll');
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            const checkboxes = document.querySelectorAll('.employee-checkbox');
+            checkboxes.forEach(cb => cb.checked = this.checked);
+            console.log('Select all toggled:', this.checked);
+        });
+        console.log('Select All functionality initialized');
+    } else {
+        console.log('Select All checkbox not found');
+    }
 });
+// Test bulk functions
+window.testBulkFunctions = function() {
+    console.log('=== TESTING BULK FUNCTIONS ===');
+    console.log('bulkPunchIn function:', typeof window.bulkPunchIn);
+    console.log('bulkPunchOut function:', typeof window.bulkPunchOut);
+    
+    // Show checkbox info
+    const checkboxes = document.querySelectorAll('.employee-checkbox');
+    console.log('Total checkboxes found:', checkboxes.length);
+    
+    checkboxes.forEach((cb, index) => {
+        console.log(`Checkbox ${index}: value="${cb.value}", checked=${cb.checked}`);
+    });
+    
+    // Check Select All functionality
+    const selectAllBox = document.getElementById('selectAll');
+    console.log('Select All checkbox found:', selectAllBox !== null);
+    
+    // Simulate selection for testing
+    if (checkboxes.length > 0) {
+        checkboxes[0].checked = true;
+        console.log('Selected first checkbox for testing');
+        console.log('You can now test: bulkPunchIn() or bulkPunchOut()');
+    } else {
+        console.log('No checkboxes found - check HTML structure');
+    }
+    
+    // Test Select All
+    if (selectAllBox) {
+        console.log('You can also test: selectAllBox.click() to select all');
+    }
+}
+
 </script>
 
 <!-- Employee Details Modal -->

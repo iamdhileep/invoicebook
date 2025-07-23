@@ -50,7 +50,6 @@
                 this.setupGlobalSearch();
                 this.setupTheme();
                 this.setupAnimations();
-                console.log('✨ Modern UI System Initialized');
             },
             
             // Sidebar Management
@@ -175,7 +174,7 @@
                                 if (field) field.value = data[key];
                             });
                         } catch (e) {
-                            console.warn('Failed to load saved form data:', e);
+                            // Failed to load saved form data
                         }
                     }
                     
@@ -354,7 +353,7 @@
         // Performance monitoring
         window.addEventListener('load', () => {
             const loadTime = performance.timing.loadEventEnd - performance.timing.navigationStart;
-            console.log(`⚡ Page loaded in ${loadTime}ms`);
+            // Page loaded in ${loadTime}ms
         });
     </script>
     
