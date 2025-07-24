@@ -56,28 +56,29 @@ include 'layouts/sidebar.php';
 ?>
 
 <div class="main-content">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="h3 mb-0">Payroll Report</h1>
-            <p class="text-muted">Detailed salary calculations for <?= date('F Y', mktime(0, 0, 0, $month, 1, $year)) ?></p>
+    <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h1 class="h5 mb-0">📄 Payroll Report</h1>
+                <p class="text-muted small">Detailed salary calculations for <?= date('F Y', mktime(0, 0, 0, $month, 1, $year)) ?></p>
+            </div>
+            <div>
+                <button class="btn btn-outline-success btn-sm" onclick="exportReport()">
+                    <i class="bi bi-download"></i> Export PDF
+                </button>
+                <button class="btn btn-outline-primary btn-sm" onclick="printReport()">
+                    <i class="bi bi-printer"></i> Print
+                </button>
+            </div>
         </div>
-        <div>
-            <button class="btn btn-outline-success" onclick="exportReport()">
-                <i class="bi bi-download"></i> Export PDF
-            </button>
-            <button class="btn btn-outline-primary" onclick="printReport()">
-                <i class="bi bi-printer"></i> Print
-            </button>
-        </div>
-    </div>
 
-    <!-- Month Selection -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <h5 class="mb-0"><i class="bi bi-calendar me-2"></i>Select Report Period</h5>
-        </div>
-        <div class="card-body">
-            <form method="GET" class="row g-3">
+        <!-- Month Selection -->
+        <div class="card mb-3 border-0 shadow-sm">
+            <div class="card-header bg-light border-0 py-2">
+                <h6 class="mb-0 text-dark"><i class="bi bi-calendar me-2"></i>Select Report Period</h6>
+            </div>
+            <div class="card-body p-3">
+                <form method="GET" class="row g-2">
                 <div class="col-md-4">
                     <label class="form-label">Select Month & Year</label>
                     <input type="month" name="month_year" class="form-control" 
@@ -134,76 +135,60 @@ include 'layouts/sidebar.php';
     $totalSavings = $totalSalaryBudget - $totalEarnedSalary;
     ?>
 
-    <!-- Summary Cards -->
-    <div class="row g-3 mb-4">
-        <div class="col-md-3">
-            <div class="card bg-primary text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="card-title mb-0">Working Days</h6>
-                            <h3 class="mb-0"><?= $daysInMonth ?></h3>
+        <!-- Summary Cards -->
+        <div class="row g-2 mb-3">
+            <div class="col-xl-3 col-lg-6 col-md-6">
+                <div class="card statistics-card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #e8f4fd 0%, #cce7ff 100%);">
+                    <div class="card-body text-center p-3">
+                        <div class="mb-2">
+                            <i class="bi bi-calendar-week-fill fs-3" style="color: #0d6efd;"></i>
                         </div>
-                        <div class="fs-1 opacity-75">
-                            <i class="bi bi-calendar-week"></i>
+                        <h5 class="mb-1 fw-bold" style="color: #0d6efd;"><?= $daysInMonth ?></h5>
+                        <small class="text-muted">Working Days</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-lg-6 col-md-6">
+                <div class="card statistics-card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);">
+                    <div class="card-body text-center p-3">
+                        <div class="mb-2">
+                            <i class="bi bi-people-fill fs-3" style="color: #7b1fa2;"></i>
                         </div>
+                        <h5 class="mb-1 fw-bold" style="color: #7b1fa2;"><?= $totalEmployees ?></h5>
+                        <small class="text-muted">Total Employees</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-lg-6 col-md-6">
+                <div class="card statistics-card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);">
+                    <div class="card-body text-center p-3">
+                        <div class="mb-2">
+                            <i class="bi bi-wallet-fill fs-3" style="color: #ff9800;"></i>
+                        </div>
+                        <h5 class="mb-1 fw-bold" style="color: #ff9800;">₹<?= number_format($totalSalaryBudget, 0) ?></h5>
+                        <small class="text-muted">Salary Budget</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-lg-6 col-md-6">
+                <div class="card statistics-card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);">
+                    <div class="card-body text-center p-3">
+                        <div class="mb-2">
+                            <i class="bi bi-currency-rupee fs-3" style="color: #388e3c;"></i>
+                        </div>
+                        <h5 class="mb-1 fw-bold" style="color: #388e3c;">₹<?= number_format($totalEarnedSalary, 0) ?></h5>
+                        <small class="text-muted">Actual Payout</small>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card bg-info text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="card-title mb-0">Total Employees</h6>
-                            <h3 class="mb-0"><?= $totalEmployees ?></h3>
-                        </div>
-                        <div class="fs-1 opacity-75">
-                            <i class="bi bi-people"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card bg-warning text-dark">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="card-title mb-0">Salary Budget</h6>
-                            <h3 class="mb-0">₹<?= number_format($totalSalaryBudget, 0) ?></h3>
-                        </div>
-                        <div class="fs-1 opacity-75">
-                            <i class="bi bi-wallet"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card bg-success text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="card-title mb-0">Actual Payout</h6>
-                            <h3 class="mb-0">₹<?= number_format($totalEarnedSalary, 0) ?></h3>
-                        </div>
-                        <div class="fs-1 opacity-75">
-                            <i class="bi bi-currency-rupee"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Payroll Details -->
-    <div class="card">
-        <div class="card-header">
-            <h5 class="mb-0">Payroll Details - <?= date('F Y', mktime(0, 0, 0, $month, 1, $year)) ?></h5>
-        </div>
-        <div class="card-body">
+        <!-- Payroll Details -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-light border-0 py-2">
+                <h6 class="mb-0 text-dark">Payroll Details - <?= date('F Y', mktime(0, 0, 0, $month, 1, $year)) ?></h6>
+            </div>
+            <div class="card-body p-3">
             <?php if (!empty($summaryData)): ?>
                 <div class="table-responsive">
                     <table class="table table-striped table-hover" id="payrollTable">
@@ -294,15 +279,15 @@ include 'layouts/sidebar.php';
         </div>
     </div>
 
-    <!-- Summary Analysis -->
-    <?php if (!empty($summaryData)): ?>
-        <div class="row mt-4">
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <h6 class="mb-0">Cost Analysis</h6>
-                    </div>
-                    <div class="card-body">
+        <!-- Summary Analysis -->
+        <?php if (!empty($summaryData)): ?>
+            <div class="row g-2 mt-3">
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-light border-0 py-2">
+                            <h6 class="mb-0 text-dark">Cost Analysis</h6>
+                        </div>
+                        <div class="card-body p-3">
                         <div class="d-flex justify-content-between mb-2">
                             <span>Budgeted Amount:</span>
                             <strong>₹<?= number_format($totalSalaryBudget, 2) ?></strong>
@@ -323,13 +308,14 @@ include 'layouts/sidebar.php';
                         </small>
                     </div>
                 </div>
-            </div>
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <h6 class="mb-0">Attendance Summary</h6>
                     </div>
-                    <div class="card-body">
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-light border-0 py-2">
+                            <h6 class="mb-0 text-dark">Attendance Summary</h6>
+                        </div>
+                        <div class="card-body p-3">
                         <?php
                         $totalPossibleDays = $totalEmployees * $daysInMonth;
                         $totalActualPresent = array_sum(array_column($summaryData, 'totalPresentDays'));
@@ -352,9 +338,11 @@ include 'layouts/sidebar.php';
                         </div>
                     </div>
                 </div>
+                    </div>
+                </div>
             </div>
-        </div>
-    <?php endif; ?>
+        <?php endif; ?>
+    </div>
 </div>
 
 <script>
@@ -382,6 +370,246 @@ function printReport() {
 </script>
 
 <style>
+/* Statistics Cards Styling */
+.statistics-card {
+    transition: all 0.3s ease;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.statistics-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
+}
+
+.statistics-card .card-body {
+    position: relative;
+    overflow: hidden;
+}
+
+.statistics-card .card-body::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    opacity: 0;
+}
+
+.statistics-card:hover .card-body::before {
+    opacity: 1;
+    transform: scale(1.2);
+}
+
+.statistics-card i {
+    transition: all 0.3s ease;
+}
+
+.statistics-card:hover i {
+    transform: scale(1.1);
+}
+
+/* Custom Card Styling */
+.card {
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+    border-radius: 10px 10px 0 0 !important;
+}
+
+/* Page Content Spacing */
+.main-content {
+    padding: 1rem 0;
+}
+
+.main-content .container-fluid {
+    padding: 0 15px;
+}
+
+/* Compact spacing for better space utilization */
+.mb-4 {
+    margin-bottom: 1rem !important;
+}
+
+.mb-3 {
+    margin-bottom: 0.75rem !important;
+}
+
+.p-3 {
+    padding: 0.75rem !important;
+}
+
+.py-2 {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+}
+
+.g-2 > * {
+    padding: 0.25rem;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .statistics-card .card-body {
+        padding: 0.75rem;
+    }
+    
+    .statistics-card h5 {
+        font-size: 1.1rem;
+    }
+    
+    .statistics-card i {
+        font-size: 1.5rem !important;
+    }
+}
+
+@media (max-width: 992px) {
+    .main-content .container-fluid {
+        padding: 0 10px;
+    }
+    
+    .statistics-card .card-body {
+        padding: 0.65rem;
+    }
+    
+    .d-flex.gap-2 {
+        gap: 0.5rem !important;
+    }
+    
+    .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .main-content {
+        padding: 0.5rem 0;
+    }
+    
+    .main-content .container-fluid {
+        padding: 0 5px;
+    }
+    
+    .statistics-card .card-body {
+        padding: 0.5rem;
+        text-align: center;
+    }
+    
+    .statistics-card h5 {
+        font-size: 1rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .statistics-card small {
+        font-size: 0.7rem;
+    }
+    
+    .statistics-card i {
+        font-size: 1.3rem !important;
+        margin-bottom: 0.25rem;
+    }
+    
+    .d-flex.justify-content-between {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .d-flex.justify-content-between .d-flex {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .form-control, .form-select {
+        font-size: 0.8rem;
+    }
+    
+    .btn-sm {
+        padding: 0.2rem 0.4rem;
+        font-size: 0.75rem;
+    }
+    
+    .card-body {
+        padding: 0.75rem !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .statistics-card {
+        margin-bottom: 0.5rem;
+    }
+    
+    .statistics-card .card-body {
+        padding: 0.4rem;
+    }
+    
+    .statistics-card h5 {
+        font-size: 0.9rem;
+    }
+    
+    .statistics-card small {
+        font-size: 0.65rem;
+    }
+    
+    .col-xl-3 {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+    
+    .card-header h6 {
+        font-size: 0.9rem;
+    }
+    
+    .card-body {
+        padding: 0.5rem !important;
+    }
+    
+    .table-responsive {
+        font-size: 0.8rem;
+    }
+    
+    .btn-group-sm .btn {
+        padding: 0.15rem 0.3rem;
+        font-size: 0.7rem;
+    }
+}
+
+/* Smooth Transitions */
+* {
+    transition: all 0.2s ease;
+}
+
+/* Table Improvements */
+.table-responsive {
+    border-radius: 8px;
+}
+
+.table th {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+    .table th, .table td {
+        padding: 0.5rem 0.25rem;
+        font-size: 0.8rem;
+    }
+    
+    .badge {
+        font-size: 0.7rem;
+    }
+}
+
 @media print {
     .btn, .card-header, .sidebar, .main-header {
         display: none !important;
@@ -389,10 +617,18 @@ function printReport() {
     .main-content {
         margin-left: 0 !important;
         margin-top: 0 !important;
+        padding: 0 !important;
     }
     .card {
-        border: none !important;
+        border: 1px solid #ddd !important;
         box-shadow: none !important;
+    }
+    .container-fluid {
+        padding: 0 !important;
+    }
+    .statistics-card {
+        break-inside: avoid;
+        page-break-inside: avoid;
     }
 }
 </style>

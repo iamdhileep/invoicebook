@@ -165,168 +165,180 @@ include 'layouts/sidebar.php';
 ?>
 
 <div class="main-content">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="h3 mb-0">
-                <i class="bi bi-calendar3 text-primary me-2"></i>
-                Advanced Attendance Calendar
-            </h1>
-            <p class="text-muted">Complete attendance management with holidays and analytics</p>
-        </div>
-        <div class="d-flex gap-2">
-            <div class="dropdown">
-                <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                    <i class="bi bi-download"></i> Export
+    <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h1 class="h5 mb-0">
+                    📅 Advanced Attendance Calendar
+                </h1>
+                <p class="text-muted small">Complete attendance management with holidays and analytics</p>
+            </div>
+            <div class="d-flex gap-2">
+                <div class="dropdown">
+                    <button class="btn btn-outline-primary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-download"></i> Export
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#" onclick="exportCalendar('pdf')">
+                            <i class="bi bi-file-pdf"></i> Export as PDF
+                        </a></li>
+                        <li><a class="dropdown-item" href="#" onclick="exportCalendar('excel')">
+                            <i class="bi bi-file-excel"></i> Export as Excel
+                        </a></li>
+                        <li><a class="dropdown-item" href="#" onclick="exportCalendar('csv')">
+                            <i class="bi bi-file-csv"></i> Export as CSV
+                        </a></li>
+                    </ul>
+                </div>
+                <button class="btn btn-success btn-sm" onclick="showHolidayManager()">
+                    <i class="bi bi-calendar-event"></i> Manage Holidays
                 </button>
-                <ul class="dropdown-menu">
-                    <li><a class="dropdown-item" href="#" onclick="exportCalendar('pdf')">
-                        <i class="bi bi-file-pdf"></i> Export as PDF
-                    </a></li>
-                    <li><a class="dropdown-item" href="#" onclick="exportCalendar('excel')">
-                        <i class="bi bi-file-excel"></i> Export as Excel
-                    </a></li>
-                    <li><a class="dropdown-item" href="#" onclick="exportCalendar('csv')">
-                        <i class="bi bi-file-csv"></i> Export as CSV
-                    </a></li>
-                </ul>
+                <a href="pages/attendance/attendance.php" class="btn btn-primary btn-sm">
+                    <i class="bi bi-calendar-check"></i> Mark Attendance
+                </a>
             </div>
-            <button class="btn btn-success" onclick="showHolidayManager()">
-                <i class="bi bi-calendar-event"></i> Manage Holidays
-            </button>
-            <a href="pages/attendance/attendance.php" class="btn btn-primary">
-                <i class="bi bi-calendar-check"></i> Mark Attendance
-            </a>
         </div>
-    </div>
 
-    <!-- Enhanced Statistics Cards -->
-    <div class="row g-3 mb-4">
-        <div class="col-md-2">
-            <div class="card bg-primary text-white">
-                <div class="card-body text-center">
-                    <div class="fs-1 mb-2"><i class="bi bi-people"></i></div>
-                    <h4 class="mb-0"><?= $stats['total_employees'] ?? 0 ?></h4>
-                    <small>Total Employees</small>
+        <!-- Enhanced Statistics Cards -->
+        <div class="row g-2 mb-3">
+            <div class="col-xl-2 col-lg-4 col-md-6">
+                <div class="card statistics-card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);">
+                    <div class="card-body text-center p-3">
+                        <div class="mb-2">
+                            <i class="bi bi-people fs-3" style="color: #1976d2;"></i>
+                        </div>
+                        <h5 class="mb-1 fw-bold" style="color: #1976d2;"><?= $stats['total_employees'] ?? 0 ?></h5>
+                        <small class="text-muted">Total Employees</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-2 col-lg-4 col-md-6">
+                <div class="card statistics-card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);">
+                    <div class="card-body text-center p-3">
+                        <div class="mb-2">
+                            <i class="bi bi-person-check-fill fs-3" style="color: #388e3c;"></i>
+                        </div>
+                        <h5 class="mb-1 fw-bold" style="color: #388e3c;"><?= $stats['present_today'] ?? 0 ?></h5>
+                        <small class="text-muted">Present Today</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-2 col-lg-4 col-md-6">
+                <div class="card statistics-card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);">
+                    <div class="card-body text-center p-3">
+                        <div class="mb-2">
+                            <i class="bi bi-person-x-fill fs-3" style="color: #d32f2f;"></i>
+                        </div>
+                        <h5 class="mb-1 fw-bold" style="color: #d32f2f;"><?= $stats['absent_today'] ?? 0 ?></h5>
+                        <small class="text-muted">Absent Today</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-2 col-lg-4 col-md-6">
+                <div class="card statistics-card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);">
+                    <div class="card-body text-center p-3">
+                        <div class="mb-2">
+                            <i class="bi bi-clock-fill fs-3" style="color: #f57c00;"></i>
+                        </div>
+                        <h5 class="mb-1 fw-bold" style="color: #f57c00;"><?= $stats['late_today'] ?? 0 ?></h5>
+                        <small class="text-muted">Late Today</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-2 col-lg-4 col-md-6">
+                <div class="card statistics-card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);">
+                    <div class="card-body text-center p-3">
+                        <div class="mb-2">
+                            <i class="bi bi-graph-up-arrow fs-3" style="color: #7b1fa2;"></i>
+                        </div>
+                        <h5 class="mb-1 fw-bold" style="color: #7b1fa2;"><?= number_format($stats['avg_attendance'] ?? 0, 1) ?>%</h5>
+                        <small class="text-muted">Avg Attendance</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-2 col-lg-4 col-md-6">
+                <div class="card statistics-card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 100%);">
+                    <div class="card-body text-center p-3">
+                        <div class="mb-2">
+                            <i class="bi bi-calendar-event-fill fs-3" style="color: #00695c;"></i>
+                        </div>
+                        <h5 class="mb-1 fw-bold" style="color: #00695c;"><?= count($allHolidays) ?></h5>
+                        <small class="text-muted">Holidays (<?= $currentYear ?>)</small>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-2">
-            <div class="card bg-success text-white">
-                <div class="card-body text-center">
-                    <div class="fs-1 mb-2"><i class="bi bi-person-check"></i></div>
-                    <h4 class="mb-0"><?= $stats['present_today'] ?? 0 ?></h4>
-                    <small>Present Today</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="card bg-danger text-white">
-                <div class="card-body text-center">
-                    <div class="fs-1 mb-2"><i class="bi bi-person-x"></i></div>
-                    <h4 class="mb-0"><?= $stats['absent_today'] ?? 0 ?></h4>
-                    <small>Absent Today</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="card bg-warning text-dark">
-                <div class="card-body text-center">
-                    <div class="fs-1 mb-2"><i class="bi bi-clock"></i></div>
-                    <h4 class="mb-0"><?= $stats['late_today'] ?? 0 ?></h4>
-                    <small>Late Today</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="card bg-info text-white">
-                <div class="card-body text-center">
-                    <div class="fs-1 mb-2"><i class="bi bi-graph-up"></i></div>
-                    <h4 class="mb-0"><?= number_format($stats['avg_attendance'] ?? 0, 1) ?>%</h4>
-                    <small>Avg Attendance</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="card bg-purple text-white" style="background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);">
-                <div class="card-body text-center">
-                    <div class="fs-1 mb-2"><i class="bi bi-calendar-event"></i></div>
-                    <h4 class="mb-0"><?= count($allHolidays) ?></h4>
-                    <small>Holidays (<?= $currentYear ?>)</small>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Calendar Controls and Filters -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <div class="row align-items-center">
-                <div class="col-md-4">
-                    <h5 class="mb-0">
-                        <i class="bi bi-calendar3 me-2"></i>
-                        Calendar View - <?= date('F Y', strtotime($currentMonth . '-01')) ?>
-                    </h5>
-                </div>
-                <div class="col-md-8">
-                    <form method="GET" class="d-flex align-items-center gap-3 justify-content-end">
-                        <div class="d-flex align-items-center gap-2">
-                            <label class="form-label mb-0 fw-bold">Month:</label>
-                            <input type="month" name="month" class="form-control" value="<?= $currentMonth ?>" 
-                                   onchange="this.form.submit()" style="width: 150px;">
-                        </div>
-                        <div class="d-flex align-items-center gap-2">
-                            <label class="form-label mb-0 fw-bold">Employee:</label>
-                            <select name="employee" class="form-select" onchange="this.form.submit()" style="width: 200px;">
-                                <option value="">All Employees</option>
-                                <?php foreach ($employees as $emp): ?>
-                                    <option value="<?= $emp['employee_id'] ?>" 
-                                            <?= $employeeFilter == $emp['employee_id'] ? 'selected' : '' ?>>
-                                        <?= htmlspecialchars($emp['name']) ?> (<?= $emp['employee_code'] ?>)
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                        <div class="btn-group" role="group">
-                            <input type="radio" class="btn-check" name="view" id="calendar-view" value="calendar" 
-                                   <?= $viewType === 'calendar' ? 'checked' : '' ?> onchange="this.form.submit()">
-                            <label class="btn btn-outline-primary" for="calendar-view">
-                                <i class="bi bi-calendar3"></i> Calendar
-                            </label>
-                            
-                            <input type="radio" class="btn-check" name="view" id="list-view" value="list" 
-                                   <?= $viewType === 'list' ? 'checked' : '' ?> onchange="this.form.submit()">
-                            <label class="btn btn-outline-primary" for="list-view">
-                                <i class="bi bi-list-ul"></i> List
-                            </label>
-                            
-                            <input type="radio" class="btn-check" name="view" id="analytics-view" value="analytics" 
-                                   <?= $viewType === 'analytics' ? 'checked' : '' ?> onchange="this.form.submit()">
-                            <label class="btn btn-outline-primary" for="analytics-view">
-                                <i class="bi bi-graph-up"></i> Analytics
-                            </label>
-                        </div>
-                    </form>
+        <!-- Calendar Controls and Filters -->
+        <div class="card mb-3 border-0 shadow-sm">
+            <div class="card-header bg-light border-0 py-2">
+                <div class="row align-items-center">
+                    <div class="col-md-4">
+                        <h6 class="mb-0 text-dark">
+                            <i class="bi bi-calendar3 me-2"></i>
+                            Calendar View - <?= date('F Y', strtotime($currentMonth . '-01')) ?>
+                        </h6>
+                    </div>
+                    <div class="col-md-8">
+                        <form method="GET" class="d-flex align-items-center gap-2 justify-content-end">
+                            <div class="d-flex align-items-center gap-2">
+                                <label class="form-label mb-0 fw-bold small">Month:</label>
+                                <input type="month" name="month" class="form-control form-control-sm" value="<?= $currentMonth ?>" 
+                                       onchange="this.form.submit()" style="width: 140px;">
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <label class="form-label mb-0 fw-bold small">Employee:</label>
+                                <select name="employee" class="form-select form-select-sm" onchange="this.form.submit()" style="width: 180px;">
+                                    <option value="">All Employees</option>
+                                    <?php foreach ($employees as $emp): ?>
+                                        <option value="<?= $emp['employee_id'] ?>" 
+                                                <?= $employeeFilter == $emp['employee_id'] ? 'selected' : '' ?>>
+                                            <?= htmlspecialchars($emp['name']) ?> (<?= $emp['employee_code'] ?>)
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <input type="radio" class="btn-check" name="view" id="calendar-view" value="calendar" 
+                                       <?= $viewType === 'calendar' ? 'checked' : '' ?> onchange="this.form.submit()">
+                                <label class="btn btn-outline-primary" for="calendar-view">
+                                    <i class="bi bi-calendar3"></i> Calendar
+                                </label>
+                                
+                                <input type="radio" class="btn-check" name="view" id="list-view" value="list" 
+                                       <?= $viewType === 'list' ? 'checked' : '' ?> onchange="this.form.submit()">
+                                <label class="btn btn-outline-primary" for="list-view">
+                                    <i class="bi bi-list-ul"></i> List
+                                </label>
+                                
+                                <input type="radio" class="btn-check" name="view" id="analytics-view" value="analytics" 
+                                       <?= $viewType === 'analytics' ? 'checked' : '' ?> onchange="this.form.submit()">
+                                <label class="btn btn-outline-primary" for="analytics-view">
+                                    <i class="bi bi-graph-up"></i> Analytics
+                                </label>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="card-body">
-            <?php if ($viewType === 'calendar'): ?>
-                <div id="calendar"></div>
-            <?php elseif ($viewType === 'list'): ?>
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover" id="attendanceListTable">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>Date</th>
-                                <th>Employee</th>
-                                <th>Status</th>
-                                <th>Time In</th>
-                                <th>Time Out</th>
-                                <th>Duration</th>
-                                <th>Holiday/Leave</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
+            <div class="card-body p-3">
+                <?php if ($viewType === 'calendar'): ?>
+                    <div id="calendar"></div>
+                <?php elseif ($viewType === 'list'): ?>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover" id="attendanceListTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Employee</th>
+                                    <th>Status</th>
+                                    <th>Time In</th>
+                                    <th>Time Out</th>
+                                    <th>Duration</th>
+                                    <th>Holiday/Leave</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
                         <tbody>
                             <?php foreach ($attendanceData as $date => $records): ?>
                                 <?php foreach ($records as $record): ?>
@@ -430,92 +442,93 @@ include 'layouts/sidebar.php';
         </div>
     </div>
 
-    <!-- Enhanced Legend with Holidays -->
-    <div class="row">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Legend</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-3">
-                            <div class="d-flex align-items-center mb-2">
-                                <div class="bg-success rounded me-2" style="width: 20px; height: 20px;"></div>
-                                <span>Present</span>
+        <!-- Enhanced Legend with Holidays -->
+        <div class="row g-2">
+            <div class="col-md-8">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-light border-0 py-2">
+                        <h6 class="mb-0 text-dark"><i class="bi bi-info-circle me-2"></i>Legend</h6>
+                    </div>
+                    <div class="card-body p-3">
+                        <div class="row">
+                            <div class="col-md-3 col-6">
+                                <div class="d-flex align-items-center mb-2">
+                                    <div class="bg-success rounded me-2" style="width: 20px; height: 20px;"></div>
+                                    <small>Present</small>
+                                </div>
                             </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="d-flex align-items-center mb-2">
-                                <div class="bg-danger rounded me-2" style="width: 20px; height: 20px;"></div>
-                                <span>Absent</span>
+                            <div class="col-md-3 col-6">
+                                <div class="d-flex align-items-center mb-2">
+                                    <div class="bg-danger rounded me-2" style="width: 20px; height: 20px;"></div>
+                                    <small>Absent</small>
+                                </div>
                             </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="d-flex align-items-center mb-2">
-                                <div class="bg-warning rounded me-2" style="width: 20px; height: 20px;"></div>
-                                <span>Late</span>
+                            <div class="col-md-3 col-6">
+                                <div class="d-flex align-items-center mb-2">
+                                    <div class="bg-warning rounded me-2" style="width: 20px; height: 20px;"></div>
+                                    <small>Late</small>
+                                </div>
                             </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="d-flex align-items-center mb-2">
-                                <div class="bg-info rounded me-2" style="width: 20px; height: 20px;"></div>
-                                <span>Half Day</span>
+                            <div class="col-md-3 col-6">
+                                <div class="d-flex align-items-center mb-2">
+                                    <div class="bg-info rounded me-2" style="width: 20px; height: 20px;"></div>
+                                    <small>Half Day</small>
+                                </div>
                             </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="d-flex align-items-center mb-2">
-                                <div class="bg-dark rounded me-2" style="width: 20px; height: 20px;"></div>
-                                <span>National Holiday</span>
+                            <div class="col-md-3 col-6">
+                                <div class="d-flex align-items-center mb-2">
+                                    <div class="rounded me-2" style="width: 20px; height: 20px; background: #6c757d;"></div>
+                                    <small>National Holiday</small>
+                                </div>
                             </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="d-flex align-items-center mb-2">
-                                <div class="bg-secondary rounded me-2" style="width: 20px; height: 20px;"></div>
-                                <span>State Holiday</span>
+                            <div class="col-md-3 col-6">
+                                <div class="d-flex align-items-center mb-2">
+                                    <div class="rounded me-2" style="width: 20px; height: 20px; background: #adb5bd;"></div>
+                                    <small>State Holiday</small>
+                                </div>
                             </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="d-flex align-items-center mb-2">
-                                <div class="rounded me-2" style="width: 20px; height: 20px; background: #ff6b6b;"></div>
-                                <span>Weekend</span>
+                            <div class="col-md-3 col-6">
+                                <div class="d-flex align-items-center mb-2">
+                                    <div class="rounded me-2" style="width: 20px; height: 20px; background: #ff6b6b;"></div>
+                                    <small>Weekend</small>
+                                </div>
                             </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="d-flex align-items-center mb-2">
-                                <div class="rounded me-2" style="width: 20px; height: 20px; background: #4ecdc4;"></div>
-                                <span>On Leave</span>
+                            <div class="col-md-3 col-6">
+                                <div class="d-flex align-items-center mb-2">
+                                    <div class="rounded me-2" style="width: 20px; height: 20px; background: #4ecdc4;"></div>
+                                    <small>On Leave</small>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="bi bi-calendar-event me-2"></i>Upcoming Holidays</h5>
-                </div>
-                <div class="card-body">
-                    <div class="list-group list-group-flush">
-                        <?php 
-                        $upcomingHolidays = array_filter($allHolidays, function($date) {
-                            return strtotime($date) >= strtotime(date('Y-m-d'));
-                        }, ARRAY_FILTER_USE_KEY);
-                        
-                        $upcomingHolidays = array_slice($upcomingHolidays, 0, 5, true);
-                        
-                        foreach ($upcomingHolidays as $date => $holiday): ?>
-                            <div class="list-group-item d-flex justify-content-between align-items-center p-2">
-                                <div>
-                                    <strong><?= $holiday['name'] ?></strong><br>
-                                    <small class="text-muted"><?= date('j M Y, l', strtotime($date)) ?></small>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-light border-0 py-2">
+                        <h6 class="mb-0 text-dark"><i class="bi bi-calendar-event me-2"></i>Upcoming Holidays</h6>
+                    </div>
+                    <div class="card-body p-3">
+                        <div class="list-group list-group-flush">
+                            <?php 
+                            $upcomingHolidays = array_filter($allHolidays, function($date) {
+                                return strtotime($date) >= strtotime(date('Y-m-d'));
+                            }, ARRAY_FILTER_USE_KEY);
+                            
+                            $upcomingHolidays = array_slice($upcomingHolidays, 0, 5, true);
+                            
+                            foreach ($upcomingHolidays as $date => $holiday): ?>
+                                <div class="list-group-item d-flex justify-content-between align-items-center p-2 border-0">
+                                    <div>
+                                        <strong class="small"><?= $holiday['name'] ?></strong><br>
+                                        <small class="text-muted"><?= date('j M Y, l', strtotime($date)) ?></small>
+                                    </div>
+                                    <span class="badge <?= $holiday['type'] === 'national' ? 'bg-primary' : 'bg-secondary' ?> badge-sm">
+                                        <?= ucfirst($holiday['type']) ?>
+                                    </span>
                                 </div>
-                                <span class="badge <?= $holiday['type'] === 'national' ? 'bg-primary' : 'bg-secondary' ?>">
-                                    <?= ucfirst($holiday['type']) ?>
-                                </span>
-                            </div>
-                        <?php endforeach; ?>
+                            <?php endforeach; ?>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1038,10 +1051,64 @@ function editHoliday(date) {
 </script>
 
 <style>
-.bg-purple {
-    background: linear-gradient(45deg, #667eea 0%, #764ba2 100%) !important;
+/* Statistics Cards Styling */
+.statistics-card {
+    transition: all 0.3s ease;
+    border-radius: 12px;
+    overflow: hidden;
 }
 
+.statistics-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
+}
+
+.statistics-card .card-body {
+    position: relative;
+    overflow: hidden;
+}
+
+.statistics-card .card-body::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    opacity: 0;
+}
+
+.statistics-card:hover .card-body::before {
+    opacity: 1;
+    transform: scale(1.2);
+}
+
+.statistics-card i {
+    transition: all 0.3s ease;
+}
+
+.statistics-card:hover i {
+    transform: scale(1.1);
+}
+
+/* Custom Card Styling */
+.card {
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+    border-radius: 10px 10px 0 0 !important;
+}
+
+/* FullCalendar Styling */
 .fc-event {
     border-radius: 4px;
     font-size: 12px;
@@ -1051,24 +1118,50 @@ function editHoliday(date) {
     margin: 1px 0;
 }
 
-.card {
-    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-    border: 1px solid rgba(0, 0, 0, 0.125);
-}
-
+/* Button Group Styling */
 .btn-group .btn-check:checked + .btn {
     background-color: #0d6efd;
     border-color: #0d6efd;
     color: white;
 }
 
-.table th {
-    font-weight: 600;
-    background-color: #f8f9fa;
-}
-
+/* Modal Styling */
 .modal-xl {
     max-width: 90%;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .statistics-card .card-body {
+        padding: 0.75rem;
+    }
+    
+    .statistics-card h5 {
+        font-size: 1.1rem;
+    }
+    
+    .statistics-card i {
+        font-size: 1.5rem !important;
+    }
+}
+
+@media (max-width: 992px) {
+    .main-content .container-fluid {
+        padding: 0 10px;
+    }
+    
+    .statistics-card .card-body {
+        padding: 0.65rem;
+    }
+    
+    .d-flex.gap-2 {
+        gap: 0.5rem !important;
+    }
+    
+    .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.8rem;
+    }
 }
 
 @media (max-width: 768px) {
@@ -1077,8 +1170,135 @@ function editHoliday(date) {
     }
     
     .card-body {
-        padding: 1rem 0.5rem;
+        padding: 0.75rem !important;
     }
+    
+    .statistics-card .card-body {
+        padding: 0.5rem;
+        text-align: center;
+    }
+    
+    .statistics-card h5 {
+        font-size: 1rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .statistics-card small {
+        font-size: 0.7rem;
+    }
+    
+    .statistics-card i {
+        font-size: 1.3rem !important;
+        margin-bottom: 0.25rem;
+    }
+    
+    .d-flex.justify-content-between {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .d-flex.justify-content-between .d-flex {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .form-control-sm, .form-select-sm {
+        font-size: 0.8rem;
+    }
+    
+    .btn-group-sm .btn {
+        padding: 0.2rem 0.4rem;
+        font-size: 0.75rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .statistics-card {
+        margin-bottom: 0.5rem;
+    }
+    
+    .statistics-card .card-body {
+        padding: 0.4rem;
+    }
+    
+    .statistics-card h5 {
+        font-size: 0.9rem;
+    }
+    
+    .statistics-card small {
+        font-size: 0.65rem;
+    }
+    
+    .col-xl-2 {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+    
+    .card-header h6 {
+        font-size: 0.9rem;
+    }
+    
+    .legend-section .col-6 {
+        margin-bottom: 0.5rem;
+    }
+    
+    .upcoming-holidays .list-group-item {
+        padding: 0.5rem !important;
+    }
+    
+    .upcoming-holidays .small, .upcoming-holidays small {
+        font-size: 0.7rem;
+    }
+}
+
+/* Additional Utility Classes */
+.badge-sm {
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
+}
+
+.shadow-soft {
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08) !important;
+}
+
+.border-radius-lg {
+    border-radius: 12px;
+}
+
+/* Smooth Transitions */
+* {
+    transition: all 0.2s ease;
+}
+
+/* Page Content Spacing */
+.main-content {
+    padding: 1rem 0;
+}
+
+.main-content .container-fluid {
+    padding: 0 15px;
+}
+
+/* Compact spacing for better space utilization */
+.mb-4 {
+    margin-bottom: 1rem !important;
+}
+
+.mb-3 {
+    margin-bottom: 0.75rem !important;
+}
+
+.p-3 {
+    padding: 0.75rem !important;
+}
+
+.py-2 {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+}
+
+.g-2 > * {
+    padding: 0.25rem;
 }
 </style>
 
