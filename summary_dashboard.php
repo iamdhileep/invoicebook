@@ -260,28 +260,28 @@ include 'layouts/header.php';
     <div class="content">
         <div class="container-fluid">
             <!-- Page Header -->
-            <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-2">
                 <div>
-                    <h1 class="h3 mb-0">📊 Summary by Date Range</h1>
-                    <p class="text-muted">Comprehensive business analytics from <?= date('M d, Y', strtotime($dateFrom)) ?> to <?= date('M d, Y', strtotime($dateTo)) ?></p>
+                    <h1 class="h5 mb-0">📊 Summary by Date Range</h1>
+                    <p class="text-muted small mb-0">Comprehensive business analytics from <?= date('M d, Y', strtotime($dateFrom)) ?> to <?= date('M d, Y', strtotime($dateTo)) ?></p>
                 </div>
                 <div class="d-flex gap-2">
-                    <button class="btn btn-outline-success" onclick="exportSummary()">
+                    <button class="btn btn-outline-success btn-sm" onclick="exportSummary()">
                         <i class="bi bi-download"></i> Export Summary
                     </button>
-                    <button class="btn btn-outline-primary" onclick="printSummary()">
+                    <button class="btn btn-outline-primary btn-sm" onclick="printSummary()">
                         <i class="bi bi-printer"></i> Print
                     </button>
                 </div>
             </div>
 
             <!-- Date Range Filter -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="bi bi-calendar-range me-2"></i>Select Date Range</h5>
+            <div class="card mb-2 border-0 shadow-sm">
+                <div class="card-header bg-light border-0 py-2">
+                    <h6 class="mb-0 text-dark"><i class="bi bi-calendar-range me-2"></i>Select Date Range</h6>
                 </div>
-                <div class="card-body">
-                    <form method="GET" class="row g-3">
+                <div class="card-body p-3">
+                    <form method="GET" class="row g-2">
                         <div class="col-md-3">
                             <label class="form-label">Quick Periods</label>
                             <select name="period" class="form-select" onchange="toggleCustomDates(this.value)">
@@ -316,17 +316,17 @@ include 'layouts/header.php';
             </div>
 
             <!-- Key Performance Indicators -->
-            <div class="row g-3 mb-4">
-                <div class="col-lg-3 col-md-6">
-                    <div class="card bg-primary text-white h-100">
-                        <div class="card-body">
+            <div class="row g-2 mb-2">
+                <div class="col-xl-3 col-lg-6 col-md-6">
+                    <div class="card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <div class="card-body p-3">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
-                                    <h6 class="card-title mb-0">Total Revenue</h6>
-                                    <h3 class="mb-0">₹<?= number_format($revenueData['total_revenue'], 2) ?></h3>
-                                    <small class="opacity-75"><?= $revenueData['total_invoices'] ?> invoices</small>
+                                    <h6 class="card-title mb-1 text-white small">Total Revenue</h6>
+                                    <h4 class="mb-0 fw-bold" style="color: #ffeb3b;">₹<?= number_format($revenueData['total_revenue'], 2) ?></h4>
+                                    <small class="text-white-50"><?= $revenueData['total_invoices'] ?> invoices</small>
                                 </div>
-                                <div class="fs-1 opacity-75">
+                                <div class="fs-2 text-white-50">
                                     <i class="bi bi-currency-rupee"></i>
                                 </div>
                             </div>
@@ -334,16 +334,16 @@ include 'layouts/header.php';
                     </div>
                 </div>
 
-                <div class="col-lg-3 col-md-6">
-                    <div class="card bg-danger text-white h-100">
-                        <div class="card-body">
+                <div class="col-xl-3 col-lg-6 col-md-6">
+                    <div class="card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                        <div class="card-body p-3">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
-                                    <h6 class="card-title mb-0">Total Expenses</h6>
-                                    <h3 class="mb-0">₹<?= number_format($expenseData['total_amount'], 2) ?></h3>
-                                    <small class="opacity-75"><?= $expenseData['total_expenses'] ?> expenses</small>
+                                    <h6 class="card-title mb-1 text-white small">Total Expenses</h6>
+                                    <h4 class="mb-0 fw-bold" style="color: #4fc3f7;">₹<?= number_format($expenseData['total_amount'], 2) ?></h4>
+                                    <small class="text-white-50"><?= $expenseData['total_expenses'] ?> expenses</small>
                                 </div>
-                                <div class="fs-1 opacity-75">
+                                <div class="fs-2 text-white-50">
                                     <i class="bi bi-cash-stack"></i>
                                 </div>
                             </div>
@@ -351,16 +351,16 @@ include 'layouts/header.php';
                     </div>
                 </div>
 
-                <div class="col-lg-3 col-md-6">
-                    <div class="card bg-<?= $profit >= 0 ? 'success' : 'warning' ?> text-white h-100">
-                        <div class="card-body">
+                <div class="col-xl-3 col-lg-6 col-md-6">
+                    <div class="card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                        <div class="card-body p-3">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
-                                    <h6 class="card-title mb-0">Net Profit</h6>
-                                    <h3 class="mb-0">₹<?= number_format($profit, 2) ?></h3>
-                                    <small class="opacity-75"><?= number_format($profitMargin, 1) ?>% margin</small>
+                                    <h6 class="card-title mb-1 text-white small">Net Profit</h6>
+                                    <h4 class="mb-0 fw-bold" style="color: #ffeb3b;">₹<?= number_format($profit, 2) ?></h4>
+                                    <small class="text-white-50"><?= number_format($profitMargin, 1) ?>% margin</small>
                                 </div>
-                                <div class="fs-1 opacity-75">
+                                <div class="fs-2 text-white-50">
                                     <i class="bi bi-graph-<?= $profit >= 0 ? 'up' : 'down' ?>"></i>
                                 </div>
                             </div>
@@ -368,16 +368,16 @@ include 'layouts/header.php';
                     </div>
                 </div>
 
-                <div class="col-lg-3 col-md-6">
-                    <div class="card bg-info text-white h-100">
-                        <div class="card-body">
+                <div class="col-xl-3 col-lg-6 col-md-6">
+                    <div class="card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                        <div class="card-body p-3">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
-                                    <h6 class="card-title mb-0">Attendance Rate</h6>
-                                    <h3 class="mb-0"><?= number_format($attendanceRate, 1) ?>%</h3>
-                                    <small class="opacity-75"><?= $employeeData['total_employees'] ?> employees</small>
+                                    <h6 class="card-title mb-1 text-white small">Attendance Rate</h6>
+                                    <h4 class="mb-0 fw-bold" style="color: #2196f3;"><?= number_format($attendanceRate, 1) ?>%</h4>
+                                    <small class="text-white-50"><?= $employeeData['total_employees'] ?> employees</small>
                                 </div>
-                                <div class="fs-1 opacity-75">
+                                <div class="fs-2 text-white-50">
                                     <i class="bi bi-people"></i>
                                 </div>
                             </div>
@@ -387,24 +387,24 @@ include 'layouts/header.php';
             </div>
 
             <!-- Detailed Metrics Row -->
-            <div class="row g-4 mb-4">
+            <div class="row g-2 mb-2">
                 <!-- Revenue Details -->
-                <div class="col-lg-6">
-                    <div class="card h-100">
-                        <div class="card-header">
-                            <h5 class="mb-0"><i class="bi bi-bar-chart me-2"></i>Revenue Analysis</h5>
+                <div class="col-lg-6 col-md-12">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-header bg-light border-0 py-2">
+                            <h6 class="mb-0 text-dark"><i class="bi bi-bar-chart me-2"></i>Revenue Analysis</h6>
                         </div>
-                        <div class="card-body">
-                            <div class="row g-3">
+                        <div class="card-body p-3">
+                            <div class="row g-2">
                                 <div class="col-6">
-                                    <div class="text-center p-3 bg-light rounded">
-                                        <h4 class="text-primary mb-1">₹<?= number_format($revenueData['avg_invoice_value'], 2) ?></h4>
+                                    <div class="text-center p-2 bg-primary bg-opacity-10 rounded">
+                                        <h5 class="text-primary mb-1 fw-bold">₹<?= number_format($revenueData['avg_invoice_value'], 2) ?></h5>
                                         <small class="text-muted">Avg Invoice Value</small>
                                     </div>
                                 </div>
                                 <div class="col-6">
-                                    <div class="text-center p-3 bg-light rounded">
-                                        <h4 class="text-success mb-1">₹<?= number_format($revenueData['highest_invoice'], 2) ?></h4>
+                                    <div class="text-center p-2 bg-success bg-opacity-10 rounded">
+                                        <h5 class="text-success mb-1 fw-bold">₹<?= number_format($revenueData['highest_invoice'], 2) ?></h5>
                                         <small class="text-muted">Highest Invoice</small>
                                     </div>
                                 </div>
@@ -423,22 +423,22 @@ include 'layouts/header.php';
                 </div>
 
                 <!-- Expense Details -->
-                <div class="col-lg-6">
-                    <div class="card h-100">
-                        <div class="card-header">
-                            <h5 class="mb-0"><i class="bi bi-receipt me-2"></i>Expense Analysis</h5>
+                <div class="col-lg-6 col-md-12">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-header bg-light border-0 py-2">
+                            <h6 class="mb-0 text-dark"><i class="bi bi-receipt me-2"></i>Expense Analysis</h6>
                         </div>
-                        <div class="card-body">
-                            <div class="row g-3">
+                        <div class="card-body p-3">
+                            <div class="row g-2">
                                 <div class="col-6">
-                                    <div class="text-center p-3 bg-light rounded">
-                                        <h4 class="text-warning mb-1">₹<?= number_format($expenseData['avg_expense'], 2) ?></h4>
+                                    <div class="text-center p-2 bg-warning bg-opacity-10 rounded">
+                                        <h5 class="text-warning mb-1 fw-bold">₹<?= number_format($expenseData['avg_expense'], 2) ?></h5>
                                         <small class="text-muted">Avg Expense</small>
                                     </div>
                                 </div>
                                 <div class="col-6">
-                                    <div class="text-center p-3 bg-light rounded">
-                                        <h4 class="text-danger mb-1">₹<?= number_format($expenseData['highest_expense'], 2) ?></h4>
+                                    <div class="text-center p-2 bg-danger bg-opacity-10 rounded">
+                                        <h5 class="text-danger mb-1 fw-bold">₹<?= number_format($expenseData['highest_expense'], 2) ?></h5>
                                         <small class="text-muted">Highest Expense</small>
                                     </div>
                                 </div>
@@ -458,24 +458,24 @@ include 'layouts/header.php';
             </div>
 
             <!-- Charts and Analytics Row -->
-            <div class="row g-4 mb-4">
+            <div class="row g-2 mb-2">
                 <!-- Daily Trends Chart -->
-                <div class="col-lg-8">
-                    <div class="card h-100">
-                        <div class="card-header">
-                            <h5 class="mb-0"><i class="bi bi-graph-up me-2"></i>Daily Revenue vs Expenses</h5>
+                <div class="col-lg-8 col-md-12">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-header bg-light border-0 py-2">
+                            <h6 class="mb-0 text-dark"><i class="bi bi-graph-up me-2"></i>Daily Revenue vs Expenses</h6>
                         </div>
-                        <div class="card-body">
+                        <div class="card-body p-3">
                             <canvas id="dailyTrendsChart" height="300"></canvas>
                         </div>
                     </div>
                 </div>
 
                 <!-- Top Categories -->
-                <div class="col-lg-4">
-                    <div class="card h-100">
-                        <div class="card-header">
-                            <h5 class="mb-0"><i class="bi bi-pie-chart me-2"></i>Top Categories</h5>
+                <div class="col-lg-4 col-md-12">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-header bg-light border-0 py-2">
+                            <h6 class="mb-0 text-dark"><i class="bi bi-pie-chart me-2"></i>Top Categories</h6>
                         </div>
                         <div class="card-body">
                             <?php if ($topCategories->num_rows > 0): ?>
@@ -502,24 +502,24 @@ include 'layouts/header.php';
             </div>
 
             <!-- Employee & Inventory Summary -->
-            <div class="row g-4 mb-4">
+            <div class="row g-2 mb-2">
                 <!-- Employee Summary -->
-                <div class="col-lg-6">
-                    <div class="card h-100">
-                        <div class="card-header">
-                            <h5 class="mb-0"><i class="bi bi-people me-2"></i>Employee & Attendance Summary</h5>
+                <div class="col-lg-6 col-md-12">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-header bg-light border-0 py-2">
+                            <h6 class="mb-0 text-dark"><i class="bi bi-people me-2"></i>Employee & Attendance Summary</h6>
                         </div>
-                        <div class="card-body">
-                            <div class="row g-3 mb-3">
+                        <div class="card-body p-3">
+                            <div class="row g-2 mb-3">
                                 <div class="col-6">
-                                    <div class="text-center p-3 bg-success bg-opacity-10 rounded">
-                                        <h4 class="text-success mb-1"><?= $employeeData['total_present_days'] ?></h4>
+                                    <div class="text-center p-2 bg-success bg-opacity-10 rounded">
+                                        <h5 class="text-success mb-1 fw-bold"><?= $employeeData['total_present_days'] ?></h5>
                                         <small class="text-muted">Present Days</small>
                                     </div>
                                 </div>
                                 <div class="col-6">
-                                    <div class="text-center p-3 bg-danger bg-opacity-10 rounded">
-                                        <h4 class="text-danger mb-1"><?= $employeeData['total_absent_days'] ?></h4>
+                                    <div class="text-center p-2 bg-danger bg-opacity-10 rounded">
+                                        <h5 class="text-danger mb-1 fw-bold"><?= $employeeData['total_absent_days'] ?></h5>
                                         <small class="text-muted">Absent Days</small>
                                     </div>
                                 </div>
@@ -546,22 +546,22 @@ include 'layouts/header.php';
                 </div>
 
                 <!-- Inventory Summary -->
-                <div class="col-lg-6">
-                    <div class="card h-100">
-                        <div class="card-header">
-                            <h5 class="mb-0"><i class="bi bi-box-seam me-2"></i>Inventory Summary</h5>
+                <div class="col-lg-6 col-md-12">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-header bg-light border-0 py-2">
+                            <h6 class="mb-0 text-dark"><i class="bi bi-box-seam me-2"></i>Inventory Summary</h6>
                         </div>
-                        <div class="card-body">
-                            <div class="row g-3 mb-3">
+                        <div class="card-body p-3">
+                            <div class="row g-2 mb-3">
                                 <div class="col-6">
-                                    <div class="text-center p-3 bg-primary bg-opacity-10 rounded">
-                                        <h4 class="text-primary mb-1"><?= $itemsData['total_items'] ?></h4>
+                                    <div class="text-center p-2 bg-primary bg-opacity-10 rounded">
+                                        <h5 class="text-primary mb-1 fw-bold"><?= $itemsData['total_items'] ?></h5>
                                         <small class="text-muted">Total Items</small>
                                     </div>
                                 </div>
                                 <div class="col-6">
-                                    <div class="text-center p-3 bg-info bg-opacity-10 rounded">
-                                        <h4 class="text-info mb-1">₹<?= number_format($itemsData['total_inventory_value'], 2) ?></h4>
+                                    <div class="text-center p-2 bg-info bg-opacity-10 rounded">
+                                        <h5 class="text-info mb-1 fw-bold">₹<?= number_format($itemsData['total_inventory_value'], 2) ?></h5>
                                         <small class="text-muted">Inventory Value</small>
                                     </div>
                                 </div>
@@ -589,9 +589,9 @@ include 'layouts/header.php';
             </div>
 
             <!-- Recent Transactions -->
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Recent Transactions</h5>
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light border-0 py-2">
+                    <h6 class="mb-0 text-dark"><i class="bi bi-clock-history me-2"></i>Recent Transactions</h6>
                 </div>
                 <div class="card-body">
                     <?php if ($recentTransactions->num_rows > 0): ?>
@@ -747,6 +747,197 @@ toggleCustomDates('<?= $period ?>');
 </script>
 
 <style>
+/* Enhanced Dashboard Styling */
+.main-content {
+    padding: 0.5rem 0;
+}
+
+.container-fluid {
+    max-width: 100%;
+    padding: 0 15px;
+}
+
+/* Card Hover Effects */
+.card {
+    transition: all 0.3s ease;
+    border-radius: 10px;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1) !important;
+}
+
+.card-header {
+    border-radius: 10px 10px 0 0 !important;
+}
+
+/* Compact Spacing */
+.mb-4 {
+    margin-bottom: 1rem !important;
+}
+
+.mb-3 {
+    margin-bottom: 0.75rem !important;
+}
+
+.mb-2 {
+    margin-bottom: 0.5rem !important;
+}
+
+.p-3 {
+    padding: 0.75rem !important;
+}
+
+.py-2 {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+}
+
+.g-2 > * {
+    padding: 0.25rem;
+}
+
+/* Responsive Grid Enhancements */
+@media (max-width: 1200px) {
+    .col-xl-3 {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+    
+    .card-body {
+        padding: 0.65rem !important;
+    }
+}
+
+@media (max-width: 992px) {
+    .main-content {
+        padding: 0.5rem 0;
+    }
+    
+    .container-fluid {
+        padding: 0 10px;
+    }
+    
+    .card-body {
+        padding: 0.6rem !important;
+    }
+    
+    .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.8rem;
+    }
+    
+    .d-flex.gap-2 {
+        gap: 0.5rem !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .col-xl-3, .col-lg-6 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+    
+    .main-content {
+        padding: 0.25rem 0;
+    }
+    
+    .container-fluid {
+        padding: 0 5px;
+    }
+    
+    .row {
+        margin: 0 -5px;
+    }
+    
+    .row > * {
+        padding: 0 5px;
+    }
+    
+    .card-body {
+        padding: 0.5rem !important;
+    }
+    
+    .d-flex.justify-content-between {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .d-flex.justify-content-between .d-flex {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .form-control, .form-select {
+        font-size: 0.85rem;
+    }
+    
+    .btn-sm {
+        padding: 0.2rem 0.4rem;
+        font-size: 0.75rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .card-body {
+        padding: 0.4rem !important;
+    }
+    
+    .h5 {
+        font-size: 1.1rem;
+    }
+    
+    .small {
+        font-size: 0.8rem;
+    }
+    
+    .card h4 {
+        font-size: 1.2rem;
+    }
+    
+    .card h5 {
+        font-size: 1rem;
+    }
+    
+    .card h6 {
+        font-size: 0.9rem;
+    }
+    
+    .form-control, .form-select {
+        font-size: 0.8rem;
+        padding: 0.375rem 0.5rem;
+    }
+    
+    .btn {
+        font-size: 0.8rem;
+        padding: 0.25rem 0.5rem;
+    }
+}
+
+/* Flexible Content Areas */
+.card-body {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+/* Responsive Table */
+@media (max-width: 768px) {
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+    
+    .table th, .table td {
+        padding: 0.5rem 0.25rem;
+    }
+}
+
+/* Smooth Transitions */
+* {
+    transition: all 0.2s ease;
+}
+
 @media print {
     .btn, .card-header, .sidebar, .navbar {
         display: none !important;

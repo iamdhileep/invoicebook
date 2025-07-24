@@ -42,102 +42,105 @@ include 'layouts/sidebar.php';
 ?>
 
 <div class="main-content">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="h3 mb-0">Invoice History</h1>
-            <p class="text-muted">View and manage all invoice records</p>
-        </div>
-        <div>
-            <a href="pages/invoice/invoice.php" class="btn btn-primary">
-                <i class="bi bi-plus-circle"></i> Create New Invoice
-            </a>
-        </div>
-    </div>
-
-    <!-- Summary Cards -->
-    <div class="row g-3 mb-4">
-        <div class="col-md-6">
-            <div class="card bg-success text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="card-title mb-0">Total Revenue</h6>
-                            <h3 class="mb-0">₹<?= number_format($totalAmount, 2) ?></h3>
-                        </div>
-                        <div class="fs-1 opacity-75">
-                            <i class="bi bi-currency-rupee"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card bg-primary text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="card-title mb-0">Total Invoices</h6>
-                            <h3 class="mb-0"><?= $totalCount ?></h3>
-                        </div>
-                        <div class="fs-1 opacity-75">
-                            <i class="bi bi-receipt"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Filters -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <h5 class="mb-0"><i class="bi bi-funnel me-2"></i>Filters</h5>
-        </div>
-        <div class="card-body">
-            <form method="GET" class="row g-3">
-                <div class="col-md-4">
-                    <label class="form-label">Search Customer</label>
-                    <input type="text" name="search" class="form-control" 
-                           placeholder="Search by customer name" 
-                           value="<?= htmlspecialchars($search) ?>">
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">From Date</label>
-                    <input type="date" name="date_from" class="form-control" value="<?= htmlspecialchars($dateFrom) ?>">
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">To Date</label>
-                    <input type="date" name="date_to" class="form-control" value="<?= htmlspecialchars($dateTo) ?>">
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label">&nbsp;</label>
-                    <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-search"></i> Filter
-                        </button>
-                        <a href="invoice_history.php" class="btn btn-outline-secondary">
-                            <i class="bi bi-arrow-clockwise"></i> Reset
-                        </a>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Invoices Table -->
-    <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">Invoice Records</h5>
+    <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center mb-3">
             <div>
-                <button class="btn btn-outline-danger btn-sm" id="bulkDeleteBtn" style="display: none;">
-                    <i class="bi bi-trash"></i> Delete Selected
-                </button>
-                <button class="btn btn-outline-success btn-sm" onclick="exportToExcel()">
-                    <i class="bi bi-file-earmark-excel"></i> Export
-                </button>
+                <h1 class="h5 mb-0">📄 Invoice History</h1>
+                <p class="text-muted small">View and manage all invoice records</p>
+            </div>
+            <div>
+                <a href="pages/invoice/invoice.php" class="btn btn-primary btn-sm">
+                    <i class="bi bi-plus-circle"></i> Create New Invoice
+                </a>
             </div>
         </div>
-        <div class="card-body">
+
+        <!-- Summary Cards -->
+        <div class="row g-2 mb-3">
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <div class="card-body p-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-title mb-1 text-white small">Total Revenue</h6>
+                                <h4 class="mb-0 fw-bold" style="color: #ffeb3b;">₹<?= number_format($totalAmount, 2) ?></h4>
+                                <small class="text-white-50">From <?= $totalCount ?> invoices</small>
+                            </div>
+                            <div class="fs-2 text-white-50">
+                                <i class="bi bi-currency-rupee"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                    <div class="card-body p-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-title mb-1 text-white small">Total Invoices</h6>
+                                <h4 class="mb-0 fw-bold" style="color: #ffeb3b;"><?= $totalCount ?></h4>
+                                <small class="text-white-50">Invoice records</small>
+                            </div>
+                            <div class="fs-2 text-white-50">
+                                <i class="bi bi-receipt"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="card mb-3 border-0 shadow-sm">
+            <div class="card-header bg-light border-0 py-2">
+                <h6 class="mb-0 text-dark"><i class="bi bi-funnel me-2"></i>Filters</h6>
+            </div>
+            <div class="card-body p-3">
+                <form method="GET" class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label small">Search Customer</label>
+                        <input type="text" name="search" class="form-control form-control-sm" 
+                               placeholder="Search by customer name" 
+                               value="<?= htmlspecialchars($search) ?>">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small">From Date</label>
+                        <input type="date" name="date_from" class="form-control form-control-sm" value="<?= htmlspecialchars($dateFrom) ?>">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small">To Date</label>
+                        <input type="date" name="date_to" class="form-control form-control-sm" value="<?= htmlspecialchars($dateTo) ?>">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">&nbsp;</label>
+                        <div class="d-flex gap-1">
+                            <button type="submit" class="btn btn-primary btn-sm">
+                                <i class="bi bi-search"></i> Filter
+                            </button>
+                            <a href="invoice_history.php" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-arrow-clockwise"></i> Reset
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Invoices Table -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-light border-0 py-2 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 text-dark"><i class="bi bi-table me-2"></i>Invoice Records</h6>
+                <div>
+                    <button class="btn btn-outline-danger btn-sm" id="bulkDeleteBtn" style="display: none;">
+                        <i class="bi bi-trash"></i> Delete Selected
+                    </button>
+                    <button class="btn btn-outline-success btn-sm" onclick="exportToExcel()">
+                        <i class="bi bi-file-earmark-excel"></i> Export
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-3">
             <?php if ($result && mysqli_num_rows($result) > 0): ?>
                 <form id="bulkDeleteForm" method="POST" action="bulk_delete_invoice.php">
                     <div class="table-responsive">
@@ -218,14 +221,15 @@ include 'layouts/sidebar.php';
                 </form>
             <?php else: ?>
                 <div class="text-center py-5">
-                    <i class="bi bi-inbox fs-1 text-muted mb-3"></i>
-                    <h5 class="text-muted">No invoices found</h5>
-                    <p class="text-muted">No invoices match your current filters.</p>
-                    <a href="pages/invoice/invoice.php" class="btn btn-primary">
+                    <i class="bi bi-inbox fs-1 text-muted mb-3 d-block"></i>
+                    <h6 class="text-muted mb-2">No invoices found</h6>
+                    <p class="text-muted small mb-3">No invoices match your current filters.</p>
+                    <a href="pages/invoice/invoice.php" class="btn btn-primary btn-sm">
                         <i class="bi bi-plus-circle"></i> Create First Invoice
                     </a>
                 </div>
             <?php endif; ?>
+            </div>
         </div>
     </div>
 </div>
@@ -336,5 +340,125 @@ function showAlert(message, type) {
     }, 5000);
 }
 </script>
+
+<style>
+/* Enhanced Invoice History Styling */
+.main-content {
+    padding: 10px;
+}
+
+.container-fluid {
+    max-width: 100%;
+    padding: 0 10px;
+}
+
+/* Responsive Enhancements */
+@media (max-width: 768px) {
+    .main-content {
+        padding: 5px;
+    }
+    
+    .container-fluid {
+        padding: 0 5px;
+    }
+    
+    .row {
+        margin: 0 -5px;
+    }
+    
+    .row > * {
+        padding: 0 5px;
+    }
+    
+    .btn-group {
+        flex-direction: column;
+    }
+    
+    .btn-group .btn {
+        margin-bottom: 2px;
+        border-radius: 0.25rem !important;
+    }
+    
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+    
+    .d-flex.gap-1 {
+        flex-direction: column;
+        gap: 0.25rem !important;
+    }
+}
+
+/* Card Hover Effects */
+.card {
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+/* Table Enhancements */
+.table th {
+    font-size: 0.875rem !important;
+    font-weight: 600 !important;
+    border-bottom: 2px solid var(--primary-color) !important;
+    background-color: var(--gray-100) !important;
+    color: var(--gray-800) !important;
+}
+
+.table td {
+    font-size: 0.875rem;
+    vertical-align: middle;
+}
+
+/* Button Group Improvements */
+.btn-group-sm > .btn {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+}
+
+/* DataTable Responsive */
+@media (max-width: 992px) {
+    .dataTables_wrapper .dataTables_filter,
+    .dataTables_wrapper .dataTables_length {
+        text-align: left;
+        margin-bottom: 10px;
+    }
+    
+    .dataTables_wrapper .dataTables_info,
+    .dataTables_wrapper .dataTables_paginate {
+        text-align: center;
+        margin-top: 10px;
+    }
+}
+
+/* Empty State Styling */
+.text-center.py-5 {
+    padding: 3rem 0 !important;
+}
+
+.text-center.py-5 .bi {
+    color: #6c757d;
+}
+
+/* Alert Improvements */
+.alert {
+    font-size: 0.875rem;
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+/* Form Control Sizing */
+.form-control-sm {
+    font-size: 0.875rem;
+}
+
+.form-label.small {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #495057;
+}
+</style>
 
 <?php include 'layouts/footer.php'; ?>

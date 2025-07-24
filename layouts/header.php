@@ -609,14 +609,40 @@
         }
         
         .table thead th {
-            background: var(--bg-gradient-dark);
-            color: var(--white);
+            background: linear-gradient(135deg, var(--gray-200) 0%, var(--gray-100) 100%) !important;
+            color: var(--gray-900) !important;
             font-weight: 600;
             font-size: var(--font-size-sm);
             text-transform: uppercase;
             letter-spacing: 0.5px;
             padding: var(--space-4);
             border: none;
+            border-bottom: 3px solid var(--primary-color);
+            position: relative;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .table thead th::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--bg-gradient-primary);
+        }
+        
+        .table thead {
+            background: linear-gradient(135deg, var(--gray-200) 0%, var(--gray-100) 100%) !important;
+        }
+        
+        .table th {
+            background: linear-gradient(135deg, var(--gray-200) 0%, var(--gray-100) 100%) !important;
+            color: var(--gray-900) !important;
+            font-weight: 600 !important;
+            font-size: var(--font-size-sm) !important;
+            border-bottom: 3px solid var(--primary-color) !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
         }
         
         .table tbody td {
@@ -624,6 +650,7 @@
             border-bottom: 1px solid var(--gray-200);
             font-size: var(--font-size-sm);
             vertical-align: middle;
+            color: var(--gray-800) !important;
         }
         
         .table tbody tr {
@@ -632,6 +659,102 @@
         
         .table tbody tr:hover {
             background: var(--gray-25);
+        }
+        
+        /* DataTables Header Override */
+        .dataTables_wrapper .table thead th,
+        .dataTables_wrapper .table thead td {
+            background: linear-gradient(135deg, var(--gray-200) 0%, var(--gray-100) 100%) !important;
+            color: var(--gray-900) !important;
+            font-weight: 600 !important;
+            border-bottom: 3px solid var(--primary-color) !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+        }
+        
+        /* Global Table Header Fix */
+        table thead th,
+        table thead td,
+        .table-striped thead th,
+        .table-hover thead th,
+        .table-bordered thead th,
+        .table > thead > tr > th,
+        .table > thead > tr > td {
+            background: linear-gradient(135deg, var(--gray-200) 0%, var(--gray-100) 100%) !important;
+            color: var(--gray-900) !important;
+            font-weight: 600 !important;
+            border-bottom: 3px solid var(--primary-color) !important;
+            text-shadow: none !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+        }
+        
+        /* Bootstrap Table Header Override */
+        .table-dark thead th,
+        .table-dark thead td,
+        .bg-dark,
+        .bg-primary,
+        .bg-secondary {
+            background: linear-gradient(135deg, var(--gray-200) 0%, var(--gray-100) 100%) !important;
+            color: var(--gray-900) !important;
+            border-color: var(--primary-color) !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+        }
+        
+        /* Override any dark backgrounds on table headers */
+        .table thead.table-dark th,
+        .table thead.table-dark td,
+        .table .table-dark th,
+        .table .table-dark td {
+            background: linear-gradient(135deg, var(--gray-200) 0%, var(--gray-100) 100%) !important;
+            color: var(--gray-900) !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+        }
+        
+        /* Additional Table Header Fixes */
+        .dataTable thead th,
+        .dataTable thead td,
+        .dt-head-center,
+        .dt-head-left,
+        .dt-head-right {
+            background: linear-gradient(135deg, var(--gray-200) 0%, var(--gray-100) 100%) !important;
+            color: var(--gray-900) !important;
+            font-weight: 600 !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+        }
+        
+        /* Ensure text visibility in all table headers */
+        thead th *,
+        thead td *,
+        .table thead th *,
+        .table thead td *,
+        .dataTables_wrapper table thead th *,
+        .dataTables_wrapper table thead td * {
+            color: var(--gray-900) !important;
+        }
+        
+        /* DataTables Sorting Icons */
+        .table thead th.sorting:before,
+        .table thead th.sorting:after,
+        .table thead th.sorting_asc:before,
+        .table thead th.sorting_asc:after,
+        .table thead th.sorting_desc:before,
+        .table thead th.sorting_desc:after {
+            color: var(--gray-700) !important;
+        }
+        
+        /* Table Header Links */
+        .table thead th a,
+        .table thead td a,
+        thead th a,
+        thead td a {
+            color: var(--gray-900) !important;
+            text-decoration: none;
+        }
+        
+        .table thead th a:hover,
+        .table thead td a:hover,
+        thead th a:hover,
+        thead td a:hover {
+            color: var(--primary-color) !important;
         }
         
         /* Professional Form Controls */
