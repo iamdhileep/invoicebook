@@ -1,6 +1,7 @@
 <?php
 session_start();
-if (!isset($_SESSION['admin'])) {
+// Check for either session variable for compatibility
+if (!isset($_SESSION['admin']) && !isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit;
 }

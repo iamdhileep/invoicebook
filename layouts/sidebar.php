@@ -2,29 +2,8 @@
 // Get current page name for active state
 $current_page = basename($_SERVER['PHP_SELF'], '.php');
 
-// Simple and reliable base URL calculation
-// Get the protocol (http or https)
-$protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https://' : 'http://';
-// Get the host
-$host = $_SERVER['HTTP_HOST'];
-// Get the base path (directory where the application is installed)
-$scriptPath = dirname($_SERVER['SCRIPT_NAME']);
-$basePath = '';
-
-// If we're in a subdirectory (like /pages/something/), get back to root
-if (strpos($scriptPath, '/pages/') !== false) {
-    // We're in pages subdirectory, go back to root
-    $basePath = '../../';
-} else {
-    // We're in root directory
-    $basePath = './';
-}
-
-// For absolute URLs (more reliable)
-$baseURL = $protocol . $host . rtrim(dirname(dirname($_SERVER['SCRIPT_NAME'])), '/');
-if (strpos($_SERVER['SCRIPT_NAME'], '/pages/') === false) {
-    $baseURL = $protocol . $host . rtrim(dirname($_SERVER['SCRIPT_NAME']), '/');
-}
+// Use absolute path from web root to avoid relative path issues
+$basePath = '/billbook/';
 ?>
 
 <!-- Sidebar -->
@@ -43,7 +22,7 @@ if (strpos($_SERVER['SCRIPT_NAME'], '/pages/') === false) {
             <div class="nav-section-title">Quick Actions</div>
         </div>
         <div class="nav-item">
-            <a href="<?= $basePath ?>pages/invoice/invoice.php" class="nav-link <?= $current_page === 'invoice' ? 'active' : '' ?>">
+            <a href="<?= $basePath ?>invoice_form.php" class="nav-link <?= $current_page === 'invoice_form' ? 'active' : '' ?>">
                 <i class="bi bi-receipt-cutoff"></i>
                 <span>New Invoice</span>
             </a>
@@ -78,9 +57,12 @@ if (strpos($_SERVER['SCRIPT_NAME'], '/pages/') === false) {
             </a>
         </div>
         <div class="nav-item">
-            <a href="<?= $basePath ?>summary_dashboard.php" class="nav-link <?= $current_page === 'summary_dashboard' ? 'active' : '' ?>">
+            <a href="<?= $basePath ?>summary_dashboard.php" class="nav-link <?= $current_page === 'summary_dashboard' ? 'active' : '' ?>" 
+               title="Summary Dashboard - Sales Analytics" style="position: relative;">
                 <i class="bi bi-graph-up-arrow"></i>
                 <span>Sales Summary</span>
+                <!-- Debug badge to verify visibility -->
+                <small class="badge bg-success ms-1" style="font-size: 10px;">✓</small>
             </a>
         </div>
 
@@ -141,6 +123,12 @@ if (strpos($_SERVER['SCRIPT_NAME'], '/pages/') === false) {
             </a>
         </div>
         <div class="nav-item">
+            <a href="<?= $basePath ?>Employee_attendance.php" class="nav-link <?= $current_page === 'Employee_attendance' ? 'active' : '' ?>">
+                <i class="bi bi-person-check-fill"></i>
+                <span>Employee Attendance</span>
+            </a>
+        </div>
+        <div class="nav-item">
             <a href="<?= $basePath ?>advanced_attendance.php" class="nav-link <?= $current_page === 'advanced_attendance' ? 'active' : '' ?>">
                 <i class="bi bi-stopwatch-fill"></i>
                 <span>Time Tracking</span>
@@ -181,7 +169,7 @@ if (strpos($_SERVER['SCRIPT_NAME'], '/pages/') === false) {
             <div class="nav-section-title">System</div>
         </div>
         <div class="nav-item">
-            <a href="#" class="nav-link" onclick="showSettings()">
+            <a href="<?= $basePath ?>settings.php" class="nav-link <?= $current_page === 'settings' ? 'active' : '' ?>">
                 <i class="bi bi-gear-fill"></i>
                 <span>Settings</span>
             </a>

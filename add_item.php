@@ -119,8 +119,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 $categories = null;
 $categoriesFromItems = false;
 try {
-    // First try to get from categories table
-    $categoryQuery = "SELECT id, name as category, color, icon FROM categories ORDER BY name ASC";
+    // First try to get from categories table (simplified query for actual table structure)
+    $categoryQuery = "SELECT name as category FROM categories ORDER BY name ASC";
     $categories = $conn->query($categoryQuery);
     
     // If categories table doesn't exist or is empty, fallback to distinct categories from items
@@ -244,41 +244,38 @@ include 'layouts/sidebar.php';
                                 </label>
                                 <div class="input-group">
                                     <select name="category" class="form-select form-select-lg" id="categorySelect">
-                                        <option value="">-- Select or Add Category --</option>
-                                        <?php if ($categories && mysqli_num_rows($categories) > 0): ?>
-                                            <?php while ($cat = $categories->fetch_assoc()): ?>
-                                                <?php if ($categoriesFromItems): ?>
-                                                    <!-- Categories from items table (fallback) -->
-                                                    <option value="<?= htmlspecialchars($cat['category']) ?>"
-                                                            data-color="#007bff"
-                                                            data-icon="bi-tag"
-                                                            <?= (($_POST['category'] ?? '') === $cat['category']) ? 'selected' : '' ?>>
-                                                        <?= htmlspecialchars($cat['category']) ?>
-                                                    </option>
-                                                <?php else: ?>
-                                                    <!-- Categories from categories table -->
-                                                    <option value="<?= htmlspecialchars($cat['category']) ?>"
-                                                            data-color="<?= htmlspecialchars($cat['color'] ?? '#007bff') ?>"
-                                                            data-icon="<?= htmlspecialchars($cat['icon'] ?? 'bi-tag') ?>"
-                                                            <?= (($_POST['category'] ?? '') === $cat['category']) ? 'selected' : '' ?>>
-                                                        <?= htmlspecialchars($cat['category']) ?>
-                                                    </option>
-                                                <?php endif; ?>
-                                            <?php endwhile; ?>
-                                        <?php endif; ?>
-                                        <option value="__new__" class="text-primary fw-bold">
-                                            <i class="bi bi-plus-circle"></i> Add New Category
-                                        </option>
+                                        <option value="">-- Loading Categories... --</option>
                                     </select>
-                                    <button type="button" class="btn btn-outline-info" id="manageCategoriesBtn" title="Manage Categories">
-                                        <i class="bi bi-gear-fill"></i>
-                                    </button>
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-outline-success" id="quickAddBtn" title="Quick Add Category">
+                                            <i class="bi bi-plus-circle"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-warning" id="quickEditBtn" title="Edit Selected Category">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-danger" id="quickDeleteBtn" title="Delete Selected Category">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-info" id="manageCategoriesBtn" title="Manage All Categories">
+                                            <i class="bi bi-gear-fill"></i>
+                                        </button>
+                                    </div>
                                     <input type="text" 
                                            name="new_category" 
                                            class="form-control form-control-lg" 
-                                           placeholder="Enter new category name" 
+                                           placeholder="Enter new category name and press Enter" 
                                            style="display: none;" 
-                                           id="newCategoryInput">
+                                           id="newCategoryInput"
+                                           maxlength="50">
+                                </div>
+                                <div class="form-text" id="categoryHelp">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Select an existing category or create a new one
+                                </div>
+                                <div class="form-text" id="newCategoryHelp" style="display: none;">
+                                    <i class="bi bi-lightbulb me-1 text-warning"></i>
+                                    Press <kbd>Enter</kbd> to add category, <kbd>Esc</kbd> to cancel
+                                    <br><small class="text-muted">Note: Duplicate categories will be rejected</small>
                                 </div>
                                 <div class="form-text" id="categoryPreview" style="display: none;">
                                     <span class="badge badge-info">
@@ -478,6 +475,76 @@ include 'layouts/sidebar.php';
     </div>
 </div>
 
+<style>
+/* Enhanced category input styling */
+#newCategoryInput {
+    border-color: #0891b2;
+    box-shadow: 0 0 0 0.2rem rgba(8, 145, 178, 0.25);
+}
+
+#newCategoryInput:focus {
+    border-color: #0891b2;
+    box-shadow: 0 0 0 0.2rem rgba(8, 145, 178, 0.25);
+}
+
+/* Category preview badge styling */
+.badge.badge-info {
+    background-color: var(--info-color) !important;
+    color: white;
+}
+
+/* Enhanced help text */
+#newCategoryHelp {
+    color: #d97706;
+}
+
+#newCategoryHelp kbd {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 3px;
+    padding: 2px 6px;
+    font-size: 0.875em;
+}
+
+/* Toast positioning for better visibility */
+.toast {
+    min-width: 250px;
+}
+
+/* Improved category dropdown */
+#categorySelect option[value="__new__"] {
+    background-color: #e3f2fd;
+    font-weight: 500;
+}
+
+/* Category action buttons styling */
+.btn-group .btn {
+    padding: 0.375rem 0.5rem;
+}
+
+.btn-group .btn i {
+    font-size: 0.875rem;
+}
+
+/* Quick action buttons hover effects */
+#quickAddBtn:hover {
+    background-color: #198754;
+    color: white;
+}
+
+#quickEditBtn:hover {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+#quickDeleteBtn:hover {
+    background-color: #dc3545;
+    color: white;
+}
+</style>
+
+<?php include 'layouts/footer.php'; ?>
+
 <!-- Enhanced JavaScript -->
 <script>
 $(document).ready(function() {
@@ -526,41 +593,380 @@ function initializeFormValidation() {
 }
 
 function initializeCategorySystem() {
+    console.log('Initializing category system...');
+    
+    // Load categories dynamically on page load
+    refreshCategories();
+    
     // Handle category selection
     $('#categorySelect').change(function() {
+        console.log('Category select changed to:', this.value);
+        
         if (this.value === '__new__') {
             $('#newCategoryInput').show().focus();
-            $(this).hide();
+            $('#categorySelect').hide();
             $('#categoryPreview').hide();
+            $('#categoryHelp').hide();
+            $('#newCategoryHelp').show();
         } else if (this.value) {
             $('#newCategoryInput').hide();
-            $(this).show();
+            $('#categorySelect').show();
+            $('#categoryHelp').show();
+            $('#newCategoryHelp').hide();
             updateCategoryPreview();
         } else {
             $('#newCategoryInput').hide();
-            $(this).show();
+            $('#categorySelect').show();
             $('#categoryPreview').hide();
+            $('#categoryHelp').show();
+            $('#newCategoryHelp').hide();
+        }
+    });
+
+    // Handle new category input
+    $('#newCategoryInput').on('keypress', function(e) {
+        console.log('Key pressed in new category input:', e.which);
+        if (e.which === 13) { // Enter key
+            e.preventDefault();
+            const categoryName = $(this).val().trim();
+            console.log('Attempting to add category:', categoryName);
+            
+            if (categoryName) {
+                console.log('Sending AJAX request to save_category.php');
+                // First, try to add category to database via AJAX
+                $.ajax({
+                    url: 'save_category.php',
+                    method: 'POST',
+                    data: { name: categoryName },
+                    dataType: 'json',
+                    beforeSend: function() {
+                        console.log('AJAX request started');
+                    },
+                    success: function(response) {
+                        console.log('AJAX success response:', response);
+                        if (response.success) {
+                            console.log('Category saved successfully, refreshing dropdown');
+                            // Refresh the entire dropdown to get the new category
+                            refreshCategories();
+                            
+                            // After refresh completes, select the new category
+                            setTimeout(function() {
+                                $('#categorySelect').val(categoryName);
+                                $('#newCategoryInput').val('').hide();
+                                $('#categorySelect').show();
+                                $('#categoryHelp').show();
+                                $('#newCategoryHelp').hide();
+                                updateCategoryPreview();
+                                console.log('Category added and selected:', categoryName);
+                            }, 100);
+                            
+                            // Show success feedback
+                            showSuccessToast('Category "' + categoryName + '" added successfully!');
+                        } else {
+                            console.error('Server error:', response.message);
+                            
+                            // Clear the input and show the dropdown again
+                            $('#newCategoryInput').val('').hide();
+                            $('#categorySelect').show();
+                            $('#categoryHelp').show();
+                            $('#newCategoryHelp').hide();
+                            
+                            if (response.message && response.message.includes('already exists')) {
+                                alert('This category already exists! Please choose a different name or select it from the dropdown.');
+                            } else {
+                                alert('Error adding category: ' + (response.message || 'Unknown error'));
+                            }
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('AJAX error:', status, error, xhr.responseText);
+                        
+                        // Clear the input and show the dropdown again
+                        $('#newCategoryInput').val('').hide();
+                        $('#categorySelect').show();
+                        $('#categoryHelp').show();
+                        $('#newCategoryHelp').hide();
+                        
+                        // Fallback: add to dropdown only (legacy behavior)
+                        console.log('Using fallback method to add category');
+                        const newOption = new Option(categoryName, categoryName, true, true);
+                        $('#categorySelect').append(newOption);
+                        $('#categorySelect').val(categoryName);
+                        updateCategoryPreview();
+                        
+                        showSuccessToast('Category "' + categoryName + '" added to form (will be saved with product)');
+                    }
+                });
+            } else {
+                console.log('Empty category name provided');
+            }
+        }
+    });
+
+    // Handle escape key to cancel new category
+    $('#newCategoryInput').on('keyup', function(e) {
+        if (e.which === 27) { // Escape key
+            $(this).val('').hide();
+            $('#categorySelect').show().val('');
+            $('#categoryPreview').hide();
+            $('#categoryHelp').show();
+            $('#newCategoryHelp').hide();
         }
     });
 
     // Allow going back to select from dropdown
     $('#newCategoryInput').blur(function() {
-        if ($(this).val() === '') {
-            $(this).hide();
-            $('#categorySelect').show().val('');
-            $('#categoryPreview').hide();
+        // Delay to allow for any click events to process
+        setTimeout(() => {
+            if ($(this).val() === '') {
+                $(this).hide();
+                $('#categorySelect').show().val('');
+                $('#categoryPreview').hide();
+                $('#categoryHelp').show();
+                $('#newCategoryHelp').hide();
+            }
+        }, 150);
+    });
+
+    // Quick Add Category button
+    $('#quickAddBtn').click(function(e) {
+        e.preventDefault();
+        console.log('Quick Add button clicked');
+        $('#categorySelect').val('__new__').trigger('change');
+    });
+    
+    // Quick Edit Category button
+    $('#quickEditBtn').click(function(e) {
+        e.preventDefault();
+        console.log('Quick Edit button clicked');
+        
+        const selectedValue = $('#categorySelect').val();
+        console.log('Selected category for edit:', selectedValue);
+        
+        if (!selectedValue || selectedValue === '__new__') {
+            alert('Please select a category to edit first.');
+            return;
+        }
+        
+        const newName = prompt('Enter new name for category "' + selectedValue + '":', selectedValue);
+        if (newName && newName.trim() !== '' && newName !== selectedValue) {
+            editCategory(selectedValue, newName.trim());
+        }
+    });
+    
+    // Quick Delete Category button
+    $('#quickDeleteBtn').click(function(e) {
+        e.preventDefault();
+        console.log('Quick Delete button clicked');
+        
+        const selectedValue = $('#categorySelect').val();
+        console.log('Selected category for delete:', selectedValue);
+        
+        if (!selectedValue || selectedValue === '__new__') {
+            alert('Please select a category to delete first.');
+            return;
+        }
+        
+        if (confirm('Are you sure you want to delete the category "' + selectedValue + '"?\n\nThis action cannot be undone.')) {
+            deleteCategory(selectedValue);
         }
     });
 
     // Manage categories button
-    $('#manageCategoriesBtn').click(function() {
-        window.open('manage_categories.php', '_blank', 'width=800,height=600,scrollbars=yes');
+    $('#manageCategoriesBtn').click(function(e) {
+        e.preventDefault();
+        console.log('Manage Categories button clicked');
+        
+        const popup = window.open('manage_categories.php', 'managecategories', 'width=900,height=700,scrollbars=yes,resizable=yes');
+        
+        // Listen for category updates from the popup
+        const checkClosed = setInterval(function() {
+            if (popup.closed) {
+                clearInterval(checkClosed);
+                // Refresh categories dropdown
+                refreshCategories();
+            }
+        }, 1000);
     });
 
     // Initialize category preview if there's a selected value
     if ($('#categorySelect').val()) {
         updateCategoryPreview();
     }
+}
+
+// Function to edit a category
+function editCategory(oldName, newName) {
+    // First get the category ID from the database
+    $.ajax({
+        url: 'get_category_id.php',
+        method: 'POST',
+        data: { name: oldName },
+        dataType: 'json',
+        success: function(response) {
+            if (response.success && response.id) {
+                // Now update the category
+                $.ajax({
+                    url: 'manage_categories.php',
+                    method: 'POST',
+                    data: { 
+                        action: 'edit',
+                        id: response.id,
+                        name: newName
+                    },
+                    dataType: 'json',
+                    success: function(editResponse) {
+                        if (editResponse.success) {
+                            // Refresh the dropdown to get updated categories
+                            refreshCategories();
+                            
+                            // After refresh, select the updated category
+                            setTimeout(function() {
+                                $('#categorySelect').val(newName);
+                                updateCategoryPreview();
+                            }, 100);
+                            
+                            showSuccessToast('Category updated successfully!');
+                        } else {
+                            alert('Error updating category: ' + (editResponse.message || 'Unknown error'));
+                        }
+                    },
+                    error: function() {
+                        alert('Error communicating with server while updating category.');
+                    }
+                });
+            } else {
+                alert('Error finding category: ' + (response.message || 'Category not found'));
+            }
+        },
+        error: function() {
+            alert('Error communicating with server while finding category.');
+        }
+    });
+}
+
+// Function to delete a category
+function deleteCategory(categoryName) {
+    // First get the category ID from the database
+    $.ajax({
+        url: 'get_category_id.php',
+        method: 'POST',
+        data: { name: categoryName },
+        dataType: 'json',
+        success: function(response) {
+            if (response.success && response.id) {
+                // Now delete the category
+                $.ajax({
+                    url: 'manage_categories.php',
+                    method: 'POST',
+                    data: { 
+                        action: 'delete',
+                        id: response.id
+                    },
+                    dataType: 'json',
+                    success: function(deleteResponse) {
+                        if (deleteResponse.success) {
+                            // Refresh the dropdown to remove deleted category
+                            refreshCategories();
+                            
+                            // Clear selection and preview
+                            setTimeout(function() {
+                                $('#categorySelect').val('');
+                                $('#categoryPreview').hide();
+                            }, 100);
+                            
+                            showSuccessToast('Category deleted successfully!');
+                        } else {
+                            alert('Error deleting category: ' + (deleteResponse.message || 'Unknown error'));
+                        }
+                    },
+                    error: function() {
+                        alert('Error communicating with server while deleting category.');
+                    }
+                });
+            } else {
+                alert('Error finding category: ' + (response.message || 'Category not found'));
+            }
+        },
+        error: function() {
+            alert('Error communicating with server while finding category.');
+        }
+    });
+}
+
+// Function to refresh categories from server
+function refreshCategories() {
+    console.log('Refreshing categories from server...');
+    
+    $.ajax({
+        url: 'get_categories.php',
+        method: 'GET',
+        dataType: 'json',
+        beforeSend: function() {
+            console.log('Loading categories...');
+            $('#categorySelect').html('<option value="">-- Loading Categories... --</option>');
+        },
+        success: function(data) {
+            console.log('Categories loaded successfully:', data);
+            
+            const currentValue = $('#categorySelect').val();
+            const postValue = '<?= htmlspecialchars($_POST['category'] ?? '') ?>';
+            const $select = $('#categorySelect');
+            
+            // Clear existing options
+            $select.empty();
+            
+            // Add default option
+            $select.append('<option value="">-- Select or Add Category --</option>');
+            
+            // Add categories from server
+            if (data && data.length > 0) {
+                console.log('Adding', data.length, 'categories to dropdown');
+                data.forEach(function(category) {
+                    const option = $('<option></option>')
+                        .val(category.name)
+                        .text(category.name)
+                        .attr('data-color', category.color || '#007bff')
+                        .attr('data-icon', category.icon || 'bi-tag');
+                    
+                    // Check if this should be selected
+                    if (postValue && postValue === category.name) {
+                        option.prop('selected', true);
+                    }
+                        
+                    $select.append(option);
+                });
+                
+                // Update help text to show count
+                $('#categoryHelp').html('<i class="bi bi-info-circle me-1"></i>Select from ' + data.length + ' existing categories or create a new one');
+            } else {
+                console.log('No categories found');
+                $('#categoryHelp').html('<i class="bi bi-info-circle me-1"></i>No categories found - create your first category');
+            }
+            
+            // Add "Add New Category" option
+            $select.append('<option value="__new__" class="text-primary fw-bold">+ Add New Category</option>');
+            
+            // Restore selection if it still exists and no POST value
+            if (!postValue && currentValue && currentValue !== '-- Loading Categories... --') {
+                $select.val(currentValue);
+            }
+            
+            // Update preview if there's a selected value
+            if ($select.val() && $select.val() !== '' && $select.val() !== '__new__') {
+                updateCategoryPreview();
+            }
+            
+            console.log('Categories refresh completed successfully');
+        },
+        error: function(xhr, status, error) {
+            console.error('Failed to load categories:', error, xhr.responseText);
+            $('#categorySelect').html('<option value="">-- Error Loading Categories --</option>');
+            
+            // Show fallback message
+            showErrorToast('Failed to load categories. Please refresh the page.');
+        }
+    });
 }
 
 function initializeFormInteractions() {
@@ -673,10 +1079,37 @@ function previewProduct() {
     });
 }
 
+// Helper function to show success toast
+function showSuccessToast(message) {
+    const toast = $('<div class="toast align-items-center text-white bg-success border-0" style="position: fixed; top: 20px; right: 20px; z-index: 1055;" role="alert">')
+        .append('<div class="d-flex"><div class="toast-body"><i class="bi bi-check-circle me-2"></i>' + message + '</div></div>');
+    $('body').append(toast);
+    const bsToast = new bootstrap.Toast(toast[0]);
+    bsToast.show();
+    toast.on('hidden.bs.toast', function() { $(this).remove(); });
+}
+
+// Helper function to show error toast
+function showErrorToast(message) {
+    const toast = $('<div class="toast align-items-center text-white bg-danger border-0" style="position: fixed; top: 20px; right: 20px; z-index: 1055;" role="alert">')
+        .append('<div class="d-flex"><div class="toast-body"><i class="bi bi-exclamation-triangle me-2"></i>' + message + '</div></div>');
+    $('body').append(toast);
+    const bsToast = new bootstrap.Toast(toast[0]);
+    bsToast.show();
+    toast.on('hidden.bs.toast', function() { $(this).remove(); });
+}
+
 // Global helper functions
 function showAlert(message, type) {
-    ModernUI.showToast(message, type);
+    if (typeof ModernUI !== 'undefined' && ModernUI.showToast) {
+        ModernUI.showToast(message, type);
+    } else {
+        // Fallback
+        if (type === 'success') {
+            showSuccessToast(message);
+        } else {
+            showErrorToast(message);
+        }
+    }
 }
 </script>
-
-<?php include 'layouts/footer.php'; ?>

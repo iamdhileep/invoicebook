@@ -6,10 +6,6 @@ if (!isset($_SESSION['admin'])) {
 }
 
 include 'db.php';
-include 'auth_guard.php';
-
-// Check if user has permission to access attendance
-checkPermission(PagePermissions::ATTENDANCE);
 
 // Set timezone
 date_default_timezone_set('Asia/Kolkata');

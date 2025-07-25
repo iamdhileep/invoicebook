@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Minimal Category Button Test</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body class="p-4">
+    <div class="container">
+        <h3>Minimal Category Test</h3>
+        
+        <div class="input-group mb-3">
+            <select class="form-select" id="categorySelect">
+                <option value="">-- Select Category --</option>
+                <option value="test1">Test Category 1</option>
+                <option value="test2">Test Category 2</option>
+                <option value="__new__">+ Add New Category</option>
+            </select>
+            <button type="button" class="btn btn-success" id="quickAddBtn">
+                <i class="bi bi-plus-circle"></i> Add
+            </button>
+        </div>
+        
+        <input type="text" 
+               class="form-control mb-3" 
+               placeholder="Type category name and press Enter" 
+               style="display: none;" 
+               id="newCategoryInput">
+        
+        <div id="output" class="alert alert-info">
+            Click the Add button or select "Add New Category" to test functionality.
+        </div>
+    </div>
+
+    <script>
+    function log(message) {
+        $('#output').append('<br>' + new Date().toLocaleTimeString() + ': ' + message);
+        console.log(message);
+    }
+    
+    $(document).ready(function() {
+        log('jQuery loaded and ready');
+        
+        // Test if jQuery is working
+        $('#quickAddBtn').click(function() {
+            log('Quick Add button clicked!');
+            $('#categorySelect').val('__new__').trigger('change');
+        });
+        
+        $('#categorySelect').change(function() {
+            const value = $(this).val();
+            log('Dropdown changed to: ' + value);
+            
+            if (value === '__new__') {
+                log('Showing new category input');
+                $('#newCategoryInput').show().focus();
+            } else {
+                log('Hiding new category input');
+                $('#newCategoryInput').hide();
+            }
+        });
+        
+        $('#newCategoryInput').keypress(function(e) {
+            if (e.which === 13) {
+                const value = $(this).val();
+                log('Enter pressed with value: ' + value);
+                alert('Category "' + value + '" would be added here');
+                $(this).hide().val('');
+                $('#categorySelect').val('').show();
+            }
+        });
+        
+        log('All event handlers attached');
+        
+        // Test button click programmatically
+        setTimeout(function() {
+            log('Testing button click programmatically...');
+            $('#quickAddBtn').click();
+        }, 1000);
+    });
+    </script>
+</body>
+</html>
