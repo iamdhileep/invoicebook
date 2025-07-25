@@ -1,4 +1,3 @@
-/* ✅ FILE: login.php - Updated for compatibility */
 <?php
 session_start();
 include 'db.php';
