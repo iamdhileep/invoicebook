@@ -242,7 +242,7 @@ include 'layouts/sidebar.php';
                                     <td><?php if (!empty($emp['photo']) && file_exists($emp['photo'])): ?><img src="<?= htmlspecialchars($emp['photo']) ?>" class="rounded-circle" style="width: 50px; height: 50px; object-fit: cover;"><?php else: ?><div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;"><i class="bi bi-person text-white"></i></div><?php endif; ?></td>
                                     <td><strong><?= htmlspecialchars($emp['name']) ?></strong><br><small class="text-muted"><?= htmlspecialchars($emp['employee_code']) ?></small><br><small class="text-muted"><?= htmlspecialchars($emp['phone']) ?></small></td>
                                     <td><span class="badge bg-info"><?= htmlspecialchars($emp['position']) ?></span></td>
-                                    <td><span class="badge bg-secondary"><?= $emp['status'] ?: 'Not Marked' ?></span></td>
+                                    <td><span class="badge bg-secondary" id="status-badge-<?= $emp['employee_id'] ?>"><?= $emp['status'] ?: 'Not Marked' ?></span></td>
                                     <td><div class="time-display" id="time-in-display-<?= $emp['employee_id'] ?>"><?= $emp['time_in'] ? date('h:i A', strtotime($emp['time_in'])) : '-' ?></div></td>
                                     <td><div class="time-display" id="time-out-display-<?= $emp['employee_id'] ?>"><?= $emp['time_out'] ? date('h:i A', strtotime($emp['time_out'])) : '-' ?></div></td>
                                     <td><div id="duration-display-<?= $emp['employee_id'] ?>"><?= $emp['work_duration'] ? $emp['work_duration'] : '-' ?></div></td>
@@ -465,7 +465,10 @@ include 'layouts/sidebar.php';
 function updateLiveClock() {
     const now = new Date();
     const timeString = now.toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    document.getElementById('liveClock').textContent = timeString;
+    const liveClockElement = document.getElementById('liveClock');
+    if (liveClockElement) {
+        liveClockElement.textContent = timeString;
+    }
 }
 setInterval(updateLiveClock, 1000);
 
@@ -487,7 +490,10 @@ window.clearSelection = function() {
 };
 function updateSelectionCounter() {
     const selectedCount = document.querySelectorAll('.employee-checkbox:checked').length;
-    document.getElementById('selectedCount').textContent = selectedCount + ' selected';
+    const selectedCountElement = document.getElementById('selectedCount');
+    if (selectedCountElement) {
+        selectedCountElement.textContent = selectedCount + ' selected';
+    }
 }
 document.getElementById('selectAll').addEventListener('change', function() {
     if (this.checked) selectAllEmployees(); else clearSelection();
@@ -522,10 +528,18 @@ window.punchIn = async function(employeeId) {
         const result = await response.json();
         
         if (result.success) {
-            // Update UI
-            document.getElementById(`time-in-display-${employeeId}`).textContent = result.time;
-            document.getElementById(`status-badge-${employeeId}`).textContent = 'Present';
-            document.getElementById(`status-badge-${employeeId}`).className = 'badge bg-success';
+            // Update UI with safety checks
+            const timeInElement = document.getElementById(`time-in-display-${employeeId}`);
+            const statusBadgeElement = document.getElementById(`status-badge-${employeeId}`);
+            
+            if (timeInElement) {
+                timeInElement.textContent = result.time;
+            }
+            
+            if (statusBadgeElement) {
+                statusBadgeElement.textContent = 'Present';
+                statusBadgeElement.className = 'badge bg-success';
+            }
             
             // Disable punch in, enable punch out
             button.disabled = true;
@@ -573,8 +587,12 @@ window.punchOut = async function(employeeId) {
         const result = await response.json();
         
         if (result.success) {
-            // Update UI
-            document.getElementById(`time-out-display-${employeeId}`).textContent = result.time;
+            // Update UI with safety checks
+            const timeOutElement = document.getElementById(`time-out-display-${employeeId}`);
+            
+            if (timeOutElement) {
+                timeOutElement.textContent = result.time;
+            }
             
             // Calculate and update duration
             updateDuration(employeeId);
@@ -625,8 +643,16 @@ window.bulkPunchOut = function() {
 
 // Helper functions
 function updateDuration(employeeId) {
-    const timeInText = document.getElementById(`time-in-display-${employeeId}`).textContent;
-    const timeOutText = document.getElementById(`time-out-display-${employeeId}`).textContent;
+    const timeInElement = document.getElementById(`time-in-display-${employeeId}`);
+    const timeOutElement = document.getElementById(`time-out-display-${employeeId}`);
+    
+    if (!timeInElement || !timeOutElement) {
+        console.warn(`Time elements not found for employee ${employeeId}`);
+        return;
+    }
+    
+    const timeInText = timeInElement.textContent;
+    const timeOutText = timeOutElement.textContent;
     
     if (timeInText !== '-' && timeOutText !== '-') {
         const timeIn = new Date(`1970-01-01 ${convertTo24Hour(timeInText)}`);
