@@ -342,9 +342,23 @@ $items = json_decode($invoice['items'], true);
             }
             .company-customer-row {
                 margin-bottom: 10px;
+                display: flex;
+                gap: 15px;
+                align-items: flex-start;
+            }
+            .company-info, .customer-info {
+                flex: 1;
+                width: 50%;
             }
             .info-group {
                 padding: 8px;
+                height: auto;
+                min-height: 120px;
+            }
+            .company-info img {
+                width: 120px !important;
+                height: auto;
+                margin-bottom: 5px;
             }
             .invoice-table th,
             .invoice-table td {
@@ -357,6 +371,12 @@ $items = json_decode($invoice['items'], true);
             }
             .footer-section {
                 margin-top: 10px;
+                display: flex;
+                gap: 15px;
+            }
+            .signature-block, .thank-you-block {
+                flex: 1;
+                width: 50%;
             }
             .signature-line {
                 height: 30px;
@@ -373,6 +393,7 @@ $items = json_decode($invoice['items'], true);
             .address-block {
                 padding: 5px;
                 font-size: 10px;
+                line-height: 1.2;
             }
         }
         
@@ -399,8 +420,8 @@ $items = json_decode($invoice['items'], true);
         <!-- Invoice Content -->
         <div class="invoice-content">
             <!-- Company and Customer Info -->
-            <div class="company-customer-row">
-                <div class="company-info">
+            <div class="company-customer-row row">
+                <div class="company-info col-md-6">
                     <div class="section-title">Company Information</div>
                     <div class="info-group">
                         <img src="img/teaboy.png" width="150" style="margin-bottom: 8px;" alt="Company Logo">
@@ -413,7 +434,7 @@ $items = json_decode($invoice['items'], true);
                     </div>
                 </div>
                 
-                <div class="customer-info">
+                <div class="customer-info col-md-6">
                     <div class="section-title">Customer Details</div>
                     <div class="info-group">
                         <div class="info-line"><strong>Invoice #:</strong> <?= htmlspecialchars($invoice['invoice_number']) ?></div>
@@ -463,8 +484,8 @@ $items = json_decode($invoice['items'], true);
             </div>
 
             <!-- Footer Section -->
-            <div class="footer-section">
-                <div class="signature-block">
+            <div class="footer-section row">
+                <div class="signature-block col-md-6">
                     <div class="section-title">Authorization</div>
                     <div class="signature-area">
                         <div class="signature-line"></div>
@@ -473,7 +494,7 @@ $items = json_decode($invoice['items'], true);
                     </div>
                 </div>
                 
-                <div class="thank-you-block">
+                <div class="thank-you-block col-md-6">
                     <div class="section-title">Thank You</div>
                     <div class="thank-you-card">
                         <h4 style="margin: 0 0 5px 0; font-size: 14px;">Thank You for Your Business!</h4>
