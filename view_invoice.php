@@ -126,199 +126,259 @@ $items = json_decode($invoice['items'], true);
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f8f9fa;
+            background-color: #ffffff;
             margin: 0;
-            padding: 20px;
+            padding: 15px;
+            font-size: 13px;
+            line-height: 1.3;
         }
         .invoice-wrapper {
             max-width: 800px;
             margin: 0 auto;
             background: white;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
-            border-radius: 8px;
-            overflow: hidden;
+            border: 1px solid #ddd;
+            border-radius: 4px;
         }
         .invoice-header {
-            background: #2c3e50;
-            color: white;
-            padding: 25px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #007bff;
+            padding: 15px 20px;
             text-align: center;
         }
         .invoice-header h2 {
-            margin: 0 0 10px 0;
-            font-size: 24px;
+            margin: 0 0 5px 0;
+            font-size: 20px;
             font-weight: 600;
+            color: #333;
         }
         .invoice-header p {
             margin: 0;
-            opacity: 0.9;
-            font-size: 16px;
+            font-size: 14px;
+            color: #666;
         }
         .action-bar {
-            background: #ecf0f1;
-            padding: 15px 25px;
+            background: #f1f3f4;
+            padding: 10px 20px;
             text-align: center;
-            border-bottom: 1px solid #bdc3c7;
+            border-bottom: 1px solid #ddd;
         }
         .btn {
             display: inline-block;
-            padding: 10px 20px;
+            padding: 8px 16px;
             margin: 0 5px;
-            border-radius: 5px;
+            border-radius: 4px;
             text-decoration: none;
             font-weight: 500;
-            border: none;
+            border: 1px solid #ddd;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
+            font-size: 13px;
         }
         .btn-primary {
-            background: #3498db;
+            background: #007bff;
             color: white;
+            border-color: #007bff;
         }
         .btn-secondary {
-            background: #95a5a6;
+            background: #6c757d;
             color: white;
+            border-color: #6c757d;
         }
         .btn:hover {
-            opacity: 0.8;
-            transform: translateY(-1px);
+            opacity: 0.9;
         }
         .invoice-content {
-            padding: 30px;
+            padding: 20px;
         }
         .company-customer-row {
             display: flex;
-            gap: 30px;
-            margin-bottom: 30px;
+            gap: 20px;
+            margin-bottom: 20px;
         }
         .company-info, .customer-info {
             flex: 1;
         }
         .section-title {
-            font-size: 18px;
+            font-size: 14px;
             font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 15px;
-            padding-bottom: 8px;
-            border-bottom: 2px solid #3498db;
+            color: #333;
+            margin-bottom: 8px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid #007bff;
         }
         .info-group {
             background: #f8f9fa;
-            padding: 20px;
-            border-radius: 6px;
-            border-left: 4px solid #3498db;
+            padding: 12px;
+            border-radius: 4px;
+            border-left: 3px solid #007bff;
         }
         .info-line {
-            margin-bottom: 8px;
-            font-size: 14px;
+            margin-bottom: 4px;
+            font-size: 12px;
+            line-height: 1.4;
         }
         .info-line strong {
-            color: #2c3e50;
+            color: #333;
             display: inline-block;
-            min-width: 80px;
+            min-width: 70px;
+            font-size: 12px;
         }
         .address-block {
             background: white;
-            padding: 15px;
-            border-radius: 4px;
-            margin: 10px 0;
+            padding: 8px;
+            border-radius: 3px;
+            margin: 5px 0;
             border: 1px solid #e0e0e0;
+            font-size: 12px;
+            line-height: 1.3;
         }
         .items-section {
-            margin: 30px 0;
+            margin: 15px 0;
         }
         .invoice-table {
             width: 100%;
             border-collapse: collapse;
-            margin: 20px 0;
+            margin: 10px 0;
             background: white;
-            border-radius: 6px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
             overflow: hidden;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         .invoice-table thead {
-            background: #34495e;
-            color: white;
+            background: #f8f9fa;
+            border-bottom: 2px solid #007bff;
         }
         .invoice-table th,
         .invoice-table td {
-            padding: 12px 15px;
+            padding: 8px 10px;
             text-align: left;
-            border-bottom: 1px solid #e0e0e0;
+            border-bottom: 1px solid #eee;
+            font-size: 12px;
         }
         .invoice-table th {
             font-weight: 600;
-            font-size: 14px;
-        }
-        .invoice-table tbody tr {
-            transition: background-color 0.3s ease;
-        }
-        .invoice-table tbody tr:hover {
-            background-color: #f8f9fa;
+            color: #333;
         }
         .invoice-table tbody tr:nth-child(even) {
             background-color: #fafafa;
         }
         .qty-badge {
-            background: #3498db;
+            background: #007bff;
             color: white;
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 12px;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 11px;
             font-weight: 500;
         }
         .total-section {
-            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
-            color: white;
-            padding: 25px;
-            border-radius: 8px;
+            background: #e8f5e9;
+            border: 1px solid #28a745;
+            padding: 15px;
+            border-radius: 4px;
             text-align: center;
-            margin: 25px 0;
+            margin: 15px 0;
         }
         .total-amount {
-            font-size: 28px;
+            font-size: 18px;
             font-weight: 700;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
+            color: #28a745;
         }
         .amount-words {
-            font-size: 14px;
-            opacity: 0.9;
+            font-size: 11px;
+            color: #666;
             font-style: italic;
         }
         .footer-section {
             display: flex;
-            gap: 30px;
-            margin-top: 40px;
+            gap: 20px;
+            margin-top: 20px;
         }
         .signature-block, .thank-you-block {
             flex: 1;
         }
         .signature-area {
             background: #f8f9fa;
-            padding: 20px;
-            border-radius: 6px;
+            padding: 12px;
+            border-radius: 4px;
             text-align: center;
+            border: 1px solid #ddd;
         }
         .signature-line {
-            border-bottom: 2px solid #bdc3c7;
-            height: 60px;
-            margin: 20px 0;
+            border-bottom: 1px solid #999;
+            height: 40px;
+            margin: 15px 0 10px 0;
         }
         .thank-you-card {
-            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
-            color: white;
-            padding: 25px;
-            border-radius: 8px;
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            color: #856404;
+            padding: 15px;
+            border-radius: 4px;
             text-align: center;
         }
-        @media print {
-            body { background: white; padding: 0; }
-            .no-print { display: none !important; }
-            .invoice-wrapper { box-shadow: none; }
+        .thank-you-card h4 {
+            color: #856404;
         }
+        
+        /* Print Styles */
+        @media print {
+            body { 
+                background: white; 
+                padding: 0; 
+                margin: 0;
+                font-size: 11px;
+                line-height: 1.2;
+            }
+            .no-print { display: none !important; }
+            .invoice-wrapper { 
+                box-shadow: none; 
+                border: none;
+                max-width: none;
+                margin: 0;
+            }
+            .invoice-content {
+                padding: 10px;
+            }
+            .company-customer-row {
+                margin-bottom: 10px;
+            }
+            .info-group {
+                padding: 8px;
+            }
+            .invoice-table th,
+            .invoice-table td {
+                padding: 4px 6px;
+                font-size: 10px;
+            }
+            .total-section {
+                padding: 10px;
+                margin: 10px 0;
+            }
+            .footer-section {
+                margin-top: 10px;
+            }
+            .signature-line {
+                height: 30px;
+                margin: 10px 0 5px 0;
+            }
+            .section-title {
+                font-size: 12px;
+                margin-bottom: 5px;
+            }
+            .info-line {
+                font-size: 10px;
+                margin-bottom: 2px;
+            }
+            .address-block {
+                padding: 5px;
+                font-size: 10px;
+            }
+        }
+        
         @media (max-width: 768px) {
-            .company-customer-row { flex-direction: column; gap: 20px; }
-            .footer-section { flex-direction: column; gap: 20px; }
+            .company-customer-row { flex-direction: column; gap: 15px; }
+            .footer-section { flex-direction: column; gap: 15px; }
         }
     </style>
 </head>
@@ -343,12 +403,11 @@ $items = json_decode($invoice['items'], true);
                 <div class="company-info">
                     <div class="section-title">Company Information</div>
                     <div class="info-group">
-                        <img src="img/teaboy.png" width="200" style="margin-bottom: 15px;" alt="Company Logo">
+                        <img src="img/teaboy.png" width="150" style="margin-bottom: 8px;" alt="Company Logo">
                         <div class="info-line"><strong>Address:</strong></div>
                         <div class="address-block">
-                            No : 3, Ground Floor,<br>
-                            Shivalaya Apartments, Ethiraj Salai,<br>
-                            Egmore, Chennai - 600 008
+                            No : 3, Ground Floor, Shivalaya Apartments,<br>
+                            Ethiraj Salai, Egmore, Chennai - 600 008
                         </div>
                         <div class="info-line"><strong>GST No:</strong> 33ABCDE1234F1Z9</div>
                     </div>
@@ -376,9 +435,9 @@ $items = json_decode($invoice['items'], true);
                     <thead>
                         <tr>
                             <th>Item Description</th>
-                            <th style="text-align: center;">Quantity</th>
-                            <th style="text-align: right;">Unit Price</th>
-                            <th style="text-align: right;">Total Amount</th>
+                            <th style="text-align: center; width: 80px;">Qty</th>
+                            <th style="text-align: right; width: 100px;">Unit Price</th>
+                            <th style="text-align: right; width: 100px;">Total</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -409,16 +468,16 @@ $items = json_decode($invoice['items'], true);
                     <div class="section-title">Authorization</div>
                     <div class="signature-area">
                         <div class="signature-line"></div>
-                        <strong>Authorized Signature</strong><br>
-                        <small class="text-muted">Owner</small>
+                        <strong style="font-size: 12px;">Authorized Signature</strong><br>
+                        <small style="font-size: 11px; color: #666;">Owner</small>
                     </div>
                 </div>
                 
                 <div class="thank-you-block">
                     <div class="section-title">Thank You</div>
                     <div class="thank-you-card">
-                        <h4 style="margin: 0 0 10px 0;">Thank You for Your Business!</h4>
-                        <p style="margin: 0; font-size: 14px;">We appreciate your prompt payment and trust in our services.</p>
+                        <h4 style="margin: 0 0 5px 0; font-size: 14px;">Thank You for Your Business!</h4>
+                        <p style="margin: 0; font-size: 11px;">We appreciate your prompt payment and trust.</p>
                     </div>
                 </div>
             </div>
