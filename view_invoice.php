@@ -125,183 +125,271 @@ $items = json_decode($invoice['items'], true);
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
             padding: 20px;
         }
-        .invoice-container {
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-            overflow: hidden;
-            max-width: 900px;
+        .invoice-wrapper {
+            max-width: 800px;
             margin: 0 auto;
+            background: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
         }
         .invoice-header {
-            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            background: #2c3e50;
             color: white;
-            padding: 30px;
+            padding: 25px;
             text-align: center;
         }
         .invoice-header h2 {
-            margin: 0;
+            margin: 0 0 10px 0;
+            font-size: 24px;
             font-weight: 600;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
-        .invoice-body {
-            padding: 30px;
+        .invoice-header p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 16px;
         }
-        .info-card {
-            background: #f8fafc;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-            border-left: 4px solid #2563eb;
-        }
-        .success { color: #16a34a; }
-        .error { color: #dc2626; }
-        .info { color: #2563eb; }
-        .amount-highlight {
-            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
-            color: white;
-            padding: 15px;
-            border-radius: 10px;
+        .action-bar {
+            background: #ecf0f1;
+            padding: 15px 25px;
             text-align: center;
-            margin: 20px 0;
+            border-bottom: 1px solid #bdc3c7;
         }
-        .table-modern {
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        .table-modern thead {
-            background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
-            color: white;
-        }
-        .table-modern tbody tr:nth-child(even) {
-            background-color: #f9fafb;
-        }
-        .btn-modern {
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-weight: 500;
-            text-decoration: none;
+        .btn {
             display: inline-block;
-            margin: 5px;
+            padding: 10px 20px;
+            margin: 0 5px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
             transition: all 0.3s ease;
         }
-        .btn-primary-modern {
-            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-            color: white;
-            border: none;
-        }
-        .btn-secondary-modern {
-            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+        .btn-primary {
+            background: #3498db;
             color: white;
         }
-        .btn-modern:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+        .btn:hover {
+            opacity: 0.8;
+            transform: translateY(-1px);
+        }
+        .invoice-content {
+            padding: 30px;
+        }
+        .company-customer-row {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        .company-info, .customer-info {
+            flex: 1;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #3498db;
+        }
+        .info-group {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 6px;
+            border-left: 4px solid #3498db;
+        }
+        .info-line {
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        .info-line strong {
+            color: #2c3e50;
+            display: inline-block;
+            min-width: 80px;
+        }
+        .address-block {
+            background: white;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+            border: 1px solid #e0e0e0;
+        }
+        .items-section {
+            margin: 30px 0;
+        }
+        .invoice-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .invoice-table thead {
+            background: #34495e;
+            color: white;
+        }
+        .invoice-table th,
+        .invoice-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .invoice-table th {
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .invoice-table tbody tr {
+            transition: background-color 0.3s ease;
+        }
+        .invoice-table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+        .invoice-table tbody tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+        .qty-badge {
+            background: #3498db;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .total-section {
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 8px;
+            text-align: center;
+            margin: 25px 0;
+        }
+        .total-amount {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        .amount-words {
+            font-size: 14px;
+            opacity: 0.9;
+            font-style: italic;
+        }
+        .footer-section {
+            display: flex;
+            gap: 30px;
+            margin-top: 40px;
+        }
+        .signature-block, .thank-you-block {
+            flex: 1;
+        }
+        .signature-area {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 6px;
+            text-align: center;
+        }
+        .signature-line {
+            border-bottom: 2px solid #bdc3c7;
+            height: 60px;
+            margin: 20px 0;
+        }
+        .thank-you-card {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 8px;
+            text-align: center;
         }
         @media print {
-            body {
-                background: white;
-                padding: 0;
-            }
-            .no-print { display: none; }
-            .invoice-container {
-                box-shadow: none;
-                border-radius: 0;
-            }
-            .invoice-header {
-                background: #2563eb !important;
-                -webkit-print-color-adjust: exact;
-            }
+            body { background: white; padding: 0; }
+            .no-print { display: none !important; }
+            .invoice-wrapper { box-shadow: none; }
         }
-        @page {
-            margin: 10mm 15mm 10mm 0mm;
-            padding: 0px;
+        @media (max-width: 768px) {
+            .company-customer-row { flex-direction: column; gap: 20px; }
+            .footer-section { flex-direction: column; gap: 20px; }
         }
-        p { margin-bottom: 8px; font-size: 14px; }
-        h6 { font-size: 14px; }
-        h5 { font-size: 16px; }
-        td { font-size: 14px; }
     </style>
 </head>
-<body class="mt-5 me-3">
-    <div class="invoice-container">
+<body>
+    <div class="invoice-wrapper">
         <!-- Header -->
         <div class="invoice-header">
-            <h2><i class="fas fa-file-invoice"></i> Invoice Management System</h2>
-            <p style="margin: 10px 0 0 0; opacity: 0.9;">Professional Invoice #<?= htmlspecialchars($invoice['invoice_number']) ?></p>
+            <h2>INVOICE</h2>
+            <p>Invoice #<?= htmlspecialchars($invoice['invoice_number']) ?></p>
         </div>
 
         <!-- Action Buttons -->
-        <div class="no-print" style="padding: 20px; background: #f8fafc; border-bottom: 1px solid #e5e7eb;">
-            <div class="text-center">
-                <a href="invoice_history.php" class="btn-modern btn-secondary-modern">
-                    <i class="fas fa-arrow-left"></i> Back to History
-                </a>
-                <button onclick="window.print()" class="btn-modern btn-primary-modern">
-                    <i class="fas fa-print"></i> Print Invoice
-                </button>
-            </div>
+        <div class="action-bar no-print">
+            <a href="invoice_history.php" class="btn btn-secondary">← Back to History</a>
+            <button onclick="window.print()" class="btn btn-primary">🖨 Print Invoice</button>
         </div>
 
         <!-- Invoice Content -->
-        <div class="invoice-body">
-            <!-- Company Info -->
-            <div class="row mb-4">
-                <div class="col-md-6">
-                    <div class="info-card">
-                        <h5><i class="fas fa-building text-primary"></i> Company Information</h5>
-                        <img src="img/teaboy.png" width="250" class="mb-3" alt="Company Logo">
-                        <div>
-                            <p><strong>Address:</strong></p>
-                            <p>No : 3, Ground Floor,</p>
-                            <p>Shivalaya Apartments, Ethiraj Salai,</p>
-                            <p>Egmore, Chennai - 600 008</p>
-                            <p><strong>GST No:</strong> 33ABCDE1234F1Z9</p>
+        <div class="invoice-content">
+            <!-- Company and Customer Info -->
+            <div class="company-customer-row">
+                <div class="company-info">
+                    <div class="section-title">Company Information</div>
+                    <div class="info-group">
+                        <img src="img/teaboy.png" width="200" style="margin-bottom: 15px;" alt="Company Logo">
+                        <div class="info-line"><strong>Address:</strong></div>
+                        <div class="address-block">
+                            No : 3, Ground Floor,<br>
+                            Shivalaya Apartments, Ethiraj Salai,<br>
+                            Egmore, Chennai - 600 008
                         </div>
+                        <div class="info-line"><strong>GST No:</strong> 33ABCDE1234F1Z9</div>
                     </div>
                 </div>
-                <div class="col-md-6">
-                    <div class="info-card">
-                        <h5><i class="fas fa-user text-success"></i> Customer Details</h5>
-                        <div style="background: white; padding: 15px; border-radius: 8px; margin-top: 10px;">
-                            <p><strong><i class="fas fa-hashtag"></i> Invoice #:</strong> <?= htmlspecialchars($invoice['invoice_number']) ?></p>
-                            <p><strong><i class="fas fa-calendar"></i> Date:</strong> <?= htmlspecialchars($invoice['invoice_date']) ?></p>
-                            <p><strong><i class="fas fa-user-circle"></i> Name:</strong> <?= htmlspecialchars($invoice['customer_name']) ?></p>
-                            <p><strong><i class="fas fa-map-marker-alt"></i> Bill To:</strong></p>
-                            <div style="padding-left: 20px; border-left: 3px solid #2563eb; margin-left: 10px;">
-                                <?= nl2br(htmlspecialchars($invoice['bill_address'])) ?>
-                            </div>
-                            <p><strong><i class="fas fa-phone"></i> Contact:</strong> <?= htmlspecialchars($invoice['customer_contact']) ?></p>
+                
+                <div class="customer-info">
+                    <div class="section-title">Customer Details</div>
+                    <div class="info-group">
+                        <div class="info-line"><strong>Invoice #:</strong> <?= htmlspecialchars($invoice['invoice_number']) ?></div>
+                        <div class="info-line"><strong>Date:</strong> <?= htmlspecialchars($invoice['invoice_date']) ?></div>
+                        <div class="info-line"><strong>Customer:</strong> <?= htmlspecialchars($invoice['customer_name']) ?></div>
+                        <div class="info-line"><strong>Contact:</strong> <?= htmlspecialchars($invoice['customer_contact']) ?></div>
+                        <div class="info-line"><strong>Bill To:</strong></div>
+                        <div class="address-block">
+                            <?= nl2br(htmlspecialchars($invoice['bill_address'])) ?>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Items Table -->
-            <div class="info-card">
-                <h5><i class="fas fa-shopping-cart text-info"></i> Invoice Items</h5>
-                <table class="table table-modern mt-3">
+            <div class="items-section">
+                <div class="section-title">Invoice Items</div>
+                <table class="invoice-table">
                     <thead>
                         <tr>
-                            <th><i class="fas fa-box"></i> Item</th>
-                            <th><i class="fas fa-sort-numeric-up"></i> Qty</th>
-                            <th><i class="fas fa-tag"></i> Price</th>
-                            <th><i class="fas fa-calculator"></i> Total</th>
+                            <th>Item Description</th>
+                            <th style="text-align: center;">Quantity</th>
+                            <th style="text-align: right;">Unit Price</th>
+                            <th style="text-align: right;">Total Amount</th>
                         </tr>
                     </thead>
                     <tbody>
                     <?php if (is_array($items)): foreach ($items as $item): ?>
                         <tr>
                             <td><?= htmlspecialchars($item['name']) ?></td>
-                            <td><span class="badge bg-primary"><?= htmlspecialchars($item['qty']) ?></span></td>
-                            <td>₹<?= number_format($item['price'], 2) ?></td>
-                            <td><strong>₹<?= number_format($item['total'], 2) ?></strong></td>
+                            <td style="text-align: center;">
+                                <span class="qty-badge"><?= htmlspecialchars($item['qty']) ?></span>
+                            </td>
+                            <td style="text-align: right;">₹<?= number_format($item['price'], 2) ?></td>
+                            <td style="text-align: right;"><strong>₹<?= number_format($item['total'], 2) ?></strong></td>
                         </tr>
                     <?php endforeach; endif; ?>
                     </tbody>
@@ -309,32 +397,32 @@ $items = json_decode($invoice['items'], true);
             </div>
 
             <!-- Total Amount -->
-            <div class="amount-highlight">
-                <h4><i class="fas fa-rupee-sign"></i> Grand Total: ₹<?= number_format($invoice['total_amount'], 2) ?></h4>
+            <div class="total-section">
+                <div class="total-amount">GRAND TOTAL: ₹<?= number_format($invoice['total_amount'], 2) ?></div>
                 <?php $amountInWords = convertNumberToWords($invoice['total_amount']); ?>
-                <p style="margin: 10px 0 0 0; opacity: 0.9;"><strong>Amount in Words:</strong> <?= $amountInWords ?> Rupees Only</p>
+                <div class="amount-words">Amount in Words: <?= $amountInWords ?> Rupees Only</div>
             </div>
 
             <!-- Footer Section -->
-            <div class="row mt-4">
-                <div class="col-md-6">
-                    <div class="info-card">
-                        <h6><i class="fas fa-signature text-warning"></i> Authorization</h6>
-                        <div style="height: 80px; border-bottom: 2px solid #e5e7eb; margin: 20px 0;"></div>
-                        <p><strong>Authorized Signature</strong></p>
-                        <p class="text-muted">Owner</p>
+            <div class="footer-section">
+                <div class="signature-block">
+                    <div class="section-title">Authorization</div>
+                    <div class="signature-area">
+                        <div class="signature-line"></div>
+                        <strong>Authorized Signature</strong><br>
+                        <small class="text-muted">Owner</small>
                     </div>
                 </div>
-                <div class="col-md-6">
-                    <div class="info-card text-center">
-                        <div style="background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: white; padding: 20px; border-radius: 10px; margin-top: 20px;">
-                            <h5><i class="fas fa-heart"></i> Thank You for Your Business!</h5>
-                            <p style="margin: 5px 0 0 0; opacity: 0.9;">We appreciate your prompt payment and trust.</p>
-                        </div>
+                
+                <div class="thank-you-block">
+                    <div class="section-title">Thank You</div>
+                    <div class="thank-you-card">
+                        <h4 style="margin: 0 0 10px 0;">Thank You for Your Business!</h4>
+                        <p style="margin: 0; font-size: 14px;">We appreciate your prompt payment and trust in our services.</p>
                     </div>
                 </div>
             </div>
         </div>
-    </div> 
+    </div>
 </body>
 </html>
