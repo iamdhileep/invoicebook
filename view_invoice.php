@@ -342,29 +342,32 @@ $items = json_decode($invoice['items'], true);
                 padding: 15px;
                 width: 100%;
             }
+            /* Force proper Bootstrap layout for print */
             .row {
-                display: flex !important;
-                flex-wrap: wrap;
-                margin: 0 -5px;
-                width: 100%;
+                display: table !important;
+                width: 100% !important;
+                table-layout: fixed !important;
+                margin: 0 !important;
             }
             .col-md-6 {
-                flex: 0 0 50% !important;
-                max-width: 50% !important;
-                padding: 0 5px;
-                box-sizing: border-box;
+                display: table-cell !important;
+                width: 50% !important;
+                vertical-align: top !important;
+                padding: 0 8px !important;
+                box-sizing: border-box !important;
             }
             .company-customer-row {
                 margin-bottom: 15px;
-                display: flex !important;
-                width: 100%;
-                align-items: flex-start;
+                display: table !important;
+                width: 100% !important;
+                table-layout: fixed !important;
             }
             .company-info, .customer-info {
+                display: table-cell !important;
                 width: 50% !important;
-                flex: 0 0 50% !important;
-                padding: 0 5px;
-                box-sizing: border-box;
+                vertical-align: top !important;
+                padding: 0 8px !important;
+                box-sizing: border-box !important;
             }
             .info-group {
                 padding: 10px;
@@ -394,15 +397,16 @@ $items = json_decode($invoice['items'], true);
             }
             .footer-section {
                 margin-top: 15px;
-                display: flex !important;
-                width: 100%;
-                align-items: flex-start;
+                display: table !important;
+                width: 100% !important;
+                table-layout: fixed !important;
             }
             .signature-block, .thank-you-block {
+                display: table-cell !important;
                 width: 50% !important;
-                flex: 0 0 50% !important;
-                padding: 0 5px;
-                box-sizing: border-box;
+                vertical-align: top !important;
+                padding: 0 8px !important;
+                box-sizing: border-box !important;
             }
             .signature-area, .thank-you-card {
                 width: 100%;
