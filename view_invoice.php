@@ -336,29 +336,51 @@ $items = json_decode($invoice['items'], true);
                 border: none;
                 max-width: none;
                 margin: 0;
+                width: 100%;
             }
             .invoice-content {
-                padding: 10px;
+                padding: 15px;
+                width: 100%;
+            }
+            .row {
+                display: flex !important;
+                flex-wrap: wrap;
+                margin: 0 -5px;
+                width: 100%;
+            }
+            .col-md-6 {
+                flex: 0 0 50% !important;
+                max-width: 50% !important;
+                padding: 0 5px;
+                box-sizing: border-box;
             }
             .company-customer-row {
-                margin-bottom: 10px;
-                display: flex;
-                gap: 15px;
+                margin-bottom: 15px;
+                display: flex !important;
+                width: 100%;
                 align-items: flex-start;
             }
             .company-info, .customer-info {
-                flex: 1;
-                width: 50%;
+                width: 50% !important;
+                flex: 0 0 50% !important;
+                padding: 0 5px;
+                box-sizing: border-box;
             }
             .info-group {
-                padding: 8px;
+                padding: 10px;
                 height: auto;
-                min-height: 120px;
+                min-height: 130px;
+                width: 100%;
+                box-sizing: border-box;
             }
             .company-info img {
                 width: 120px !important;
                 height: auto;
-                margin-bottom: 5px;
+                margin-bottom: 8px;
+            }
+            .invoice-table {
+                width: 100%;
+                margin: 10px 0;
             }
             .invoice-table th,
             .invoice-table td {
@@ -366,34 +388,44 @@ $items = json_decode($invoice['items'], true);
                 font-size: 10px;
             }
             .total-section {
-                padding: 10px;
-                margin: 10px 0;
+                padding: 12px;
+                margin: 15px 0;
+                width: 100%;
             }
             .footer-section {
-                margin-top: 10px;
-                display: flex;
-                gap: 15px;
+                margin-top: 15px;
+                display: flex !important;
+                width: 100%;
+                align-items: flex-start;
             }
             .signature-block, .thank-you-block {
-                flex: 1;
-                width: 50%;
+                width: 50% !important;
+                flex: 0 0 50% !important;
+                padding: 0 5px;
+                box-sizing: border-box;
+            }
+            .signature-area, .thank-you-card {
+                width: 100%;
+                box-sizing: border-box;
             }
             .signature-line {
-                height: 30px;
-                margin: 10px 0 5px 0;
+                height: 35px;
+                margin: 12px 0 8px 0;
             }
             .section-title {
                 font-size: 12px;
-                margin-bottom: 5px;
+                margin-bottom: 6px;
+                font-weight: 600;
             }
             .info-line {
                 font-size: 10px;
-                margin-bottom: 2px;
+                margin-bottom: 3px;
             }
             .address-block {
-                padding: 5px;
+                padding: 6px;
                 font-size: 10px;
-                line-height: 1.2;
+                line-height: 1.3;
+                margin: 3px 0;
             }
         }
         
