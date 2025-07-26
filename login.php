@@ -9,6 +9,12 @@ if (isset($_SESSION['admin']) || isset($_SESSION['user_id'])) {
 }
 
 $error = '';
+$success_message = '';
+
+// Check for logout success message
+if (isset($_GET['logout']) && $_GET['logout'] == '1') {
+    $success_message = 'You have been successfully logged out.';
+}
 
 if (isset($_POST['username'], $_POST['password'])) {
     $username = trim($_POST['username']);
@@ -253,6 +259,13 @@ if (isset($_POST['username'], $_POST['password'])) {
                 <p>Invoice Management System</p>
             </div>
             <div class="card-body">
+                <?php if (!empty($success_message)): ?>
+                    <div class="alert alert-success d-flex align-items-center" role="alert">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <?= htmlspecialchars($success_message) ?>
+                    </div>
+                <?php endif; ?>
+                
                 <?php if (!empty($error)): ?>
                     <div class="alert alert-danger d-flex align-items-center" role="alert">
                         <i class="fas fa-exclamation-triangle me-2"></i>
