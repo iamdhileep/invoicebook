@@ -34,11 +34,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($stmt->execute()) {
                 // Send email
                 if (sendPasswordResetEmail($email, $reset_token, $user['username'])) {
-                    $message = 'Password reset instructions have been sent to your email address.';
-                    $message_type = 'success';
+                    // Check if we're in development mode
+                    include_once 'mail_config.php';
+                    global $emailConfig;
+                    
+                    if ($emailConfig['development_mode']) {
+                        $message = '<strong>Development Mode:</strong> Password reset link generated successfully!<br>';
+                        $message .= '📧 Check the <code>email_log.txt</code> file for the reset link, or visit the ';
+                        $message .= '<a href="email_setup_guide.php" class="alert-link"><i class="fas fa-cog"></i> Email Setup Guide</a> to view and test email functionality.';
+                        $message_type = 'info';
+                    } else {
+                        $message = '<strong>Email Sent!</strong> Password reset instructions have been sent to your email address.';
+                        $message_type = 'success';
+                    }
                 } else {
-                    $message = 'Failed to send email. Please try again or contact support.';
-                    $message_type = 'danger';
+                    $message = '<strong>Email Error:</strong> Failed to send password reset email.<br>';
+                    $message .= 'Please visit the <a href="email_setup_guide.php" class="alert-link"><i class="fas fa-tools"></i> Email Setup Guide</a> to configure email settings or contact your administrator.';
+                    $message_type = 'warning';
                 }
             } else {
                 $message = 'Database error. Please try again.';
@@ -101,6 +113,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         .card-body {
             padding: 40px;
+        }
+        .alert {
+            border-radius: 10px;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .alert a {
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .alert a:hover {
+            text-decoration: underline;
+        }
+        .alert code {
+            background: rgba(0,0,0,0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
         }
         .form-floating {
             margin-bottom: 20px;
@@ -182,7 +212,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <?php if (!empty($message)): ?>
                     <div class="alert alert-<?= $message_type ?> d-flex align-items-center" role="alert">
                         <i class="fas <?= $message_type === 'success' ? 'fa-check-circle' : ($message_type === 'danger' ? 'fa-exclamation-triangle' : 'fa-info-circle') ?> me-2"></i>
-                        <?= htmlspecialchars($message) ?>
+                        <div><?= $message ?></div>
                     </div>
                 <?php endif; ?>
 
