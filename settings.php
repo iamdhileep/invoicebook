@@ -41,7 +41,7 @@ if ($table_check->num_rows === 0) {
     // If no user found, check if this is a legacy admin session
     if (!$user && isset($_SESSION['admin'])) {
         // For backward compatibility, assume admin access if session exists
-        $user = ['id' => $_SESSION['admin'], 'role' => 'admin', 'permissions' => 'all'];
+        $user = ['id' => $_SESSION['admin'], 'username' => 'admin', 'role' => 'admin', 'permissions' => 'all'];
     }
 }
 
@@ -102,11 +102,11 @@ if ($setup_needed) {
             $user = $permission_check->get_result()->fetch_assoc();
         } else {
             // Assume admin access for now
-            $user = ['role' => 'admin'];
+            $user = ['username' => 'admin', 'role' => 'admin'];
         }
     } else {
         $setup_error = "Error setting up database: " . $conn->error;
-        $user = ['role' => 'admin']; // Allow access to show error
+        $user = ['username' => 'admin', 'role' => 'admin']; // Allow access to show error
     }
 } else {
     // Table exists, check permissions normally
@@ -353,7 +353,7 @@ include 'layouts/header.php';
                                             <?= count(array_filter($users, function($u) { return $u['role'] !== 'admin'; })) ?>
                                         </div>
                                         <div class="list-group-item">
-                                            <strong>Current User:</strong> <?= htmlspecialchars($user['username']) ?>
+                                            <strong>Current User:</strong> <?= htmlspecialchars($user['username'] ?? 'Admin User') ?>
                                         </div>
                                     </div>
                                 </div>

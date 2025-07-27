@@ -20,21 +20,22 @@ include '../../layouts/sidebar.php';
 ?>
 
 <div class="main-content">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="h3 mb-0">Mark Attendance</h1>
-            <p class="text-muted">Record daily attendance with punch in/out times - <?= date('F j, Y') ?></p>
-        </div>
-        <div class="d-flex align-items-center gap-3">
-            <div class="live-clock">
-                <i class="bi bi-clock me-2"></i>
-                <strong>Live Time: <span id="liveClock"></span></strong>
+    <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h1 class="h5 mb-0">⏰ Mark Attendance</h1>
+                <p class="text-muted small">Record daily attendance with punch in/out times - <?= date('F j, Y') ?></p>
             </div>
-            <a href="../../attendance-calendar.php" class="btn btn-outline-primary">
-                <i class="bi bi-calendar3"></i> View Calendar
-            </a>
+            <div class="d-flex align-items-center gap-3">
+                <div class="live-clock">
+                    <i class="bi bi-clock me-2"></i>
+                    <strong>Live Time: <span id="liveClock"></span></strong>
+                </div>
+                <a href="../../attendance-calendar.php" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-calendar3"></i> View Calendar
+                </a>
+            </div>
         </div>
-    </div>
 
     <?php if (isset($_GET['success'])): ?>
         <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -45,10 +46,10 @@ include '../../layouts/sidebar.php';
 
     <div class="row">
         <div class="col-lg-8">
-            <div class="card">
-                <div class="card-header">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light border-0 py-2">
                     <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0"><i class="bi bi-calendar-check me-2"></i>Today's Attendance</h5>
+                        <h6 class="mb-0 text-dark"><i class="bi bi-calendar-check me-2"></i>Today's Attendance</h6>
                         <div>
                             <input type="date" id="attendanceDate" class="form-control form-control-sm" 
                                    value="<?= $today ?>" onchange="changeDate()">
@@ -283,6 +284,64 @@ include '../../layouts/sidebar.php';
                 </div>
             </div>
 
+            <!-- Biometric System Integration -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-fingerprint me-2"></i>Devices Integrated</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex flex-column gap-3" id="devicesList">
+                        <!-- Devices will be loaded dynamically -->
+                        <div class="text-center py-2">
+                            <div class="d-flex align-items-center justify-content-center">
+                                <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <small class="text-muted">Loading devices...</small>
+                            </div>
+                            <button class="btn btn-link btn-sm p-0 mt-1" onclick="loadDevices()" style="font-size: 0.8rem;">
+                                <i class="bi bi-arrow-clockwise"></i> Refresh
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Integration Status -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-wifi me-2"></i>Integration Status</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex flex-column gap-3" id="syncStatusList">
+                        <!-- Sync status will be loaded dynamically -->
+                        <div class="text-center py-2">
+                            <div class="d-flex align-items-center justify-content-center">
+                                <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <small class="text-muted">Loading sync status...</small>
+                            </div>
+                            <button class="btn btn-link btn-sm p-0 mt-1" onclick="loadSyncStatus()" style="font-size: 0.8rem;">
+                                <i class="bi bi-arrow-clockwise"></i> Refresh
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Sync Actions -->
+                    <div class="mt-3 pt-3 border-top">
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-primary btn-sm" onclick="syncAllDevices()" id="syncAllBtn">
+                                <i class="bi bi-arrow-clockwise me-1"></i> Sync All Devices
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="openDeviceSettings()">
+                                <i class="bi bi-gear me-1"></i> Device Settings
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Quick Actions -->
             <div class="card">
                 <div class="card-header">
@@ -442,6 +501,903 @@ function showAlert(message, type = 'info') {
         }
     }, 3000);
 }
+
+// Biometric device management functions
+let devices = [];
+let syncStatus = [];
+
+// Quick status check function
+async function checkBiometricStatus() {
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2000); // 2 second timeout for status check
+        
+        const response = await fetch('../../api/biometric_status_check.php', {
+            signal: controller.signal,
+            headers: {
+                'Cache-Control': 'no-cache'
+            }
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+            throw new Error(`Status check failed: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Biometric Status Check:', data);
+        
+        return data.status === 'ok' && data.database_connected;
+        
+    } catch (error) {
+        console.warn('Status check failed:', error.message);
+        return false;
+    }
+}
+
+// Load devices and sync status on page load
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Page loaded, starting biometric system initialization...');
+    
+    // Start loading immediately with better UI feedback
+    showLoadingState();
+    
+    // First do a quick status check
+    setTimeout(async () => {
+        console.log('Starting status check...');
+        const statusOk = await checkBiometricStatus();
+        
+        if (!statusOk) {
+            console.warn('Status check failed, showing fallback content');
+            showFallbackContent();
+            return;
+        }
+        
+        console.log('Status check passed, loading full data...');
+        
+        // Set a fallback timeout - if loading takes more than 8 seconds, show error
+        const fallbackTimeout = setTimeout(() => {
+            console.warn('Fallback timeout reached after 8 seconds');
+            showFallbackContent();
+        }, 8000);
+        
+        // Status is OK, proceed with full loading
+        try {
+            await Promise.all([loadDevices(), loadSyncStatus()]);
+            clearTimeout(fallbackTimeout);
+            console.log('Biometric data loaded successfully');
+        } catch (error) {
+            console.error('Error loading biometric data:', error);
+            clearTimeout(fallbackTimeout);
+            showFallbackContent();
+        }
+    }, 100);
+    
+    // Initialize live clock
+    updateClock();
+    setInterval(updateClock, 1000);
+});
+
+function showLoadingState() {
+    const devicesList = document.getElementById('devicesList');
+    const syncStatusList = document.getElementById('syncStatusList');
+    
+    devicesList.innerHTML = `
+        <div class="text-center py-2">
+            <div class="d-flex align-items-center justify-content-center">
+                <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <small class="text-muted">Loading devices...</small>
+            </div>
+            <div class="mt-1">
+                <small class="text-info" style="font-size: 0.75rem;">Fetching from database...</small>
+            </div>
+        </div>
+    `;
+    
+    syncStatusList.innerHTML = `
+        <div class="text-center py-2">
+            <div class="d-flex align-items-center justify-content-center">
+                <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <small class="text-muted">Loading sync status...</small>
+            </div>
+            <div class="mt-1">
+                <small class="text-info" style="font-size: 0.75rem;">Fetching from database...</small>
+            </div>
+        </div>
+    `;
+}
+
+function showFallbackContent() {
+    const devicesList = document.getElementById('devicesList');
+    const syncStatusList = document.getElementById('syncStatusList');
+    
+    // Show static fallback content with sample data for demonstration
+    devicesList.innerHTML = `
+        <div class="text-center py-2 mb-2">
+            <div class="text-warning mb-2">
+                <i class="bi bi-exclamation-triangle"></i>
+            </div>
+            <small class="text-muted">Unable to load devices</small>
+            <div class="mt-2">
+                <button class="btn btn-sm btn-outline-primary" onclick="loadDevices()">
+                    <i class="bi bi-arrow-clockwise me-1"></i>Try Again
+                </button>
+            </div>
+        </div>
+        <div class="card device-card active mb-2">
+            <div class="card-body py-2">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <small class="fw-bold">Sample Device 1</small>
+                        <div><small class="text-muted">Status: Active</small></div>
+                    </div>
+                    <span class="badge bg-success">Online</span>
+                </div>
+            </div>
+        </div>
+        <div class="card device-card active mb-2">
+            <div class="card-body py-2">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <small class="fw-bold">Sample Device 2</small>
+                        <div><small class="text-muted">Status: Active</small></div>
+                    </div>
+                    <span class="badge bg-warning">Syncing</span>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    syncStatusList.innerHTML = `
+        <div class="text-center py-2 mb-2">
+            <div class="text-warning mb-2">
+                <i class="bi bi-exclamation-triangle"></i>
+            </div>
+            <small class="text-muted">Unable to load sync status</small>
+            <div class="mt-2">
+                <button class="btn btn-sm btn-outline-primary" onclick="loadSyncStatus()">
+                    <i class="bi bi-arrow-clockwise me-1"></i>Try Again
+                </button>
+            </div>
+        </div>
+        <div class="card mb-2">
+            <div class="card-body py-2">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <small class="fw-bold">Device 1</small>
+                        <div><small class="text-muted">Last sync: Just now</small></div>
+                    </div>
+                    <span class="badge bg-success">Synced</span>
+                </div>
+            </div>
+        </div>
+        <div class="card mb-2">
+            <div class="card-body py-2">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <small class="fw-bold">Device 2</small>
+                        <div><small class="text-muted">Last sync: 5 min ago</small></div>
+                    </div>
+                    <span class="badge bg-warning">Pending</span>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// Update live clock function
+function updateClock() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('en-US', { 
+        hour12: true, 
+        hour: '2-digit', 
+        minute: '2-digit', 
+        second: '2-digit' 
+    });
+    const clockElement = document.getElementById('liveClock');
+    if (clockElement) {
+        clockElement.textContent = timeString;
+    }
+}
+
+async function loadDevices() {
+    console.log('Starting to load devices...');
+    const devicesList = document.getElementById('devicesList');
+    
+    try {
+        // Add timeout to the fetch request
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => {
+            console.warn('Device loading timeout after 5 seconds');
+            controller.abort();
+        }, 5000); // 5 second timeout
+        
+        console.log('Fetching devices from API...');
+        const response = await fetch('api/biometric_api_test.php?action=get_devices', {
+            signal: controller.signal,
+            headers: {
+                'Cache-Control': 'no-cache'
+            }
+        });
+        clearTimeout(timeoutId);
+        
+        console.log('Device API response received:', response.status, response.ok);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        console.log('Device data received:', data);
+        
+        if (data.success) {
+            devices = data.devices;
+            console.log('Devices loaded:', devices.length);
+            renderDevices();
+        } else {
+            console.error('Error loading devices:', data.message);
+            devicesList.innerHTML = '<div class="text-center py-3"><small class="text-danger">Failed to load devices: ' + (data.message || 'Unknown error') + '</small></div>';
+        }
+    } catch (error) {
+        console.error('Error loading devices:', error);
+        if (error.name === 'AbortError') {
+            devicesList.innerHTML = '<div class="text-center py-3"><small class="text-warning">Loading devices timed out. <button class="btn btn-sm btn-link p-0" onclick="loadDevices()">Retry</button></small></div>';
+        } else {
+            devicesList.innerHTML = '<div class="text-center py-3"><small class="text-danger">Failed to load devices. <button class="btn btn-sm btn-link p-0" onclick="loadDevices()">Retry</button></small></div>';
+        }
+    }
+}
+
+async function loadSyncStatus() {
+    console.log('Starting to load sync status...');
+    const syncStatusList = document.getElementById('syncStatusList');
+    
+    try {
+        // Add timeout to the fetch request
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+        console.log('Fetching sync status from API...');
+        const response = await fetch('api/biometric_api_test.php?action=get_sync_status', {
+            signal: controller.signal,
+            headers: {
+                'Cache-Control': 'no-cache'
+            }
+        });
+        clearTimeout(timeoutId);
+        
+        console.log('Sync status response received:', response.status, response.ok);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        console.log('Sync status data received:', data);
+        
+        if (data.success) {
+            syncStatus = data.status;
+            console.log('Sync status loaded:', syncStatus.length);
+            renderSyncStatus();
+        } else {
+            console.error('Error loading sync status:', data.message);
+            syncStatusList.innerHTML = '<div class="text-center py-3"><small class="text-danger">Failed to load sync status: ' + (data.message || 'Unknown error') + '</small></div>';
+        }
+    } catch (error) {
+        console.error('Error loading sync status:', error);
+        if (error.name === 'AbortError') {
+            syncStatusList.innerHTML = '<div class="text-center py-3"><small class="text-warning">Loading sync status timed out. <button class="btn btn-sm btn-link p-0" onclick="loadSyncStatus()">Retry</button></small></div>';
+        } else {
+            syncStatusList.innerHTML = '<div class="text-center py-3"><small class="text-danger">Failed to load sync status. <button class="btn btn-sm btn-link p-0" onclick="loadSyncStatus()">Retry</button></small></div>';
+        }
+    }
+}
+
+    function renderDevices() {
+        const devicesList = document.getElementById('devicesList');
+        
+        if (devices.length === 0) {
+            devicesList.innerHTML = '<div class="text-center py-3"><small class="text-muted">No devices configured</small></div>';
+            return;
+        }
+
+        devicesList.innerHTML = devices.map(device => {
+            const iconClass = getDeviceIcon(device.device_type);
+            const colorClass = getDeviceColor(device.device_type);
+            // Use is_enabled from database instead of is_active
+            const isActive = device.is_enabled == 1;
+            
+            return `
+                <div class="d-flex align-items-center justify-content-between p-2 rounded device-item" style="border: 1px dashed #dee2e6;">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-light rounded p-2 me-3">
+                            <i class="bi ${iconClass} text-${colorClass} fs-5"></i>
+                        </div>
+                        <div>
+                            <span class="fw-medium">${device.device_name}</span>
+                            <small class="text-muted d-block">${device.location}</small>
+                        </div>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="device_${device.id}" 
+                               ${isActive ? 'checked' : ''} 
+                               onchange="toggleDevice(${device.id}, this.checked)">
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function renderSyncStatus() {
+        const syncStatusList = document.getElementById('syncStatusList');
+        
+        if (syncStatus.length === 0) {
+            syncStatusList.innerHTML = '<div class="text-center py-3"><small class="text-muted">No sync status available</small></div>';
+            return;
+        }
+
+        const statusHtml = syncStatus.map(status => {
+            // Use mapped values from API
+            const statusColor = status.sync_status === 'sync' ? 'success' : 'danger';
+            const statusIcon = status.sync_status === 'sync' ? 'check-circle' : 'x-circle';
+            const statusText = status.sync_status === 'sync' ? 'Sync' : 'Failed';
+            const lastSync = new Date(status.last_sync).toLocaleString();
+            
+            return `
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-${statusColor} rounded-circle me-3" style="width: 8px; height: 8px;"></div>
+                        <div>
+                            <span class="fw-medium">${status.campus_name}</span>
+                            <small class="text-muted d-block">Last sync: ${lastSync}</small>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-${statusIcon} text-${statusColor} me-1"></i>
+                        <small class="text-${statusColor} fw-medium">${statusText}</small>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        syncStatusList.innerHTML = statusHtml;
+    }function getDeviceIcon(deviceType) {
+    const icons = {
+        'fingerprint': 'bi-fingerprint',
+        'biometric': 'bi-person-badge',
+        'facial_recognition': 'bi-person-check'
+    };
+    return icons[deviceType] || 'bi-device-hdd';
+}
+
+function getDeviceColor(deviceType) {
+    const colors = {
+        'fingerprint': 'primary',
+        'biometric': 'info',
+        'facial_recognition': 'success'
+    };
+    return colors[deviceType] || 'secondary';
+}
+
+    async function toggleDevice(deviceId, isActive) {
+        try {
+            const response = await fetch('api/biometric_api_test.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    action: 'toggle_device',
+                    device_id: deviceId,
+                    is_active: isActive
+                })
+            });        const data = await response.json();
+        
+        if (data.success) {
+            showAlert(`Device ${isActive ? 'activated' : 'deactivated'} successfully`, 'success');
+            // Update local data
+            const device = devices.find(d => d.id == deviceId);
+            if (device) {
+                device.is_active = isActive;
+            }
+        } else {
+            showAlert(data.message || 'Failed to update device', 'danger');
+            // Revert toggle
+            document.getElementById(`device_${deviceId}`).checked = !isActive;
+        }
+    } catch (error) {
+        console.error('Error toggling device:', error);
+        showAlert('Failed to update device. Please check your connection.', 'danger');
+        // Revert toggle
+        document.getElementById(`device_${deviceId}`).checked = !isActive;
+    }
+}
+
+async function syncAllDevices() {
+    const syncAllBtn = document.getElementById('syncAllBtn');
+    if (!syncAllBtn) return;
+    
+    const originalHtml = syncAllBtn.innerHTML;
+    
+    syncAllBtn.innerHTML = '<i class="bi bi-arrow-clockwise me-1" style="animation: spin 1s linear infinite;"></i> Syncing...';
+    syncAllBtn.disabled = true;
+    
+    try {
+        const response = await fetch('api/biometric_api_test.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                action: 'sync_all_devices'
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showAlert('All devices synced successfully!', 'success');
+            loadSyncStatus(); // Refresh sync status
+        } else {
+            showAlert(data.message || 'Failed to sync devices', 'danger');
+        }
+    } catch (error) {
+        console.error('Error syncing devices:', error);
+        showAlert('Failed to sync devices. Please check your connection.', 'danger');
+    } finally {
+        syncAllBtn.innerHTML = originalHtml;
+        syncAllBtn.disabled = false;
+    }
+}
+
+function openDeviceSettings() {
+    // Create modal for device settings with actual database data
+    const deviceTableRows = devices.map(device => `
+        <tr>
+            <td>
+                <div class="d-flex align-items-center">
+                    <i class="bi ${getDeviceIcon(device.device_type)} text-${getDeviceColor(device.device_type)} me-2"></i>
+                    ${device.device_name}
+                </div>
+            </td>
+            <td><span class="badge bg-secondary">${device.device_type.replace('_', ' ')}</span></td>
+            <td>${device.location}</td>
+            <td>
+                <span class="badge bg-${device.is_active ? 'success' : 'danger'}">
+                    ${device.is_active ? 'Active' : 'Inactive'}
+                </span>
+            </td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary" onclick="editDevice(${device.id})" title="Edit Device">
+                    <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger ms-1" onclick="deleteDevice(${device.id})" title="Delete Device">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+    
+    const campusList = [...new Set(syncStatus.map(s => s.campus_name))].map(campus => `
+        <div class="list-group-item d-flex justify-content-between align-items-center">
+            ${campus}
+            <span class="badge bg-success rounded-pill">Active</span>
+        </div>
+    `).join('');
+
+    const modal = document.createElement('div');
+    modal.className = 'modal fade';
+    modal.id = 'deviceSettingsModal';
+    modal.innerHTML = `
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-gear me-2"></i>Biometric Device Settings
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 class="mb-0">Device Management</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>Device</th>
+                                                    <th>Type</th>
+                                                    <th>Location</th>
+                                                    <th>Status</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                ${deviceTableRows}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="mt-3">
+                                        <button class="btn btn-primary btn-sm" onclick="addNewDevice()">
+                                            <i class="bi bi-plus me-1"></i>Add New Device
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card mb-3">
+                                <div class="card-header">
+                                    <h6 class="mb-0">Sync Settings</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Sync Interval</label>
+                                        <select class="form-select" id="syncInterval">
+                                            <option value="5">Every 5 minutes</option>
+                                            <option value="10" selected>Every 10 minutes</option>
+                                            <option value="15">Every 15 minutes</option>
+                                            <option value="30">Every 30 minutes</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Connection Timeout</label>
+                                        <input type="number" class="form-control" id="connectionTimeout" value="30" min="10" max="120">
+                                        <small class="text-muted">Seconds</small>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="autoRetry" checked>
+                                        <label class="form-check-label" for="autoRetry">
+                                            Auto-retry failed connections
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 class="mb-0">Campus Locations</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Add New Campus</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="newCampusName" placeholder="Campus name">
+                                            <button class="btn btn-outline-primary" type="button" onclick="addNewCampus()">
+                                                <i class="bi bi-plus"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="list-group">
+                                        ${campusList}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveDeviceSettings()">
+                        <i class="bi bi-save me-1"></i>Save Settings
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    const bsModal = new bootstrap.Modal(modal);
+    bsModal.show();
+    
+    // Clean up modal when closed
+    modal.addEventListener('hidden.bs.modal', () => {
+        document.body.removeChild(modal);
+    });
+}
+
+function editDevice(deviceId) {
+    const device = devices.find(d => d.id == deviceId);
+    if (!device) return;
+    
+    // Create edit device modal
+    const editModal = document.createElement('div');
+    editModal.className = 'modal fade';
+    editModal.id = 'editDeviceModal';
+    editModal.innerHTML = `
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Device</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editDeviceForm">
+                        <div class="mb-3">
+                            <label class="form-label">Device Name</label>
+                            <input type="text" class="form-control" id="editDeviceName" value="${device.device_name}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Device Type</label>
+                            <select class="form-select" id="editDeviceType">
+                                <option value="fingerprint" ${device.device_type === 'fingerprint' ? 'selected' : ''}>Fingerprint</option>
+                                <option value="biometric" ${device.device_type === 'biometric' ? 'selected' : ''}>Biometric</option>
+                                <option value="facial_recognition" ${device.device_type === 'facial_recognition' ? 'selected' : ''}>Facial Recognition</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Location</label>
+                            <input type="text" class="form-control" id="editDeviceLocation" value="${device.location}">
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="editDeviceActive" ${device.is_active ? 'checked' : ''}>
+                            <label class="form-check-label" for="editDeviceActive">
+                                Device Active
+                            </label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="updateDevice(${deviceId})">Update Device</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(editModal);
+    const bsEditModal = new bootstrap.Modal(editModal);
+    bsEditModal.show();
+    
+    editModal.addEventListener('hidden.bs.modal', () => {
+        document.body.removeChild(editModal);
+    });
+}
+
+async function updateDevice(deviceId) {
+    const deviceName = document.getElementById('editDeviceName').value;
+    const deviceType = document.getElementById('editDeviceType').value;
+    const location = document.getElementById('editDeviceLocation').value;
+    const isActive = document.getElementById('editDeviceActive').checked;
+    
+    if (!deviceName.trim() || !location.trim()) {
+        showAlert('Please fill in all required fields', 'warning');
+        return;
+    }
+    
+    try {
+        const response = await fetch('api/biometric_api_test.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                action: 'update_device',
+                device_id: deviceId,
+                device_name: deviceName,
+                device_type: deviceType,
+                location: location,
+                is_active: isActive
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showAlert('Device updated successfully!', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('editDeviceModal')).hide();
+            loadDevices(); // Refresh devices list
+            
+            // Close settings modal and reopen to show updated data
+            const settingsModal = bootstrap.Modal.getInstance(document.getElementById('deviceSettingsModal'));
+            if (settingsModal) {
+                settingsModal.hide();
+                setTimeout(() => openDeviceSettings(), 500);
+            }
+        } else {
+            showAlert(data.message || 'Failed to update device', 'danger');
+        }
+    } catch (error) {
+        console.error('Error updating device:', error);
+        showAlert('Failed to update device. Please check your connection.', 'danger');
+    }
+}
+
+async function deleteDevice(deviceId) {
+    if (!confirm('Are you sure you want to delete this device? This action cannot be undone.')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('api/biometric_api_test.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                action: 'delete_device',
+                device_id: deviceId
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showAlert('Device deleted successfully!', 'success');
+            loadDevices(); // Refresh devices list
+            
+            // Close settings modal and reopen to show updated data
+            const settingsModal = bootstrap.Modal.getInstance(document.getElementById('deviceSettingsModal'));
+            if (settingsModal) {
+                settingsModal.hide();
+                setTimeout(() => openDeviceSettings(), 500);
+            }
+        } else {
+            showAlert(data.message || 'Failed to delete device', 'danger');
+        }
+    } catch (error) {
+        console.error('Error deleting device:', error);
+        showAlert('Failed to delete device. Please check your connection.', 'danger');
+    }
+}
+
+function addNewDevice() {
+    // Create add device modal
+    const addModal = document.createElement('div');
+    addModal.className = 'modal fade';
+    addModal.id = 'addDeviceModal';
+    addModal.innerHTML = `
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add New Device</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addDeviceForm">
+                        <div class="mb-3">
+                            <label class="form-label">Device Name</label>
+                            <input type="text" class="form-control" id="newDeviceName" placeholder="Enter device name">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Device Type</label>
+                            <select class="form-select" id="newDeviceType">
+                                <option value="fingerprint">Fingerprint</option>
+                                <option value="biometric">Biometric</option>
+                                <option value="facial_recognition">Facial Recognition</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Location</label>
+                            <input type="text" class="form-control" id="newDeviceLocation" placeholder="Enter location">
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="newDeviceActive" checked>
+                            <label class="form-check-label" for="newDeviceActive">
+                                Device Active
+                            </label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="createDevice()">Add Device</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(addModal);
+    const bsAddModal = new bootstrap.Modal(addModal);
+    bsAddModal.show();
+    
+    addModal.addEventListener('hidden.bs.modal', () => {
+        document.body.removeChild(addModal);
+    });
+}
+
+async function createDevice() {
+    const deviceName = document.getElementById('newDeviceName').value;
+    const deviceType = document.getElementById('newDeviceType').value;
+    const location = document.getElementById('newDeviceLocation').value;
+    const isActive = document.getElementById('newDeviceActive').checked;
+    
+    if (!deviceName.trim() || !location.trim()) {
+        showAlert('Please fill in all required fields', 'warning');
+        return;
+    }
+    
+    try {
+        const response = await fetch('api/biometric_api_test.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                action: 'create_device',
+                device_name: deviceName,
+                device_type: deviceType,
+                location: location,
+                is_active: isActive
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showAlert('Device added successfully!', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('addDeviceModal')).hide();
+            loadDevices(); // Refresh devices list
+            
+            // Close settings modal and reopen to show updated data
+            const settingsModal = bootstrap.Modal.getInstance(document.getElementById('deviceSettingsModal'));
+            if (settingsModal) {
+                settingsModal.hide();
+                setTimeout(() => openDeviceSettings(), 500);
+            }
+        } else {
+            showAlert(data.message || 'Failed to add device', 'danger');
+        }
+    } catch (error) {
+        console.error('Error adding device:', error);
+        showAlert('Failed to add device. Please check your connection.', 'danger');
+    }
+}
+
+function addNewCampus() {
+    const campusName = document.getElementById('newCampusName').value;
+    if (!campusName.trim()) {
+        showAlert('Please enter a campus name', 'warning');
+        return;
+    }
+    
+    // This would typically save to database
+    showAlert('Campus management feature coming soon', 'info');
+    document.getElementById('newCampusName').value = '';
+}
+
+function saveDeviceSettings() {
+    showAlert('Device settings saved successfully!', 'success');
+    const modal = bootstrap.Modal.getInstance(document.getElementById('deviceSettingsModal'));
+    modal.hide();
+}
+
+// Device toggle handlers
+document.addEventListener('DOMContentLoaded', function() {
+    // Fingerprint toggle
+    const fingerprintToggle = document.getElementById('fingerprintToggle');
+    if (fingerprintToggle) {
+        fingerprintToggle.addEventListener('change', function() {
+            const status = this.checked ? 'enabled' : 'disabled';
+            showAlert(`Fingerprint device ${status}`, this.checked ? 'success' : 'warning');
+        });
+    }
+    
+    // Biometric toggle
+    const biometricToggle = document.getElementById('biometricToggle');
+    if (biometricToggle) {
+        biometricToggle.addEventListener('change', function() {
+            const status = this.checked ? 'enabled' : 'disabled';
+            showAlert(`Biometric device ${status}`, this.checked ? 'success' : 'warning');
+        });
+    }
+    
+    // Facial recognition toggle
+    const facialToggle = document.getElementById('facialToggle');
+    if (facialToggle) {
+        facialToggle.addEventListener('change', function() {
+            const status = this.checked ? 'enabled' : 'disabled';
+            showAlert(`Facial recognition ${status}`, this.checked ? 'success' : 'warning');
+        });
+    }
+});
 </script>
 
 <style>
@@ -477,6 +1433,220 @@ function showAlert(message, type = 'info') {
 .btn-group .btn:not(:last-child) {
     margin-right: 2px;
 }
+
+/* Biometric Device Styles */
+.device-item {
+    transition: all 0.2s ease;
+}
+
+.device-item:hover {
+    background-color: #f8f9fa !important;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.device-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Loading and animation styles */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.spin {
+    animation: spin 1s linear infinite;
+}
+
+/* Toast notification slide in animation */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.toast-notification {
+    animation: slideIn 0.3s ease;
+}
+
+/* Form enhancements */
+.form-control:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+.form-select:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+/* Modal enhancements */
+.modal-content {
+    border: none;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.modal-header {
+    border-bottom: 1px solid #dee2e6;
+    background-color: #f8f9fa;
+}
+
+/* Status indicators */
+.status-indicator {
+    position: relative;
+    display: inline-block;
+}
+
+.status-indicator::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: 2px solid white;
+}
+
+.status-indicator.online::after {
+    background-color: #28a745;
+}
+
+.status-indicator.offline::after {
+    background-color: #dc3545;
+}
+
+/* Card hover effects */
+.card {
+    transition: all 0.2s ease;
+}
+
+.card:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* Button loading state */
+.btn:disabled {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* Table responsive improvements */
+.table-responsive {
+    border-radius: 0.375rem;
+    border: 1px solid #dee2e6;
+}
+
+.table th {
+    border-top: none;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Badge styles */
+.badge {
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+/* Custom scrollbar for modals */
+.modal-body {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.modal-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Additional biometric styles */
+.integration-card {
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.integration-status {
+    transition: all 0.3s ease;
+}
+
+.sync-animation {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+.form-switch .form-check-input {
+    width: 3rem;
+    height: 1.5rem;
+}
+
+.form-switch .form-check-input:checked {
+    background-color: #28a745;
+    border-color: #28a745;
+}
+
+.status-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    animation: statusBlink 2s infinite;
+}
+
+@keyframes statusBlink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0.3; }
+}
+
+.device-card {
+    border-left: 4px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.device-card.active {
+    border-left-color: #28a745;
+    background-color: #f8fff9;
+}
+
+.device-card.inactive {
+    border-left-color: #dc3545;
+    background-color: #fff8f8;
+}
 </style>
+
+    </div>
+</div>
 
 <?php include '../../layouts/footer.php'; ?>

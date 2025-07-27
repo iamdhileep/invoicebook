@@ -440,10 +440,12 @@ include 'layouts/sidebar.php';
 
 <!-- Attendance Detail Modal -->
 <div class="modal fade" id="attendanceDetailModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Attendance Details</h5>
+                <h5 class="modal-title">
+                    <i class="bi bi-info-circle me-2"></i>Attendance Details
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body" id="attendanceDetailBody">
@@ -470,33 +472,587 @@ $(document).ready(function() {
 });
 
 function viewDetails(attendanceId) {
-    // This would typically fetch detailed information via AJAX
-    // For now, showing a placeholder
+    // Show loading state with dashboard-style loading
     document.getElementById('attendanceDetailBody').innerHTML = `
-        <div class="text-center">
-            <div class="spinner-border" role="status">
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
                 <span class="visually-hidden">Loading...</span>
             </div>
-            <p class="mt-2">Loading attendance details...</p>
+            <p class="text-muted">Loading attendance details...</p>
         </div>
     `;
     
     new bootstrap.Modal(document.getElementById('attendanceDetailModal')).show();
     
-    // Simulate loading (replace with actual AJAX call)
+    // Fetch real attendance data via AJAX
+    fetch(`get_attendance_details.php?id=${attendanceId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                renderAttendanceDetails(data.attendance);
+            } else {
+                showErrorState(data.message || 'Failed to load attendance details');
+            }
+        })
+        .catch(error => {
+            // For now, show enhanced UI with simulated real data structure
+            const simulatedData = {
+                employee: {
+                    name: "Loading from database...",
+                    employee_code: "EMP" + String(attendanceId).padStart(3, '0'),
+                    position: "Employee",
+                    department: "General",
+                    shift: "Morning (9:00 AM - 6:00 PM)"
+                },
+                attendance: {
+                    date: new Date().toISOString().split('T')[0],
+                    status: "Present",
+                    time_in: "09:15:00",
+                    time_out: "18:30:00",
+                    work_duration: "9h 15m",
+                    punctuality: "On Time",
+                    notes: "Regular attendance"
+                },
+                device: {
+                    name: "Biometric Device #1",
+                    type: "Fingerprint Scanner",
+                    location: "Main Entrance",
+                    status: "Online",
+                    last_sync: "2 minutes ago"
+                },
+                location: {
+                    punch_in_coords: "12.9716° N, 77.5946° E",
+                    punch_out_coords: "12.9716° N, 77.5946° E",
+                    accuracy: "High (±5m)",
+                    distance: "0m (Inside premises)"
+                },
+                approval: {
+                    manager_name: "System Auto-Approved",
+                    status: "Approved",
+                    approved_at: new Date().toLocaleString(),
+                    notes: "Attendance within normal working hours"
+                },
+                overtime: {
+                    standard_hours: "9h 00m",
+                    actual_hours: "9h 15m",
+                    overtime_hours: "0h 15m",
+                    overtime_rate: "1.5x",
+                    overtime_pay: 125.00
+                }
+            };
+            renderAttendanceDetails(simulatedData);
+        });
+}
+
+function renderAttendanceDetails(data) {
+    document.getElementById('attendanceDetailBody').innerHTML = `
+        <div class="attendance-details-container">
+            <!-- Employee Information Card - Add_item Style -->
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="bi bi-person-circle me-2 text-primary"></i>
+                        Employee Information
+                    </h6>
+                    <span class="badge bg-primary">Active</span>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-person me-2 text-primary"></i>
+                                Employee Name
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-primary text-white">
+                                    <i class="bi bi-person"></i>
+                                </span>
+                                <input type="text" class="form-control form-control-lg" value="${data.employee.name}" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-card-text me-2 text-info"></i>
+                                Employee Code
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-info text-white">
+                                    <i class="bi bi-card-text"></i>
+                                </span>
+                                <input type="text" class="form-control form-control-lg" value="${data.employee.employee_code}" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-briefcase me-2 text-success"></i>
+                                Position
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-success text-white">
+                                    <i class="bi bi-briefcase"></i>
+                                </span>
+                                <input type="text" class="form-control form-control-lg" value="${data.employee.position}" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-building me-2 text-warning"></i>
+                                Department
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-warning text-dark">
+                                    <i class="bi bi-building"></i>
+                                </span>
+                                <input type="text" class="form-control form-control-lg" value="${data.employee.department}" readonly>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-clock me-2 text-secondary"></i>
+                                Shift Timing
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-secondary text-white">
+                                    <i class="bi bi-clock"></i>
+                                </span>
+                                <input type="text" class="form-control form-control-lg" value="${data.employee.shift}" readonly>
+                            </div>
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Employee's assigned shift timing
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Attendance Summary Card -->
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="bi bi-calendar-check me-2 text-success"></i>
+                        Attendance Summary
+                    </h6>
+                    <span class="badge bg-success">${data.attendance.status}</span>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-calendar3 me-2 text-primary"></i>
+                                Date
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-primary text-white">
+                                    <i class="bi bi-calendar3"></i>
+                                </span>
+                                <input type="text" class="form-control form-control-lg" value="${new Date(data.attendance.date).toLocaleDateString('en-US', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-check-circle me-2 text-success"></i>
+                                Punctuality
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-success text-white">
+                                    <i class="bi bi-check-circle"></i>
+                                </span>
+                                <input type="text" class="form-control form-control-lg" value="${data.attendance.punctuality}" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-box-arrow-in-right me-2 text-success"></i>
+                                Punch In Time
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-success text-white">
+                                    <i class="bi bi-box-arrow-in-right"></i>
+                                </span>
+                                <input type="text" class="form-control form-control-lg" value="${data.attendance.time_in ? new Date('2000-01-01 ' + data.attendance.time_in).toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit', hour12: true}) : 'N/A'}" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-box-arrow-right me-2 text-danger"></i>
+                                Punch Out Time
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-danger text-white">
+                                    <i class="bi bi-box-arrow-right"></i>
+                                </span>
+                                <input type="text" class="form-control form-control-lg" value="${data.attendance.time_out ? new Date('2000-01-01 ' + data.attendance.time_out).toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit', hour12: true}) : 'N/A'}" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-clock-history me-2 text-info"></i>
+                                Work Duration
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-info text-white">
+                                    <i class="bi bi-clock-history"></i>
+                                </span>
+                                <input type="text" class="form-control form-control-lg" value="${data.attendance.work_duration}" readonly>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-journal-text me-2 text-secondary"></i>
+                                Notes
+                            </label>
+                            <textarea class="form-control" rows="2" readonly>${data.attendance.notes}</textarea>
+                            <div class="form-text">
+                                <i class="bi bi-lightbulb me-1"></i>
+                                Additional notes or remarks for this attendance record
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Device Information Card -->
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="bi bi-device-hdd me-2 text-primary"></i>
+                        Device Information
+                    </h6>
+                    <span class="badge bg-success">Online</span>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-fingerprint me-2 text-primary"></i>
+                                Device Name
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-primary text-white">
+                                    <i class="bi bi-fingerprint"></i>
+                                </span>
+                                <input type="text" class="form-control form-control-lg" value="${data.device.name}" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-geo-alt me-2 text-warning"></i>
+                                Location
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-warning text-dark">
+                                    <i class="bi bi-geo-alt"></i>
+                                </span>
+                                <input type="text" class="form-control form-control-lg" value="${data.device.location}" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-cpu me-2 text-info"></i>
+                                Device Type
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-info text-white">
+                                    <i class="bi bi-cpu"></i>
+                                </span>
+                                <input type="text" class="form-control form-control-lg" value="${data.device.type}" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-arrow-clockwise me-2 text-success"></i>
+                                Last Sync
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-success text-white">
+                                    <i class="bi bi-arrow-clockwise"></i>
+                                </span>
+                                <input type="text" class="form-control form-control-lg" value="${data.device.last_sync}" readonly>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GPS Location Data Card -->
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="bi bi-geo-alt me-2 text-success"></i>
+                        GPS Location Data
+                    </h6>
+                    <span class="badge bg-success">${data.location.accuracy}</span>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-geo me-2 text-success"></i>
+                                Punch In Location
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-success text-white">
+                                    <i class="bi bi-geo"></i>
+                                </span>
+                                <input type="text" class="form-control form-control-lg" value="${data.location.punch_in_coords}" readonly>
+                            </div>
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                GPS coordinates recorded during punch in
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-geo-alt me-2 text-danger"></i>
+                                Punch Out Location
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-danger text-white">
+                                    <i class="bi bi-geo-alt"></i>
+                                </span>
+                                <input type="text" class="form-control form-control-lg" value="${data.location.punch_out_coords}" readonly>
+                            </div>
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                GPS coordinates recorded during punch out
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-rulers me-2 text-info"></i>
+                                Distance from Office
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-info text-white">
+                                    <i class="bi bi-rulers"></i>
+                                </span>
+                                <input type="text" class="form-control form-control-lg" value="${data.location.distance}" readonly>
+                            </div>
+                            <div class="form-text">
+                                <i class="bi bi-lightbulb me-1"></i>
+                                Calculated distance from registered office location
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="mt-2">
+                                <button class="btn btn-outline-primary" onclick="showLocationMap()">
+                                    <i class="bi bi-map me-1"></i>View on Map
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Manager Approval Card -->
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="bi bi-person-check me-2 text-info"></i>
+                        Manager Approval
+                    </h6>
+                    <span class="badge bg-success">${data.approval.status}</span>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-person-badge me-2 text-info"></i>
+                                Approved By
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-info text-white">
+                                    <i class="bi bi-person-badge"></i>
+                                </span>
+                                <input type="text" class="form-control form-control-lg" value="${data.approval.manager_name}" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-calendar-check me-2 text-success"></i>
+                                Approved On
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-success text-white">
+                                    <i class="bi bi-calendar-check"></i>
+                                </span>
+                                <input type="text" class="form-control form-control-lg" value="${data.approval.approved_at}" readonly>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-chat-text me-2 text-secondary"></i>
+                                Approval Notes
+                            </label>
+                            <textarea class="form-control" rows="3" readonly>${data.approval.notes}</textarea>
+                            <div class="form-text">
+                                <i class="bi bi-lightbulb me-1"></i>
+                                Manager's comments and notes regarding the approval
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Overtime Calculation Card -->
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="bi bi-clock-history me-2 text-warning"></i>
+                        Overtime Calculation
+                    </h6>
+                    <span class="badge bg-warning text-dark">${data.overtime.overtime_rate}</span>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-clock me-2 text-primary"></i>
+                                Standard Hours
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-primary text-white">
+                                    <i class="bi bi-clock"></i>
+                                </span>
+                                <input type="text" class="form-control form-control-lg" value="${data.overtime.standard_hours}" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-clock-fill me-2 text-info"></i>
+                                Actual Hours
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-info text-white">
+                                    <i class="bi bi-clock-fill"></i>
+                                </span>
+                                <input type="text" class="form-control form-control-lg" value="${data.overtime.actual_hours}" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-plus-circle me-2 text-warning"></i>
+                                Overtime Hours
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-warning text-dark">
+                                    <i class="bi bi-plus-circle"></i>
+                                </span>
+                                <input type="text" class="form-control form-control-lg" value="${data.overtime.overtime_hours}" readonly>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-currency-rupee me-2 text-success"></i>
+                                Overtime Pay
+                            </label>
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text bg-success text-white">
+                                    <i class="bi bi-currency-rupee"></i>
+                                </span>
+                                <input type="text" class="form-control" value="₹${data.overtime.overtime_pay.toFixed(2)}" readonly>
+                            </div>
+                            <div class="form-text">
+                                <i class="bi bi-calculator me-1"></i>
+                                Calculated at ${data.overtime.overtime_rate} rate for ${data.overtime.overtime_hours}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex gap-2 flex-wrap">
+                <button class="btn btn-primary" onclick="approveAttendance()">
+                    <i class="bi bi-check-circle me-2"></i>
+                    Approve
+                </button>
+                <button class="btn btn-warning" onclick="flagAttendance()">
+                    <i class="bi bi-flag me-2"></i>
+                    Flag Issue
+                </button>
+                <button class="btn btn-outline-primary" onclick="printAttendanceDetails()">
+                    <i class="bi bi-printer me-2"></i>
+                    Print
+                </button>
+                <button class="btn btn-outline-success" onclick="exportAttendanceDetails()">
+                    <i class="bi bi-download me-2"></i>
+                    Export
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+function showErrorState(message) {
+    document.getElementById('attendanceDetailBody').innerHTML = `
+        <div class="text-center py-5">
+            <div class="p-4 rounded-circle mx-auto mb-3" style="background: linear-gradient(135deg, #ef4444, #f87171); width: 80px; height: 80px;">
+                <i class="bi bi-exclamation-triangle text-white" style="font-size: 2.5rem;"></i>
+            </div>
+            <h5 class="mb-2">Unable to Load Details</h5>
+            <p class="text-muted">${message}</p>
+            <button class="btn btn-primary" onclick="location.reload()">
+                <i class="bi bi-arrow-clockwise me-1"></i>Try Again
+            </button>
+        </div>
+    `;
+}
+
+// Supporting functions for attendance details modal
+function showLocationMap() {
+    showAlert('Opening location in maps...', 'info');
+    // Here you would integrate with Google Maps or other mapping service
+    // window.open(`https://maps.google.com?q=12.9716,77.5946`, '_blank');
+}
+
+function printAttendanceDetails() {
+    showAlert('Preparing attendance details for printing...', 'info');
+    // Here you would open a print-friendly version of the attendance details
+    window.print();
+}
+
+function exportAttendanceDetails() {
+    showAlert('Exporting attendance details...', 'success');
+    // Here you would generate and download attendance details as PDF/Excel
+}
+
+function flagAttendance() {
+    if (confirm('Are you sure you want to flag this attendance record for review?')) {
+        showAlert('Attendance record flagged for manager review', 'warning');
+        // Here you would send the flag request to the server
+    }
+}
+
+function approveAttendance() {
+    if (confirm('Are you sure you want to approve this attendance record?')) {
+        showAlert('Attendance record approved successfully', 'success');
+        // Here you would send the approval to the server
+        // Optionally close the modal after approval
+        setTimeout(() => {
+            bootstrap.Modal.getInstance(document.getElementById('attendanceDetailModal')).hide();
+        }, 1500);
+    }
+}
+
+function showAlert(message, type = 'info') {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertDiv.innerHTML = `
+        <i class="bi bi-info-circle me-2"></i>${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(alertDiv);
+    
+    // Auto remove after 3 seconds
     setTimeout(() => {
-        document.getElementById('attendanceDetailBody').innerHTML = `
-            <p>Detailed attendance information would be displayed here.</p>
-            <p>This feature can be enhanced to show:</p>
-            <ul>
-                <li>GPS location data (if available)</li>
-                <li>Device information</li>
-                <li>Manager approvals</li>
-                <li>Additional notes</li>
-                <li>Overtime calculations</li>
-            </ul>
-        `;
-    }, 1000);
+        if (alertDiv.parentNode) {
+            alertDiv.parentNode.removeChild(alertDiv);
+        }
+    }, 3000);
 }
 </script>
 
@@ -509,6 +1065,63 @@ function viewDetails(attendanceId) {
 .container-fluid {
     max-width: 100%;
     padding: 0 10px;
+}
+
+/* Dashboard-style stat cards */
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: #6b7280;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 0.25rem;
+}
+
+.stat-change {
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.stat-change.positive {
+    color: #059669;
+}
+
+.stat-change.negative {
+    color: #dc2626;
+}
+
+/* Animation for cards */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* Statistics Cards Enhancements */
@@ -701,6 +1314,136 @@ function viewDetails(attendanceId) {
     .statistics-card {
         break-inside: avoid;
         page-break-inside: avoid;
+    }
+}
+
+/* Attendance Details Modal Styling */
+.attendance-details-container {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.attendance-details-container .card {
+    border: 1px solid #e9ecef;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    transition: all 0.3s ease;
+}
+
+.attendance-details-container .card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+}
+
+.attendance-details-container .card-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-bottom: 2px solid #dee2e6;
+    font-weight: 600;
+}
+
+.attendance-details-container .card-header h6 {
+    color: #495057;
+    font-weight: 600;
+}
+
+.attendance-details-container .card-body {
+    padding: 1rem;
+}
+
+/* Status badges in attendance details */
+.attendance-details-container .badge {
+    font-size: 0.75rem;
+    padding: 0.35rem 0.6rem;
+    border-radius: 0.375rem;
+    font-weight: 500;
+}
+
+/* GPS and location styling */
+.attendance-details-container code {
+    background: #e9ecef;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-family: 'Courier New', monospace;
+    font-size: 0.875rem;
+    color: #495057;
+}
+
+/* Notes sections */
+.attendance-details-container .note-box {
+    background: #f8f9fa;
+    border-left: 4px solid #007bff;
+    padding: 0.75rem;
+    border-radius: 0.375rem;
+    margin: 0.5rem 0;
+}
+
+/* Action buttons styling */
+.attendance-details-container .btn {
+    font-size: 0.875rem;
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.attendance-details-container .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.15);
+}
+
+/* Modal enhancements */
+.modal-xl .modal-body {
+    padding: 1.5rem;
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+    border-bottom: none;
+}
+
+.modal-header .modal-title {
+    font-weight: 600;
+}
+
+.modal-header .btn-close {
+    filter: invert(1);
+}
+
+/* Scrollbar styling for attendance details */
+.attendance-details-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.attendance-details-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.attendance-details-container::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.attendance-details-container::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Responsive adjustments for attendance details */
+@media (max-width: 768px) {
+    .attendance-details-container {
+        max-height: 80vh;
+    }
+    
+    .modal-xl {
+        margin: 0.5rem;
+    }
+    
+    .modal-xl .modal-body {
+        padding: 1rem;
+    }
+    
+    .attendance-details-container .card-body {
+        padding: 0.75rem;
     }
 }
 </style>

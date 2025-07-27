@@ -1,0 +1,1101 @@
+/* BillBook Global Styles - Consistent UI Design */
+/* Based on attendance-calendar.php reference design - Compact and Professional */
+
+:root {
+    /* Color Variables */
+    --primary: #007bff;
+    --secondary: #6c757d;
+    --success: #28a745;
+    --info: #17a2b8;
+    --warning: #ffc107;
+    --danger: #dc3545;
+    --light: #f8f9fa;
+    --dark: #343a40;
+    
+    /* Font Sizes - Compact and Readable */
+    --font-xs: 0.65rem;
+    --font-sm: 0.75rem;
+    --font-base: 0.85rem;
+    --font-lg: 0.95rem;
+    --font-xl: 1.05rem;
+    --font-2xl: 1.15rem;
+    --font-3xl: 1.3rem;
+    
+    /* Spacing - Based on attendance-calendar compact design */
+    --spacing-xs: 0.25rem;   /* 4px */
+    --spacing-sm: 0.5rem;    /* 8px */
+    --spacing-md: 0.75rem;   /* 12px */
+    --spacing-lg: 1rem;      /* 16px */
+    --spacing-xl: 1.25rem;   /* 20px */
+    --spacing-2xl: 1.5rem;   /* 24px */
+    
+    /* Border Radius - Consistent rounded corners */
+    --radius-xs: 3px;
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+    --radius-xl: 10px;
+    --radius-2xl: 12px;
+    
+    /* Card spacing - Compact like attendance-calendar */
+    --card-padding: 0.75rem;  /* 12px - matches p-3 */
+    --card-header-padding: 0.5rem 0.75rem; /* py-2 px-3 */
+    --page-margin: 0.75rem;   /* mb-3 */
+}
+
+/* Base Styles */
+* {
+    transition: all 0.2s ease;
+}
+
+body {
+    font-size: var(--font-base);
+    line-height: 1.4;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Container and Layout Consistency */
+.main-content {
+    padding: var(--spacing-lg) 0 !important;
+}
+
+.main-content .container-fluid {
+    padding: 0 var(--spacing-md) !important;
+}
+
+/* Page Header Standardization - Based on attendance-calendar */
+.main-content h1 {
+    font-size: var(--font-xl) !important;
+    font-weight: 600 !important;
+    margin-bottom: var(--spacing-xs) !important;
+    color: var(--dark) !important;
+}
+
+.main-content h1.h5 {
+    font-size: var(--font-xl) !important;
+}
+
+.main-content .text-muted.small {
+    font-size: var(--font-sm) !important;
+    margin-bottom: 0 !important;
+    line-height: 1.3;
+}
+
+/* Page Header Container - Consistent spacing */
+.d-flex.justify-content-between.align-items-center {
+    margin-bottom: var(--page-margin) !important;
+}
+
+.d-flex.justify-content-between.align-items-center.mb-5 {
+    margin-bottom: var(--page-margin) !important;
+}
+
+.d-flex.justify-content-between.align-items-center.mb-4 {
+    margin-bottom: var(--page-margin) !important;
+}
+
+/* Row Spacing Standardization - Compact like attendance-calendar */
+.row.g-4 {
+    gap: var(--spacing-sm) !important;
+}
+
+.row.g-4 > * {
+    padding: var(--spacing-xs) !important;
+}
+
+.row.g-3 > * {
+    padding: var(--spacing-xs) !important;
+}
+
+.row.g-2 > * {
+    padding: var(--spacing-xs) !important;
+}
+
+.mb-5 {
+    margin-bottom: var(--page-margin) !important;
+}
+
+.mb-4 {
+    margin-bottom: var(--page-margin) !important;
+}
+
+.mb-3 {
+    margin-bottom: var(--page-margin) !important;
+}
+
+.mb-2 {
+    margin-bottom: var(--spacing-sm) !important;
+}
+
+/* Statistics Cards Standardization - Based on attendance-calendar design */
+.statistics-card, .stat-card {
+    transition: all 0.3s ease;
+    border-radius: var(--radius-lg) !important;
+    overflow: hidden;
+    border: none !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08) !important;
+    margin-bottom: var(--spacing-sm);
+}
+
+.statistics-card:hover, .stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12) !important;
+}
+
+.statistics-card .card-body, .stat-card .card-body, .stat-card {
+    position: relative;
+    overflow: hidden;
+    padding: var(--card-padding) !important;
+    text-align: center;
+}
+
+.statistics-card .card-body::before, .stat-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    opacity: 0;
+}
+
+.statistics-card:hover .card-body::before, .stat-card:hover::before {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.statistics-card i, .stat-card i {
+    transition: all 0.3s ease;
+    margin-bottom: var(--spacing-xs);
+}
+
+.statistics-card:hover i, .stat-card:hover i {
+    transform: scale(1.05);
+}
+
+.statistics-card h5, .stat-card .stat-value {
+    font-size: var(--font-2xl) !important;
+    font-weight: 700 !important;
+    margin-bottom: var(--spacing-xs) !important;
+    line-height: 1.2;
+}
+
+.statistics-card small, .stat-card .stat-label, .stat-card small {
+    font-size: var(--font-xs) !important;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    font-weight: 500;
+    opacity: 0.8;
+}
+
+/* Card Standardization - Compact spacing */
+.card {
+    border-radius: var(--radius-lg) !important;
+    transition: all 0.3s ease;
+    border: none !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08) !important;
+    margin-bottom: var(--spacing-sm);
+}
+
+.card:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+.card-header {
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0 !important;
+    background-color: var(--light) !important;
+    border-bottom: 1px solid rgba(0,0,0,0.05) !important;
+    padding: var(--card-header-padding) !important;
+}
+
+.card-header h6, .card-header h5 {
+    font-size: var(--font-base) !important;
+    font-weight: 600 !important;
+    margin-bottom: 0 !important;
+    color: var(--dark) !important;
+}
+
+.card-body {
+    padding: var(--card-padding) !important;
+}
+
+/* Override large padding classes */
+.p-3 {
+    padding: var(--card-padding) !important;
+}
+
+.py-2 {
+    padding-top: var(--spacing-sm) !important;
+    padding-bottom: var(--spacing-sm) !important;
+}
+
+.px-3 {
+    padding-left: var(--card-padding) !important;
+    padding-right: var(--card-padding) !important;
+}
+
+/* Table Standardization - Compact and clean */
+.table-responsive {
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    margin-bottom: 0;
+}
+
+.table {
+    margin-bottom: 0 !important;
+    font-size: var(--font-sm) !important;
+}
+
+.table th {
+    font-weight: 600 !important;
+    font-size: var(--font-sm) !important;
+    background-color: var(--light) !important;
+    border-bottom: 2px solid rgba(0,0,0,0.05) !important;
+    padding: var(--spacing-sm) var(--spacing-md) !important;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: var(--dark) !important;
+    white-space: nowrap;
+}
+
+.table td {
+    padding: var(--spacing-sm) var(--spacing-md) !important;
+    font-size: var(--font-sm) !important;
+    vertical-align: middle !important;
+    border-bottom: 1px solid rgba(0,0,0,0.05) !important;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(0,0,0,0.02) !important;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(0,123,255,0.05) !important;
+}
+
+/* Button Standardization - Compact sizes */
+.btn {
+    font-size: var(--font-sm) !important;
+    font-weight: 500 !important;
+    border-radius: var(--radius-md) !important;
+    padding: var(--spacing-xs) var(--spacing-md) !important;
+    transition: all 0.2s ease !important;
+    line-height: 1.4;
+}
+
+.btn-sm {
+    font-size: var(--font-xs) !important;
+    padding: var(--spacing-xs) var(--spacing-sm) !important;
+}
+
+.btn-lg {
+    font-size: var(--font-base) !important;
+    padding: var(--spacing-sm) var(--spacing-lg) !important;
+}
+
+/* Badge Standardization - Compact and readable */
+.badge {
+    font-size: var(--font-xs) !important;
+    font-weight: 500 !important;
+    padding: var(--spacing-xs) var(--spacing-sm) !important;
+    border-radius: var(--radius-sm) !important;
+    line-height: 1.3;
+}
+
+/* Form Control Standardization - Compact */
+.form-control, .form-select {
+    font-size: var(--font-sm) !important;
+    border-radius: var(--radius-md) !important;
+    border: 1px solid rgba(0,0,0,0.1) !important;
+    padding: var(--spacing-sm) var(--spacing-md) !important;
+    line-height: 1.4;
+}
+
+.form-control-sm, .form-select-sm {
+    font-size: var(--font-xs) !important;
+    padding: var(--spacing-xs) var(--spacing-sm) !important;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 0.15rem rgba(0,123,255,0.15) !important;
+}
+
+.form-label {
+    font-size: var(--font-sm) !important;
+    font-weight: 500 !important;
+    margin-bottom: var(--spacing-xs) !important;
+    color: var(--dark) !important;
+}
+
+/* Alert Standardization - Compact */
+.alert {
+    border-radius: var(--radius-lg) !important;
+    border: none !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08) !important;
+    font-size: var(--font-sm) !important;
+    padding: var(--spacing-md) !important;
+    margin-bottom: var(--spacing-sm) !important;
+}
+
+/* Dashboard-specific fixes */
+.main-content.animate-fade-in-up h1.gradient-text {
+    font-size: var(--font-3xl) !important;
+    margin-bottom: var(--spacing-sm) !important;
+}
+
+.main-content.animate-fade-in-up p {
+    font-size: var(--font-base) !important;
+    margin-bottom: 0 !important;
+}
+
+/* Today's Summary and similar card sections */
+.activity-list .activity-item {
+    margin-bottom: var(--spacing-sm) !important;
+}
+
+.activity-list .activity-item:last-child {
+    margin-bottom: 0 !important;
+}
+
+/* Responsive Design - Maintaining compact spacing */
+@media (max-width: 1200px) {
+    .statistics-card .card-body, .stat-card {
+        padding: var(--spacing-sm) !important;
+    }
+    
+    .statistics-card h5, .stat-card .stat-value {
+        font-size: var(--font-xl) !important;
+    }
+    
+    .statistics-card i, .stat-card i {
+        font-size: 1.2rem !important;
+    }
+    
+    .main-content h1 {
+        font-size: var(--font-lg) !important;
+    }
+}
+
+@media (max-width: 992px) {
+    .main-content .container-fluid {
+        padding: 0 var(--spacing-sm) !important;
+    }
+    
+    .statistics-card .card-body, .stat-card {
+        padding: var(--spacing-sm) !important;
+    }
+    
+    .statistics-card i, .stat-card i {
+        font-size: 1.1rem !important;
+    }
+    
+    .btn-sm {
+        padding: var(--spacing-xs) !important;
+        font-size: var(--font-xs) !important;
+    }
+    
+    .card-body {
+        padding: var(--spacing-sm) !important;
+    }
+    
+    :root {
+        --card-padding: 0.5rem;
+        --card-header-padding: 0.375rem 0.5rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .main-content {
+        padding: var(--spacing-sm) 0 !important;
+    }
+    
+    .main-content .container-fluid {
+        padding: 0 var(--spacing-xs) !important;
+    }
+    
+    .statistics-card .card-body, .stat-card {
+        padding: var(--spacing-xs) !important;
+        text-align: center;
+    }
+    
+    .statistics-card h5, .stat-card .stat-value {
+        font-size: var(--font-lg) !important;
+        margin-bottom: var(--spacing-xs) !important;
+    }
+    
+    .statistics-card small, .stat-card .stat-label {
+        font-size: var(--font-xs) !important;
+    }
+    
+    .statistics-card i, .stat-card i {
+        font-size: 1rem !important;
+        margin-bottom: var(--spacing-xs) !important;
+    }
+    
+    .d-flex.justify-content-between {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+        align-items: stretch !important;
+    }
+    
+    .d-flex.justify-content-between .d-flex {
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: var(--spacing-xs);
+    }
+    
+    .form-control, .form-select {
+        font-size: var(--font-xs) !important;
+    }
+    
+    .btn-sm {
+        padding: var(--spacing-xs) !important;
+        font-size: var(--font-xs) !important;
+    }
+    
+    .card-body {
+        padding: var(--spacing-sm) !important;
+    }
+    
+    .table th, .table td {
+        padding: var(--spacing-xs) !important;
+        font-size: var(--font-xs) !important;
+    }
+    
+    .badge {
+        font-size: 0.6rem !important;
+        padding: 0.15rem 0.3rem !important;
+    }
+    
+    .main-content h1 {
+        font-size: var(--font-base) !important;
+    }
+    
+    :root {
+        --card-padding: 0.5rem;
+        --card-header-padding: 0.25rem 0.5rem;
+        --page-margin: 0.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .statistics-card, .stat-card {
+        margin-bottom: var(--spacing-xs);
+    }
+    
+    .statistics-card .card-body, .stat-card {
+        padding: var(--spacing-xs) !important;
+    }
+    
+    .statistics-card h5, .stat-card .stat-value {
+        font-size: var(--font-base) !important;
+    }
+    
+    .statistics-card small, .stat-card .stat-label {
+        font-size: 0.6rem !important;
+    }
+    
+    .col-xl-3, .col-lg-6, .col-md-6, .col-xl-2, .col-lg-4 {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+    
+    .card-header h6, .card-header h5 {
+        font-size: var(--font-sm) !important;
+    }
+    
+    .card-body {
+        padding: var(--spacing-xs) !important;
+    }
+    
+    .table-responsive {
+        font-size: var(--font-xs) !important;
+    }
+    
+    .btn-group-sm .btn {
+        padding: 0.1rem 0.2rem !important;
+        font-size: 0.6rem !important;
+    }
+    
+    :root {
+        --card-padding: 0.375rem;
+        --card-header-padding: 0.25rem 0.375rem;
+        --page-margin: 0.375rem;
+    }
+}
+
+/* Empty State Styling - Compact */
+.text-center.py-5 {
+    padding: var(--spacing-xl) var(--spacing-lg) !important;
+}
+
+.text-center.py-5 i {
+    font-size: 2.5rem !important;
+    margin-bottom: var(--spacing-md) !important;
+    opacity: 0.5;
+}
+
+.text-center.py-5 h5, .text-center.py-5 h6 {
+    font-size: var(--font-xl) !important;
+    margin-bottom: var(--spacing-sm) !important;
+}
+
+.text-center.py-5 p {
+    font-size: var(--font-sm) !important;
+    margin-bottom: var(--spacing-md) !important;
+}
+
+/* Gradient Text */
+.gradient-text {
+    background: linear-gradient(135deg, var(--primary), #6f42c1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Shadow Improvements - Subtle */
+.shadow-sm {
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08) !important;
+}
+
+.shadow {
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1) !important;
+}
+
+.shadow-lg {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12) !important;
+}
+
+/* Custom scrollbar for tables - Compact */
+.table-responsive::-webkit-scrollbar {
+    height: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+    background: var(--light);
+    border-radius: var(--radius-xs);
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+    background: var(--secondary);
+    border-radius: var(--radius-xs);
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+    background: var(--dark);
+}
+
+/* Animation for page load */
+.animate-fade-in-up {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Loading state - Compact */
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 16px;
+    height: 16px;
+    margin: -8px 0 0 -8px;
+    border: 2px solid var(--primary);
+    border-radius: 50%;
+    border-top-color: transparent;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Statistics Cards Standardization */
+.statistics-card {
+    transition: all 0.3s ease;
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    border: none !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08) !important;
+}
+
+.statistics-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12) !important;
+}
+
+.statistics-card .card-body {
+    position: relative;
+    overflow: hidden;
+    padding: var(--spacing-md) !important;
+}
+
+.statistics-card .card-body::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    opacity: 0;
+}
+
+.statistics-card:hover .card-body::before {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.statistics-card i {
+    transition: all 0.3s ease;
+}
+
+.statistics-card:hover i {
+    transform: scale(1.05);
+}
+
+.statistics-card h5 {
+    font-size: var(--font-2xl) !important;
+    font-weight: 700 !important;
+    margin-bottom: var(--spacing-xs) !important;
+}
+
+.statistics-card small {
+    font-size: var(--font-xs) !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 500;
+}
+
+/* Card Standardization */
+.card {
+    border-radius: var(--radius-lg) !important;
+    transition: all 0.3s ease;
+    border: none !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08) !important;
+}
+
+.card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+.card-header {
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0 !important;
+    background-color: var(--light) !important;
+    border-bottom: 1px solid rgba(0,0,0,0.05) !important;
+    padding: var(--spacing-sm) var(--spacing-md) !important;
+}
+
+.card-header h6 {
+    font-size: var(--font-base) !important;
+    font-weight: 600 !important;
+    margin-bottom: 0 !important;
+    color: var(--dark) !important;
+}
+
+.card-body {
+    padding: var(--spacing-md) !important;
+}
+
+/* Table Standardization */
+.table-responsive {
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.table {
+    margin-bottom: 0 !important;
+}
+
+.table th {
+    font-weight: 600 !important;
+    font-size: var(--font-sm) !important;
+    background-color: var(--light) !important;
+    border-bottom: 2px solid rgba(0,0,0,0.05) !important;
+    padding: var(--spacing-sm) var(--spacing-md) !important;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: var(--dark) !important;
+}
+
+.table td {
+    padding: var(--spacing-sm) var(--spacing-md) !important;
+    font-size: var(--font-sm) !important;
+    vertical-align: middle !important;
+    border-bottom: 1px solid rgba(0,0,0,0.05) !important;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(0,0,0,0.02) !important;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(0,123,255,0.05) !important;
+}
+
+/* Button Standardization */
+.btn {
+    font-size: var(--font-sm) !important;
+    font-weight: 500 !important;
+    border-radius: var(--radius-md) !important;
+    padding: var(--spacing-xs) var(--spacing-md) !important;
+    transition: all 0.2s ease !important;
+}
+
+.btn-sm {
+    font-size: var(--font-xs) !important;
+    padding: var(--spacing-xs) var(--spacing-sm) !important;
+}
+
+.btn-lg {
+    font-size: var(--font-base) !important;
+    padding: var(--spacing-sm) var(--spacing-lg) !important;
+}
+
+/* Badge Standardization */
+.badge {
+    font-size: var(--font-xs) !important;
+    font-weight: 500 !important;
+    padding: var(--spacing-xs) var(--spacing-sm) !important;
+    border-radius: var(--radius-sm) !important;
+}
+
+/* Form Control Standardization */
+.form-control, .form-select {
+    font-size: var(--font-sm) !important;
+    border-radius: var(--radius-md) !important;
+    border: 1px solid rgba(0,0,0,0.1) !important;
+    padding: var(--spacing-sm) var(--spacing-md) !important;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.15) !important;
+}
+
+.form-label {
+    font-size: var(--font-sm) !important;
+    font-weight: 500 !important;
+    margin-bottom: var(--spacing-xs) !important;
+    color: var(--dark) !important;
+}
+
+/* Spacing Standardization */
+.main-content {
+    padding: var(--spacing-lg) 0 !important;
+}
+
+.main-content .container-fluid {
+    padding: 0 var(--spacing-md) !important;
+}
+
+.mb-4 {
+    margin-bottom: var(--spacing-lg) !important;
+}
+
+.mb-3 {
+    margin-bottom: var(--spacing-md) !important;
+}
+
+.mb-2 {
+    margin-bottom: var(--spacing-sm) !important;
+}
+
+.p-3 {
+    padding: var(--spacing-md) !important;
+}
+
+.py-2 {
+    padding-top: var(--spacing-sm) !important;
+    padding-bottom: var(--spacing-sm) !important;
+}
+
+.g-2 > * {
+    padding: var(--spacing-xs) !important;
+}
+
+.g-3 > * {
+    padding: var(--spacing-sm) !important;
+}
+
+/* Alert Standardization */
+.alert {
+    border-radius: var(--radius-lg) !important;
+    border: none !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08) !important;
+    font-size: var(--font-sm) !important;
+    padding: var(--spacing-md) !important;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .statistics-card .card-body {
+        padding: var(--spacing-sm) !important;
+    }
+    
+    .statistics-card h5 {
+        font-size: var(--font-xl) !important;
+    }
+    
+    .statistics-card i {
+        font-size: 1.3rem !important;
+    }
+    
+    .main-content h1 {
+        font-size: var(--font-lg) !important;
+    }
+}
+
+@media (max-width: 992px) {
+    .main-content .container-fluid {
+        padding: 0 var(--spacing-sm) !important;
+    }
+    
+    .statistics-card .card-body {
+        padding: var(--spacing-sm) !important;
+    }
+    
+    .btn-sm {
+        padding: var(--spacing-xs) !important;
+        font-size: var(--font-xs) !important;
+    }
+    
+    .card-body {
+        padding: var(--spacing-sm) !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .main-content {
+        padding: var(--spacing-sm) 0 !important;
+    }
+    
+    .main-content .container-fluid {
+        padding: 0 var(--spacing-xs) !important;
+    }
+    
+    .statistics-card .card-body {
+        padding: var(--spacing-xs) !important;
+        text-align: center;
+    }
+    
+    .statistics-card h5 {
+        font-size: var(--font-lg) !important;
+        margin-bottom: var(--spacing-xs) !important;
+    }
+    
+    .statistics-card small {
+        font-size: var(--font-xs) !important;
+    }
+    
+    .statistics-card i {
+        font-size: 0.9rem !important;
+        margin-bottom: var(--spacing-xs) !important;
+    }
+    
+    .d-flex.justify-content-between {
+        flex-direction: column;
+        gap: var(--spacing-md);
+    }
+    
+    .d-flex.justify-content-between .d-flex {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .form-control, .form-select {
+        font-size: var(--font-xs) !important;
+    }
+    
+    .btn-sm {
+        padding: var(--spacing-xs) !important;
+        font-size: var(--font-xs) !important;
+    }
+    
+    .card-body {
+        padding: var(--spacing-sm) !important;
+    }
+    
+    .table th, .table td {
+        padding: var(--spacing-xs) !important;
+        font-size: var(--font-xs) !important;
+    }
+    
+    .badge {
+        font-size: 0.6rem !important;
+    }
+    
+    .main-content h1 {
+        font-size: var(--font-base) !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .statistics-card {
+        margin-bottom: var(--spacing-sm);
+    }
+    
+    .statistics-card .card-body {
+        padding: var(--spacing-xs) !important;
+    }
+    
+    .statistics-card h5 {
+        font-size: var(--font-base) !important;
+    }
+    
+    .statistics-card small {
+        font-size: 0.6rem !important;
+    }
+    
+    .statistics-card i {
+        font-size: 0.8rem !important;
+    }
+    
+    .col-xl-3, .col-lg-6, .col-md-6 {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+    
+    .card-header h6 {
+        font-size: var(--font-sm) !important;
+    }
+    
+    .card-body {
+        padding: var(--spacing-xs) !important;
+    }
+    
+    .table-responsive {
+        font-size: var(--font-xs) !important;
+    }
+    
+    .btn-group-sm .btn {
+        padding: 0.1rem 0.2rem !important;
+        font-size: 0.6rem !important;
+    }
+}
+
+/* Empty State Styling */
+.text-center.py-5 {
+    padding: var(--spacing-2xl) var(--spacing-lg) !important;
+}
+
+.text-center.py-5 i {
+    font-size: 3rem !important;
+    margin-bottom: var(--spacing-lg) !important;
+    opacity: 0.5;
+}
+
+.text-center.py-5 h5 {
+    font-size: var(--font-xl) !important;
+    margin-bottom: var(--spacing-sm) !important;
+}
+
+.text-center.py-5 p {
+    font-size: var(--font-sm) !important;
+    margin-bottom: var(--spacing-lg) !important;
+}
+
+/* Gradient Text */
+.gradient-text {
+    background: linear-gradient(135deg, var(--primary), #6f42c1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Shadow Improvements */
+.shadow-sm {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08) !important;
+}
+
+.shadow {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
+}
+
+.shadow-lg {
+    box-shadow: 0 8px 16px rgba(0,0,0,0.12) !important;
+}
+
+/* Custom scrollbar for tables */
+.table-responsive::-webkit-scrollbar {
+    height: 6px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+    background: var(--light);
+    border-radius: var(--radius-sm);
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+    background: var(--secondary);
+    border-radius: var(--radius-sm);
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+    background: var(--dark);
+}
+
+/* Animation for page load */
+.animate-fade-in-up {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Loading state */
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid var(--primary);
+    border-radius: 50%;
+    border-top-color: transparent;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}

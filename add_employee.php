@@ -160,17 +160,18 @@ include 'layouts/sidebar.php';
 ?>
 
 <div class="main-content">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="h3 mb-0">Add New Employee</h1>
-            <p class="text-muted">Add a new team member to your organization</p>
+    <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="h3 mb-0">Add New Employee</h1>
+                <p class="text-muted">Add a new team member to your organization</p>
+            </div>
+            <div>
+                <a href="pages/employees/employees.php" class="btn btn-outline-primary">
+                    <i class="bi bi-people"></i> View All Employees
+                </a>
+            </div>
         </div>
-        <div>
-            <a href="pages/employees/employees.php" class="btn btn-outline-primary">
-                <i class="bi bi-people"></i> View All Employees
-            </a>
-        </div>
-    </div>
 
     <?php if ($success): ?>
         <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -377,5 +378,8 @@ function showAlert(message, type) {
     }, 5000);
 }
 </script>
+
+    </div>
+</div>
 
 <?php include 'layouts/footer.php'; ?>

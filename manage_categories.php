@@ -460,32 +460,33 @@ include 'layouts/sidebar.php';
 </style>
 
 <div class="main-content">
-    <!-- Modern Page Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="h3 mb-0 fw-bold">
-                <i class="bi bi-tags me-2 text-primary"></i>Manage Categories
-            </h1>
-            <p class="text-muted">Organize your products efficiently with smart category management</p>
+    <div class="container-fluid">
+        <!-- Modern Page Header -->
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <div>
+                <h1 class="h4 mb-0 fw-bold">
+                    <i class="bi bi-tags me-2 text-primary"></i>Manage Categories
+                </h1>
+                <p class="text-muted small">Organize your products efficiently with smart category management</p>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+                    <i class="bi bi-plus-circle-fill me-2"></i>Add Category
+                </button>
+                <button class="btn btn-outline-primary btn-sm" onclick="refreshDropdowns()">
+                    <i class="bi bi-arrow-clockwise me-2"></i>Refresh
+                </button>
+            </div>
         </div>
-        <div class="d-flex gap-2">
-            <button class="btn btn-success btn-lg" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
-                <i class="bi bi-plus-circle-fill me-2"></i>Add Category
-            </button>
-            <button class="btn btn-outline-primary btn-lg" onclick="refreshDropdowns()">
-                <i class="bi bi-arrow-clockwise me-2"></i>Refresh
-            </button>
-        </div>
-    </div>
 
     <!-- Alert Container -->
-    <div id="alertContainer" class="mb-4"></div>
+    <div id="alertContainer" class="mb-2"></div>
 
     <!-- Enhanced Statistics Cards -->
-    <div class="row g-4 mb-4">
+    <div class="row g-2 mb-2">
         <div class="col-xl-3 col-lg-6 col-md-6">
-            <div class="card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                <div class="card-body text-white">
+            <div class="card border-0 h-100" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <div class="card-body text-white p-2">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <h6 class="card-title mb-1 opacity-75">Total Categories</h6>
@@ -501,8 +502,8 @@ include 'layouts/sidebar.php';
         </div>
         
         <div class="col-xl-3 col-lg-6 col-md-6">
-            <div class="card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
-                <div class="card-body text-white">
+            <div class="card border-0 h-100" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                <div class="card-body text-white p-2">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <h6 class="card-title mb-1 opacity-75">Active Categories</h6>
@@ -518,8 +519,8 @@ include 'layouts/sidebar.php';
         </div>
         
         <div class="col-xl-3 col-lg-6 col-md-6">
-            <div class="card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
-                <div class="card-body text-white">
+            <div class="card border-0 h-100" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                <div class="card-body text-white p-2">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <h6 class="card-title mb-1 opacity-75">Total Items</h6>
@@ -535,8 +536,8 @@ include 'layouts/sidebar.php';
         </div>
         
         <div class="col-xl-3 col-lg-6 col-md-6">
-            <div class="card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
-                <div class="card-body text-white">
+            <div class="card border-0 h-100" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                <div class="card-body text-white p-2">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <h6 class="card-title mb-1 opacity-75">Empty Categories</h6>
@@ -553,33 +554,33 @@ include 'layouts/sidebar.php';
     </div>
 
     <!-- Quick Category Creation Card -->
-    <div class="card border-0 shadow-sm mb-4">
-        <div class="card-header bg-gradient text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-            <h5 class="mb-0 fw-semibold">
+    <div class="card border-0 mb-2">
+        <div class="card-header bg-gradient text-white py-2" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <h6 class="mb-0 fw-semibold">
                 <i class="bi bi-lightning-charge-fill me-2"></i>Quick Category Creation
-            </h5>
+            </h6>
         </div>
-        <div class="card-body p-4">
-            <form id="quickCategoryForm" class="row g-3 align-items-end">
+        <div class="card-body p-2">
+            <form id="quickCategoryForm" class="row g-2 align-items-end">
                 <div class="col-md-5">
                     <label for="quickCategoryName" class="form-label fw-semibold">
                         <i class="bi bi-pencil-square me-1 text-primary"></i>Category Name
                     </label>
-                    <input type="text" class="form-control form-control-lg" id="quickCategoryName" 
+                    <input type="text" class="form-control" id="quickCategoryName" 
                            placeholder="Enter category name..." required maxlength="50">
                 </div>
                 <div class="col-md-3">
                     <label for="quickCategoryColor" class="form-label fw-semibold">
                         <i class="bi bi-palette-fill me-1 text-warning"></i>Color Theme
                     </label>
-                    <input type="color" class="form-control form-control-lg form-control-color" 
+                    <input type="color" class="form-control form-control-color" 
                            id="quickCategoryColor" value="#667eea">
                 </div>
                 <div class="col-md-3">
                     <label for="quickCategoryIcon" class="form-label fw-semibold">
                         <i class="bi bi-emoji-smile me-1 text-info"></i>Icon
                     </label>
-                    <select class="form-select form-select-lg" id="quickCategoryIcon">
+                    <select class="form-select" id="quickCategoryIcon">
                         <option value="bi-tag">🏷️ Tag</option>
                         <option value="bi-cup-hot">☕ Food & Drinks</option>
                         <option value="bi-laptop">💻 Electronics</option>
@@ -593,7 +594,7 @@ include 'layouts/sidebar.php';
                     </select>
                 </div>
                 <div class="col-md-1">
-                    <button type="submit" class="btn btn-primary btn-lg w-100" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
+                    <button type="submit" class="btn btn-primary btn-sm w-100" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
                         <i class="bi bi-plus-circle-fill"></i>
                     </button>
                 </div>
@@ -602,12 +603,12 @@ include 'layouts/sidebar.php';
     </div>
 
     <!-- Categories Management Card -->
-    <div class="card border-0 shadow-sm">
-        <div class="card-header bg-white border-bottom">
+    <div class="card border-0">
+        <div class="card-header bg-white border-bottom py-2">
             <div class="d-flex justify-content-between align-items-center">
-                <h5 class="mb-0 fw-semibold">
+                <h6 class="mb-0 fw-semibold">
                     <i class="bi bi-list-ul me-2 text-primary"></i>Categories Management
-                </h5>
+                </h6>
                 <div class="d-flex gap-2 align-items-center">
                     <button class="btn btn-sm btn-outline-primary" onclick="exportCategories()">
                         <i class="bi bi-download"></i> Export
@@ -723,7 +724,7 @@ include 'layouts/sidebar.php';
                     </div>
                     <h4 class="text-muted mb-3">No Categories Found</h4>
                     <p class="text-muted mb-4">Create your first category to start organizing your products efficiently.</p>
-                    <button class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
                         <i class="bi bi-plus-circle-fill me-2"></i>Create Your First Category
                     </button>
                 </div>
@@ -734,47 +735,47 @@ include 'layouts/sidebar.php';
 
 <!-- Enhanced Add Category Modal -->
 <div class="modal fade" id="addCategoryModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header border-0" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                <h5 class="modal-title text-white fw-bold">
+    <div class="modal-dialog">
+        <div class="modal-content border-0">
+            <div class="modal-header border-0 py-2" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <h6 class="modal-title text-white fw-bold">
                     <i class="bi bi-plus-circle-fill me-2"></i>Create New Category
-                </h5>
+                </h6>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form id="addCategoryForm">
-                <div class="modal-body p-4">
-                    <div class="row g-4">
+                <div class="modal-body p-2">
+                    <div class="row g-2">
                         <div class="col-md-8">
-                            <div class="mb-3">
+                            <div class="mb-2">
                                 <label for="categoryName" class="form-label fw-semibold">
                                     <i class="bi bi-pencil-square me-2 text-primary"></i>Category Name 
                                     <span class="text-danger">*</span>
                                 </label>
-                                <input type="text" class="form-control form-control-lg" id="categoryName" 
+                                <input type="text" class="form-control" id="categoryName" 
                                        name="name" placeholder="Enter category name..." required maxlength="50">
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <div class="mb-3">
+                            <div class="mb-2">
                                 <label for="categoryColor" class="form-label fw-semibold">
                                     <i class="bi bi-palette-fill me-2 text-warning"></i>Color Theme
                                 </label>
-                                <input type="color" class="form-control form-control-lg form-control-color" 
+                                <input type="color" class="form-control form-control-color" 
                                        id="categoryColor" name="color" value="#667eea">
                             </div>
                         </div>
                     </div>
                     
-                    <div class="mb-4">
+                    <div class="mb-2">
                         <label for="categoryDescription" class="form-label fw-semibold">
                             <i class="bi bi-text-paragraph me-2 text-info"></i>Description
                         </label>
                         <textarea class="form-control" id="categoryDescription" name="description" 
-                                  rows="3" placeholder="Optional description for this category..."></textarea>
+                                  rows="2" placeholder="Optional description for this category..."></textarea>
                     </div>
                     
-                    <div class="mb-4">
+                    <div class="mb-2">
                         <label for="categoryIcon" class="form-label fw-semibold">
                             <i class="bi bi-emoji-smile me-2 text-success"></i>Category Icon
                         </label>
@@ -812,11 +813,11 @@ include 'layouts/sidebar.php';
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer border-0 bg-light">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                <div class="modal-footer border-0 bg-light py-2">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
                         <i class="bi bi-x-circle me-2"></i>Cancel
                     </button>
-                    <button type="submit" class="btn btn-primary btn-lg" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
+                    <button type="submit" class="btn btn-primary btn-sm" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
                         <i class="bi bi-plus-circle-fill me-2"></i>Create Category
                     </button>
                 </div>
@@ -827,25 +828,25 @@ include 'layouts/sidebar.php';
 
 <!-- Enhanced Edit Category Modal -->
 <div class="modal fade" id="editCategoryModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header border-0" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
-                <h5 class="modal-title text-white fw-bold">
+    <div class="modal-dialog">
+        <div class="modal-content border-0">
+            <div class="modal-header border-0 py-2" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                <h6 class="modal-title text-white fw-bold">
                     <i class="bi bi-pencil-square-fill me-2"></i>Edit Category
-                </h5>
+                </h6>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form id="editCategoryForm">
                 <input type="hidden" id="editCategoryId" name="id">
-                <div class="modal-body p-4">
-                    <div class="row g-4">
+                <div class="modal-body p-2">
+                    <div class="row g-2">
                         <div class="col-md-8">
-                            <div class="mb-3">
+                            <div class="mb-2">
                                 <label for="editCategoryName" class="form-label fw-semibold">
                                     <i class="bi bi-pencil-square me-2 text-primary"></i>Category Name 
                                     <span class="text-danger">*</span>
                                 </label>
-                                <input type="text" class="form-control form-control-lg" id="editCategoryName" 
+                                <input type="text" class="form-control" id="editCategoryName" 
                                        name="name" required maxlength="50">
                             </div>
                         </div>
@@ -911,11 +912,11 @@ include 'layouts/sidebar.php';
                         <strong>Note:</strong> Changes will affect all items in this category.
                     </div>
                 </div>
-                <div class="modal-footer border-0 bg-light">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                <div class="modal-footer border-0 bg-light py-2">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
                         <i class="bi bi-x-circle me-2"></i>Cancel
                     </button>
-                    <button type="submit" class="btn btn-primary btn-lg" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border: none;">
+                    <button type="submit" class="btn btn-primary btn-sm" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border: none;">
                         <i class="bi bi-check-circle-fill me-2"></i>Update Category
                     </button>
                 </div>
@@ -946,11 +947,11 @@ include 'layouts/sidebar.php';
                     </div>
                 </div>
             </div>
-            <div class="modal-footer border-0 bg-light">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <div class="modal-footer border-0 bg-light py-2">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
                     <i class="bi bi-x-circle me-2"></i>Close
                 </button>
-                <a href="#" class="btn btn-primary btn-lg" id="manageItemsLink" 
+                <a href="#" class="btn btn-primary btn-sm" id="manageItemsLink" 
                    style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border: none;">
                     <i class="bi bi-box-seam-fill me-2"></i>Manage Items
                 </a>
@@ -1833,3 +1834,6 @@ if (!document.getElementById('performance-styles')) {
     height: 2rem;
 }
 </style>
+
+    </div>
+</div>

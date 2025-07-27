@@ -57,35 +57,52 @@ include 'layouts/sidebar.php';
 
         <!-- Summary Cards -->
         <div class="row g-2 mb-3">
-            <div class="col-md-6">
-                <div class="card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                    <div class="card-body p-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="card-title mb-1 text-white small">Total Revenue</h6>
-                                <h4 class="mb-0 fw-bold" style="color: #ffeb3b;">₹<?= number_format($totalAmount, 2) ?></h4>
-                                <small class="text-white-50">From <?= $totalCount ?> invoices</small>
-                            </div>
-                            <div class="fs-2 text-white-50">
-                                <i class="bi bi-currency-rupee"></i>
-                            </div>
+            <div class="col-xl-3 col-lg-6 col-md-6">
+                <div class="card statistics-card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #e8f4fd 0%, #cce7ff 100%);">
+                    <div class="card-body text-center p-3">
+                        <div class="mb-2">
+                            <i class="bi bi-currency-rupee fs-3" style="color: #0d6efd;"></i>
                         </div>
+                        <h5 class="mb-1 fw-bold" style="color: #0d6efd;">₹<?= number_format($totalAmount, 2) ?></h5>
+                        <small class="text-muted">Total Revenue</small>
                     </div>
                 </div>
             </div>
-            <div class="col-md-6">
-                <div class="card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
-                    <div class="card-body p-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="card-title mb-1 text-white small">Total Invoices</h6>
-                                <h4 class="mb-0 fw-bold" style="color: #ffeb3b;"><?= $totalCount ?></h4>
-                                <small class="text-white-50">Invoice records</small>
-                            </div>
-                            <div class="fs-2 text-white-50">
-                                <i class="bi bi-receipt"></i>
-                            </div>
+            <div class="col-xl-3 col-lg-6 col-md-6">
+                <div class="card statistics-card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);">
+                    <div class="card-body text-center p-3">
+                        <div class="mb-2">
+                            <i class="bi bi-receipt fs-3" style="color: #7b1fa2;"></i>
                         </div>
+                        <h5 class="mb-1 fw-bold" style="color: #7b1fa2;"><?= $totalCount ?></h5>
+                        <small class="text-muted">Total Invoices</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-lg-6 col-md-6">
+                <div class="card statistics-card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);">
+                    <div class="card-body text-center p-3">
+                        <div class="mb-2">
+                            <i class="bi bi-calculator fs-3" style="color: #388e3c;"></i>
+                        </div>
+                        <h5 class="mb-1 fw-bold" style="color: #388e3c;">₹<?= $totalCount > 0 ? number_format($totalAmount / $totalCount, 2) : '0.00' ?></h5>
+                        <small class="text-muted">Average Amount</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-lg-6 col-md-6">
+                <div class="card statistics-card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);">
+                    <div class="card-body text-center p-3">
+                        <div class="mb-2">
+                            <i class="bi bi-calendar-week fs-3" style="color: #ff9800;"></i>
+                        </div>
+                        <h5 class="mb-1 fw-bold" style="color: #ff9800;">
+                            <?php
+                            $thisMonth = $conn->query("SELECT COUNT(*) as count FROM invoices WHERE MONTH(invoice_date) = MONTH(CURDATE()) AND YEAR(invoice_date) = YEAR(CURDATE())");
+                            echo $thisMonth ? $thisMonth->fetch_assoc()['count'] : 0;
+                            ?>
+                        </h5>
+                        <small class="text-muted">This Month</small>
                     </div>
                 </div>
             </div>

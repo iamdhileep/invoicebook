@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biometric System - Final Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        .test-section {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .info { color: #17a2b8; }
+        .device-card {
+            border: 1px dashed #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            transition: all 0.2s;
+        }
+        .device-card:hover {
+            background-color: #f8f9fa;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        .status-online { background-color: #28a745; }
+        .status-offline { background-color: #dc3545; }
+    </style>
+</head>
+<body>
+    <div class="container my-5">
+        <div class="row">
+            <div class="col-12">
+                <div class="text-center mb-5">
+                    <h1 class="display-4">🔐 Biometric System Test</h1>
+                    <p class="lead">Complete functionality demonstration</p>
+                    <div class="badge bg-success fs-6">System Status: OPERATIONAL</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="test-section">
+                    <h4><i class="bi bi-fingerprint me-2"></i>Device Management</h4>
+                    <div id="devices-list">
+                        <div class="text-center py-3">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading devices...</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <button class="btn btn-primary btn-sm" onclick="loadDevices()">
+                            <i class="bi bi-arrow-clockwise me-1"></i>Refresh Devices
+                        </button>
+                        <button class="btn btn-success btn-sm ms-2" onclick="testAddDevice()">
+                            <i class="bi bi-plus me-1"></i>Test Add Device
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="test-section">
+                    <h4><i class="bi bi-wifi me-2"></i>Sync Status</h4>
+                    <div id="sync-status">
+                        <div class="text-center py-3">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading sync status...</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <button class="btn btn-primary btn-sm" onclick="testSyncAll()">
+                            <i class="bi bi-arrow-clockwise me-1"></i>Test Sync All
+                        </button>
+                        <button class="btn btn-info btn-sm ms-2" onclick="loadSyncStatus()">
+                            <i class="bi bi-eye me-1"></i>Refresh Status
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="test-section">
+                    <h4><i class="bi bi-clipboard-check me-2"></i>Test Results</h4>
+                    <div id="test-results">
+                        <p class="info">Tests will appear here as they run...</p>
+                    </div>
+                    <div class="mt-3">
+                        <button class="btn btn-warning btn-sm" onclick="runAllTests()">
+                            <i class="bi bi-play me-1"></i>Run Complete Test Suite
+                        </button>
+                        <button class="btn btn-secondary btn-sm ms-2" onclick="clearResults()">
+                            <i class="bi bi-trash me-1"></i>Clear Results
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="test-section">
+                    <h4><i class="bi bi-link me-2"></i>Quick Links</h4>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <a href="attendance.php" class="btn btn-outline-primary btn-sm" target="_blank">
+                            <i class="bi bi-calendar-check me-1"></i>Attendance Page
+                        </a>
+                        <a href="api/biometric_api_test.php?action=get_devices" class="btn btn-outline-info btn-sm" target="_blank">
+                            <i class="bi bi-code me-1"></i>API: Get Devices
+                        </a>
+                        <a href="api/biometric_api_test.php?action=get_sync_status" class="btn btn-outline-info btn-sm" target="_blank">
+                            <i class="bi bi-code me-1"></i>API: Sync Status
+                        </a>
+                        <a href="api/test_api_direct.php" class="btn btn-outline-success btn-sm" target="_blank">
+                            <i class="bi bi-database me-1"></i>Database Test
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let devices = [];
+        let syncStatus = [];
+
+        // Load on page start
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDevices();
+            loadSyncStatus();
+        });
+
+        async function loadDevices() {
+            try {
+                logTest('Loading devices from API...', 'info');
+                const response = await fetch('api/biometric_api_test.php?action=get_devices');
+                const data = await response.json();
+                
+                if (data.success) {
+                    devices = data.devices;
+                    renderDevices();
+                    logTest(`✓ Loaded ${devices.length} devices successfully`, 'success');
+                } else {
+                    logTest('✗ Failed to load devices: ' + data.message, 'error');
+                }
+            } catch (error) {
+                logTest('✗ Error loading devices: ' + error.message, 'error');
+            }
+        }
+
+        async function loadSyncStatus() {
+            try {
+                logTest('Loading sync status from API...', 'info');
+                const response = await fetch('api/biometric_api_test.php?action=get_sync_status');
+                const data = await response.json();
+                
+                if (data.success) {
+                    syncStatus = data.status;
+                    renderSyncStatus();
+                    logTest(`✓ Loaded sync status for ${syncStatus.length} entries`, 'success');
+                } else {
+                    logTest('✗ Failed to load sync status: ' + data.message, 'error');
+                }
+            } catch (error) {
+                logTest('✗ Error loading sync status: ' + error.message, 'error');
+            }
+        }
+
+        function renderDevices() {
+            const devicesList = document.getElementById('devices-list');
+            
+            if (devices.length === 0) {
+                devicesList.innerHTML = '<div class="text-center py-3"><small class="text-muted">No devices configured</small></div>';
+                return;
+            }
+
+            devicesList.innerHTML = devices.map(device => {
+                const iconClass = getDeviceIcon(device.device_type);
+                const colorClass = getDeviceColor(device.device_type);
+                const isActive = device.is_enabled == 1;
+                
+                return `
+                    <div class="device-card">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-light rounded p-2 me-3">
+                                    <i class="bi ${iconClass} text-${colorClass} fs-4"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">${device.device_name}</h6>
+                                    <small class="text-muted">${device.location}</small><br>
+                                    <span class="badge bg-${colorClass}">${device.device_type.replace('_', ' ')}</span>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="device_${device.id}" 
+                                           ${isActive ? 'checked' : ''} 
+                                           onchange="toggleDevice(${device.id}, this.checked)">
+                                </div>
+                                <small class="text-${isActive ? 'success' : 'muted'}">${isActive ? 'Active' : 'Inactive'}</small>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderSyncStatus() {
+            const syncStatusDiv = document.getElementById('sync-status');
+            
+            if (syncStatus.length === 0) {
+                syncStatusDiv.innerHTML = '<div class="text-center py-3"><small class="text-muted">No sync status available</small></div>';
+                return;
+            }
+
+            syncStatusDiv.innerHTML = syncStatus.map(status => {
+                const statusColor = status.sync_status === 'sync' ? 'success' : 'danger';
+                const statusIcon = status.sync_status === 'sync' ? 'check-circle' : 'x-circle';
+                const statusText = status.sync_status === 'sync' ? 'Synced' : 'Failed';
+                const lastSync = new Date(status.last_sync).toLocaleString();
+                
+                return `
+                    <div class="d-flex align-items-center justify-content-between mb-2 p-2 rounded" style="background-color: rgba(${statusColor === 'success' ? '40, 167, 69' : '220, 53, 69'}, 0.1);">
+                        <div class="d-flex align-items-center">
+                            <span class="status-dot status-${statusColor === 'success' ? 'online' : 'offline'}"></span>
+                            <div>
+                                <strong>${status.campus_name}</strong><br>
+                                <small class="text-muted">Last sync: ${lastSync}</small>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <i class="bi bi-${statusIcon} text-${statusColor} fs-5"></i><br>
+                            <small class="text-${statusColor} fw-bold">${statusText}</small>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function toggleDevice(deviceId, isActive) {
+            try {
+                logTest(`Testing device toggle for ID: ${deviceId} to ${isActive ? 'active' : 'inactive'}`, 'info');
+                
+                const response = await fetch('api/biometric_api_test.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'toggle_device',
+                        device_id: deviceId,
+                        is_active: isActive
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    logTest(`✓ Device ${isActive ? 'activated' : 'deactivated'} successfully`, 'success');
+                    // Update local data
+                    const device = devices.find(d => d.id == deviceId);
+                    if (device) device.is_enabled = isActive ? 1 : 0;
+                    renderDevices();
+                } else {
+                    logTest('✗ Toggle failed: ' + data.message, 'error');
+                    document.getElementById(`device_${deviceId}`).checked = !isActive;
+                }
+            } catch (error) {
+                logTest('✗ Toggle error: ' + error.message, 'error');
+                document.getElementById(`device_${deviceId}`).checked = !isActive;
+            }
+        }
+
+        async function testSyncAll() {
+            try {
+                logTest('Testing sync all devices...', 'info');
+                
+                const response = await fetch('api/biometric_api_test.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'sync_all_devices' })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    logTest('✓ All devices synced successfully', 'success');
+                    loadSyncStatus(); // Refresh status
+                } else {
+                    logTest('✗ Sync failed: ' + data.message, 'error');
+                }
+            } catch (error) {
+                logTest('✗ Sync error: ' + error.message, 'error');
+            }
+        }
+
+        async function testAddDevice() {
+            try {
+                logTest('Testing add new device...', 'info');
+                
+                const response = await fetch('api/biometric_api_test.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'create_device',
+                        device_name: 'Test Device ' + Date.now(),
+                        device_type: 'fingerprint',
+                        location: 'Test Location',
+                        is_active: true
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    logTest('✓ Device added successfully with ID: ' + data.device_id, 'success');
+                    loadDevices(); // Refresh devices
+                    loadSyncStatus(); // Refresh sync status
+                } else {
+                    logTest('✗ Add device failed: ' + data.message, 'error');
+                }
+            } catch (error) {
+                logTest('✗ Add device error: ' + error.message, 'error');
+            }
+        }
+
+        async function runAllTests() {
+            logTest('🚀 Starting comprehensive test suite...', 'info');
+            logTest('═══════════════════════════════════════', 'info');
+            
+            // Test 1: Load devices
+            await loadDevices();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            // Test 2: Load sync status
+            await loadSyncStatus();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            // Test 3: Toggle first device if available
+            if (devices.length > 0) {
+                const firstDevice = devices[0];
+                const currentStatus = firstDevice.is_enabled == 1;
+                await toggleDevice(firstDevice.id, !currentStatus);
+                await new Promise(resolve => setTimeout(resolve, 500));
+                await toggleDevice(firstDevice.id, currentStatus); // Toggle back
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+            
+            // Test 4: Sync all devices
+            await testSyncAll();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            // Test 5: Add test device
+            await testAddDevice();
+            
+            logTest('═══════════════════════════════════════', 'info');
+            logTest('🎉 Test suite completed! Check results above.', 'success');
+        }
+
+        function getDeviceIcon(deviceType) {
+            const icons = {
+                'fingerprint': 'bi-fingerprint',
+                'biometric': 'bi-person-badge',
+                'facial_recognition': 'bi-person-check'
+            };
+            return icons[deviceType] || 'bi-device-hdd';
+        }
+
+        function getDeviceColor(deviceType) {
+            const colors = {
+                'fingerprint': 'primary',
+                'biometric': 'info',
+                'facial_recognition': 'success'
+            };
+            return colors[deviceType] || 'secondary';
+        }
+
+        function logTest(message, type = 'info') {
+            const resultsDiv = document.getElementById('test-results');
+            const timestamp = new Date().toLocaleTimeString();
+            const colorClass = type === 'success' ? 'success' : type === 'error' ? 'error' : 'info';
+            
+            resultsDiv.innerHTML += `<div class="${colorClass}"><small>[${timestamp}]</small> ${message}</div>`;
+            resultsDiv.scrollTop = resultsDiv.scrollHeight;
+        }
+
+        function clearResults() {
+            document.getElementById('test-results').innerHTML = '<p class="info">Test results cleared. Ready for new tests...</p>';
+        }
+    </script>
+</body>
+</html>

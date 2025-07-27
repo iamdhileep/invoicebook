@@ -91,34 +91,35 @@ include '../../layouts/sidebar.php';
 ?>
 
 <div class="main-content animate-fade-in-up">
-    <!-- Welcome Header -->
-    <div class="d-flex justify-content-between align-items-center mb-5">
-        <div>
-            <h1 class="gradient-text mb-2" style="font-size: 2.5rem; font-weight: 700;">Welcome Back!</h1>
-            <p class="text-muted" style="font-size: 1.1rem;">Here's what's happening with your business today, <?= date('F j, Y') ?>.</p>
-        </div>
-        <div class="d-flex gap-2">
-            <button class="btn btn-outline-primary" onclick="refreshDashboard()">
-                <i class="bi bi-arrow-clockwise"></i>
-                Refresh
-            </button>
-            <div class="dropdown">
-                <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                    <i class="bi bi-calendar-event"></i>
-                    View Reports
+    <div class="container-fluid">
+        <!-- Welcome Header -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h1 class="gradient-text mb-2" style="font-size: 2.5rem; font-weight: 700;">Welcome Back!</h1>
+                <p class="text-muted" style="font-size: 1.1rem;">Here's what's happening with your business today, <?= date('F j, Y') ?>.</p>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-primary btn-sm" onclick="refreshDashboard()">
+                    <i class="bi bi-arrow-clockwise"></i>
+                    Refresh
                 </button>
-                <ul class="dropdown-menu">
-                    <li><a class="dropdown-item" href="../../summary_dashboard.php">Summary Reports</a></li>
-                    <li><a class="dropdown-item" href="../../reports.php">Business Analytics</a></li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" href="../../export_reports.php">Export Data</a></li>
-                </ul>
+                <div class="dropdown">
+                    <button class="btn btn-primary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-calendar-event"></i>
+                        View Reports
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="../../summary_dashboard.php">Summary Reports</a></li>
+                        <li><a class="dropdown-item" href="../../reports.php">Business Analytics</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="../../export_reports.php">Export Data</a></li>
+                    </ul>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- Key Statistics -->
-    <div class="row g-4 mb-5">
+        <!-- Key Statistics -->
+        <div class="row g-2 mb-3">
         <div class="col-xl-3 col-lg-6 col-md-6">
             <div class="stat-card animate-fade-in-up" style="animation-delay: 0.1s;">
                 <div class="d-flex justify-content-between align-items-start mb-3">
@@ -205,7 +206,7 @@ include '../../layouts/sidebar.php';
     </div>
 
     <!-- Today's Summary & Alerts -->
-    <div class="row g-4 mb-5">
+    <div class="row g-2 mb-3">
         <div class="col-lg-8">
             <div class="card h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
@@ -215,8 +216,8 @@ include '../../layouts/sidebar.php';
                     </h5>
                     <span class="badge badge-info"><?= date('M j, Y') ?></span>
                 </div>
-                <div class="card-body">
-                    <div class="row g-4">
+                <div class="card-body p-3">
+                    <div class="row g-2">
                         <div class="col-md-6">
                             <div class="d-flex align-items-center p-3 rounded-lg" style="background: linear-gradient(135deg, rgb(16 185 129 / 0.1), rgb(34 197 94 / 0.05));">
                                 <div class="p-2 rounded-circle me-3" style="background: var(--success);">
@@ -246,7 +247,7 @@ include '../../layouts/sidebar.php';
                         </div>
                     </div>
                     
-                    <hr class="my-4">
+                    <hr class="my-3">
                     
                     <div class="row">
                         <div class="col-md-6">
@@ -313,7 +314,7 @@ include '../../layouts/sidebar.php';
                         Alerts & Notifications
                     </h5>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-3">
                     <?php if ($lowStockItems > 0): ?>
                     <div class="alert alert-warning d-flex align-items-center mb-3">
                         <i class="bi bi-exclamation-triangle me-2"></i>
@@ -349,8 +350,8 @@ include '../../layouts/sidebar.php';
                 Quick Actions
             </h5>
         </div>
-        <div class="card-body">
-            <div class="row g-4">
+        <div class="card-body p-3">
+            <div class="row g-2">
                 <div class="col-lg-3 col-md-6">
                     <div class="text-center p-4 border rounded-lg hover-lift" style="border-color: var(--primary) !important;">
                         <div class="mb-3">

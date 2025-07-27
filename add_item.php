@@ -140,25 +140,26 @@ include 'layouts/sidebar.php';
 ?>
 
 <div class="main-content animate-fade-in-up">
-    <!-- Modern Header with Gradient -->
-    <div class="d-flex justify-content-between align-items-center mb-5">
-        <div>
-            <h1 class="gradient-text mb-2" style="font-size: 2.25rem; font-weight: 700;">
-                <i class="bi bi-plus-circle me-3"></i>Add New Product
-            </h1>
-            <p class="text-muted" style="font-size: 1.1rem;">Create a new product entry for your inventory system</p>
+    <div class="container-fluid">
+        <!-- Modern Header with Gradient -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h1 class="gradient-text mb-2" style="font-size: 2.25rem; font-weight: 700;">
+                    <i class="bi bi-plus-circle me-3"></i>Add New Product
+                </h1>
+                <p class="text-muted" style="font-size: 1.1rem;">Create a new product entry for your inventory system</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="pages/products/products.php" class="btn btn-outline-primary">
+                    <i class="bi bi-list"></i>
+                    View All Products
+                </a>
+                <a href="item-stock.php" class="btn btn-outline-secondary">
+                    <i class="bi bi-boxes"></i>
+                    Manage Stock
+                </a>
+            </div>
         </div>
-        <div class="d-flex gap-2">
-            <a href="pages/products/products.php" class="btn btn-outline-primary">
-                <i class="bi bi-list"></i>
-                View All Products
-            </a>
-            <a href="item-stock.php" class="btn btn-outline-secondary">
-                <i class="bi bi-boxes"></i>
-                Manage Stock
-            </a>
-        </div>
-    </div>
 
     <!-- Success/Error Messages -->
     <?php if ($success): ?>
@@ -177,7 +178,7 @@ include 'layouts/sidebar.php';
         </div>
     <?php endif; ?>
 
-    <div class="row g-4">
+    <div class="row g-2">
         <!-- Main Form -->
         <div class="col-lg-8">
             <div class="card h-100">
@@ -190,7 +191,7 @@ include 'layouts/sidebar.php';
                 </div>
                 <div class="card-body">
                     <form method="POST" data-autosave="add_product" class="needs-validation" novalidate>
-                        <div class="row g-4">
+                        <div class="row g-2">
                             <!-- Product Name -->
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">
@@ -327,21 +328,21 @@ include 'layouts/sidebar.php';
                         </div>
 
                         <!-- Form Actions -->
-                        <div class="mt-5 pt-4 border-top">
-                            <div class="d-flex gap-3 flex-wrap">
-                                <button type="submit" class="btn btn-primary btn-lg">
+                        <div class="mt-3 pt-3 border-top">
+                            <div class="d-flex gap-2 flex-wrap">
+                                <button type="submit" class="btn btn-primary btn-sm">
                                     <i class="bi bi-save me-2"></i>
                                     Add Product
                                 </button>
-                                <button type="reset" class="btn btn-secondary btn-lg">
+                                <button type="reset" class="btn btn-secondary btn-sm">
                                     <i class="bi bi-arrow-counterclockwise me-2"></i>
                                     Reset Form
                                 </button>
-                                <a href="pages/products/products.php" class="btn btn-outline-primary btn-lg">
+                                <a href="pages/products/products.php" class="btn btn-outline-primary btn-sm">
                                     <i class="bi bi-arrow-left me-2"></i>
                                     Back to Products
                                 </a>
-                                <button type="button" class="btn btn-outline-info btn-lg" onclick="previewProduct()">
+                                <button type="button" class="btn btn-outline-info btn-sm" onclick="previewProduct()">
                                     <i class="bi bi-eye me-2"></i>
                                     Preview
                                 </button>
@@ -355,7 +356,7 @@ include 'layouts/sidebar.php';
         <!-- Sidebar -->
         <div class="col-lg-4">
             <!-- Quick Actions -->
-            <div class="card mb-4">
+            <div class="card mb-3">
                 <div class="card-header">
                     <h6 class="mb-0">
                         <i class="bi bi-lightning-fill me-2 text-warning"></i>
@@ -363,20 +364,20 @@ include 'layouts/sidebar.php';
                     </h6>
                 </div>
                 <div class="card-body">
-                    <div class="d-grid gap-3">
-                        <a href="pages/products/products.php" class="btn btn-outline-primary">
+                    <div class="d-grid gap-2">
+                        <a href="pages/products/products.php" class="btn btn-outline-primary btn-sm">
                             <i class="bi bi-list-ul me-2"></i>
                             View All Products
                         </a>
-                        <a href="item-stock.php" class="btn btn-outline-warning">
+                        <a href="item-stock.php" class="btn btn-outline-warning btn-sm">
                             <i class="bi bi-boxes me-2"></i>
                             Manage Stock
                         </a>
-                        <a href="manage_categories.php" class="btn btn-outline-info">
+                        <a href="manage_categories.php" class="btn btn-outline-info btn-sm">
                             <i class="bi bi-tags-fill me-2"></i>
                             Manage Categories
                         </a>
-                        <a href="item-full-list.php" class="btn btn-outline-secondary">
+                        <a href="item-full-list.php" class="btn btn-outline-secondary btn-sm">
                             <i class="bi bi-table me-2"></i>
                             Full Product List
                         </a>
@@ -385,7 +386,7 @@ include 'layouts/sidebar.php';
             </div>
 
             <!-- Product Guidelines -->
-            <div class="card mb-4">
+            <div class="card mb-3">
                 <div class="card-header">
                     <h6 class="mb-0">
                         <i class="bi bi-lightbulb-fill me-2 text-info"></i>
@@ -394,8 +395,8 @@ include 'layouts/sidebar.php';
                 </div>
                 <div class="card-body">
                     <div class="guidelines-list">
-                        <div class="guideline-item d-flex align-items-start mb-3">
-                            <div class="guideline-icon me-3">
+                        <div class="guideline-item d-flex align-items-start mb-2">
+                            <div class="guideline-icon me-2">
                                 <i class="bi bi-check-circle-fill text-success"></i>
                             </div>
                             <div class="flex-grow-1">
@@ -403,8 +404,8 @@ include 'layouts/sidebar.php';
                                 <div class="small text-muted">Use descriptive, easy-to-understand product names</div>
                             </div>
                         </div>
-                        <div class="guideline-item d-flex align-items-start mb-3">
-                            <div class="guideline-icon me-3">
+                        <div class="guideline-item d-flex align-items-start mb-2">
+                            <div class="guideline-icon me-2">
                                 <i class="bi bi-check-circle-fill text-success"></i>
                             </div>
                             <div class="flex-grow-1">
@@ -412,8 +413,8 @@ include 'layouts/sidebar.php';
                                 <div class="small text-muted">Research market rates before setting prices</div>
                             </div>
                         </div>
-                        <div class="guideline-item d-flex align-items-start mb-3">
-                            <div class="guideline-icon me-3">
+                        <div class="guideline-item d-flex align-items-start mb-2">
+                            <div class="guideline-icon me-2">
                                 <i class="bi bi-check-circle-fill text-success"></i>
                             </div>
                             <div class="flex-grow-1">
@@ -422,7 +423,7 @@ include 'layouts/sidebar.php';
                             </div>
                         </div>
                         <div class="guideline-item d-flex align-items-start">
-                            <div class="guideline-icon me-3">
+                            <div class="guideline-icon me-2">
                                 <i class="bi bi-check-circle-fill text-success"></i>
                             </div>
                             <div class="flex-grow-1">
@@ -452,7 +453,7 @@ include 'layouts/sidebar.php';
                     ?>
                         <div class="recent-products">
                             <?php while ($recent = $recentResult->fetch_assoc()): ?>
-                                <div class="recent-item d-flex justify-content-between align-items-center mb-3">
+                                <div class="recent-item d-flex justify-content-between align-items-center mb-2">
                                     <div class="flex-grow-1">
                                         <div class="fw-semibold"><?= htmlspecialchars($recent['item_name']) ?></div>
                                         <div class="small text-muted">₹<?= number_format($recent['item_price'], 2) ?></div>
@@ -464,7 +465,7 @@ include 'layouts/sidebar.php';
                             <?php endwhile; ?>
                         </div>
                     <?php else: ?>
-                        <div class="text-center text-muted py-3">
+                        <div class="text-center text-muted py-2">
                             <i class="bi bi-inbox display-6 mb-2"></i>
                             <div>No recent products found</div>
                         </div>
@@ -496,6 +497,91 @@ include 'layouts/sidebar.php';
 /* Enhanced help text */
 #newCategoryHelp {
     color: #d97706;
+}
+
+/* Fix row and column alignment issues */
+.row.g-2 {
+    margin: 0;
+    row-gap: var(--spacing-md);
+}
+
+.row.g-2 > * {
+    padding-left: var(--spacing-xs);
+    padding-right: var(--spacing-xs);
+}
+
+/* Ensure form columns are properly aligned */
+.col-md-6, .col-lg-8, .col-lg-4, .col-12 {
+    min-height: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Input group alignment fixes */
+.input-group {
+    display: flex;
+    align-items: stretch;
+}
+
+.input-group .btn-group {
+    display: flex;
+    align-items: stretch;
+}
+
+.input-group .btn-group .btn {
+    border-radius: 0;
+    border-left: none;
+}
+
+.input-group .btn-group .btn:first-child {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.input-group .btn-group .btn:last-child {
+    border-top-right-radius: var(--radius-md);
+    border-bottom-right-radius: var(--radius-md);
+}
+
+/* Card alignment */
+.card.h-100 {
+    height: 100% !important;
+    display: flex;
+    flex-direction: column;
+}
+
+.card.h-100 .card-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Form actions alignment */
+.mt-3.pt-3.border-top {
+    margin-top: var(--spacing-md) !important;
+    padding-top: var(--spacing-sm) !important;
+}
+
+.d-flex.gap-2.flex-wrap {
+    gap: var(--spacing-xs) !important;
+}
+
+/* Guidelines list alignment */
+.guidelines-list .guideline-item {
+    margin-bottom: var(--spacing-sm) !important;
+}
+
+.guidelines-list .guideline-item:last-child {
+    margin-bottom: 0 !important;
+}
+
+/* Recent products alignment */
+.recent-products .recent-item {
+    margin-bottom: var(--spacing-sm) !important;
+}
+
+.recent-products .recent-item:last-child {
+    margin-bottom: 0 !important;
 }
 
 #newCategoryHelp kbd {
@@ -1113,3 +1199,6 @@ function showAlert(message, type) {
     }
 }
 </script>
+
+    </div>
+</div>

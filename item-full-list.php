@@ -89,23 +89,24 @@ body.loaded {
 </div>
 
 <div class="main-content">
-    <!-- Modern Page Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="h3 mb-0 fw-bold">
-                <i class="bi bi-box-seam me-2 text-primary"></i>Complete Item Inventory
-            </h1>
-            <p class="text-muted">Manage and analyze your complete product catalog with advanced filtering and insights</p>
+    <div class="container-fluid">
+        <!-- Modern Page Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="h3 mb-0 fw-bold">
+                    <i class="bi bi-box-seam me-2 text-primary"></i>Complete Item Inventory
+                </h1>
+                <p class="text-muted">Manage and analyze your complete product catalog with advanced filtering and insights</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="add_item.php" class="btn btn-success btn-lg">
+                    <i class="bi bi-plus-circle-fill me-2"></i>Add New Item
+                </a>
+                <button class="btn btn-outline-primary btn-lg" onclick="refreshData()">
+                    <i class="bi bi-arrow-clockwise me-2"></i>Refresh
+                </button>
+            </div>
         </div>
-        <div class="d-flex gap-2">
-            <a href="add_item.php" class="btn btn-success btn-lg">
-                <i class="bi bi-plus-circle-fill me-2"></i>Add New Item
-            </a>
-            <button class="btn btn-outline-primary btn-lg" onclick="refreshData()">
-                <i class="bi bi-arrow-clockwise me-2"></i>Refresh
-            </button>
-        </div>
-    </div>
 
     <!-- Alert Container -->
     <div id="alertContainer" class="mb-4"></div>
@@ -253,3 +254,6 @@ function refreshData() {
     location.reload();
 }
 </script>
+
+    </div>
+</div>

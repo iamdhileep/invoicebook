@@ -16,17 +16,18 @@ $itemOptions = $conn->query("SELECT * FROM items ORDER BY item_name ASC");
 ?>
 
 <div class="main-content">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="h3 mb-0">Create Invoice</h1>
-            <p class="text-muted">Generate a new customer invoice</p>
+    <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="h3 mb-0">Create Invoice</h1>
+                <p class="text-muted">Generate a new customer invoice</p>
+            </div>
+            <div>
+                <a href="invoice_history.php" class="btn btn-outline-primary">
+                    <i class="bi bi-clock-history"></i> Invoice History
+                </a>
+            </div>
         </div>
-        <div>
-            <a href="invoice_history.php" class="btn btn-outline-primary">
-                <i class="bi bi-clock-history"></i> Invoice History
-            </a>
-        </div>
-    </div>
 
     <div class="row">
         <div class="col-lg-8">
@@ -412,5 +413,8 @@ document.addEventListener("DOMContentLoaded", () => {
     calculateTotals();
 });
 </script>
+
+    </div>
+</div>
 
 <?php include 'layouts/footer.php'; ?>

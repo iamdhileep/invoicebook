@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Biometric API Test</title>
+</head>
+<body>
+    <h1>Biometric API Test</h1>
+    <div id="results"></div>
+    
+    <script>
+    async function testAPIs() {
+        const results = document.getElementById('results');
+        results.innerHTML = '<p>Testing APIs...</p>';
+        
+        try {
+            // Test status check
+            console.log('Testing status check...');
+            const statusResponse = await fetch('../../api/biometric_status_check.php');
+            const statusData = await statusResponse.json();
+            console.log('Status check result:', statusData);
+            
+            results.innerHTML += '<h3>Status Check:</h3><pre>' + JSON.stringify(statusData, null, 2) + '</pre>';
+            
+            // Test get devices
+            console.log('Testing get devices...');
+            const devicesResponse = await fetch('api/biometric_api_test.php?action=get_devices');
+            const devicesData = await devicesResponse.json();
+            console.log('Get devices result:', devicesData);
+            
+            results.innerHTML += '<h3>Get Devices:</h3><pre>' + JSON.stringify(devicesData, null, 2) + '</pre>';
+            
+            // Test get sync status
+            console.log('Testing get sync status...');
+            const syncResponse = await fetch('api/biometric_api_test.php?action=get_sync_status');
+            const syncData = await syncResponse.json();
+            console.log('Get sync status result:', syncData);
+            
+            results.innerHTML += '<h3>Get Sync Status:</h3><pre>' + JSON.stringify(syncData, null, 2) + '</pre>';
+            
+        } catch (error) {
+            console.error('Error:', error);
+            results.innerHTML += '<p style="color: red;">Error: ' + error.message + '</p>';
+        }
+    }
+    
+    // Run test when page loads
+    document.addEventListener('DOMContentLoaded', testAPIs);
+    </script>
+</body>
+</html>

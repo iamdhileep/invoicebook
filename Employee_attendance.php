@@ -138,28 +138,29 @@ include 'layouts/sidebar.php';
 ?>
 
 <div class="main-content">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="h3 mb-0">Employee Attendance (Advanced)</h1>
-            <p class="text-muted">Advanced attendance management with face recognition - <?= date('F j, Y') ?></p>
-        </div>
-        <div class="d-flex align-items-center gap-3">
-            <div class="live-clock">
-                <i class="bi bi-clock me-2"></i>
-                <strong>Live Time: <span id="liveClock"></span></strong>
+    <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h1 class="h5 mb-0">⚡ Employee Attendance (Advanced)</h1>
+                <p class="text-muted small">Advanced attendance management with face recognition - <?= date('F j, Y') ?></p>
             </div>
-            <a href="attendance-calendar.php" class="btn btn-outline-primary">
-                <i class="bi bi-calendar3"></i> View Calendar
-            </a>
+            <div class="d-flex align-items-center gap-3">
+                <div class="live-clock">
+                    <i class="bi bi-clock me-2"></i>
+                    <strong>Live Time: <span id="liveClock"></span></strong>
+                </div>
+                <a href="attendance-calendar.php" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-calendar3"></i> View Calendar
+                </a>
+            </div>
         </div>
-    </div>
 
     <div class="row">
         <div class="col-lg-8">
             <!-- Debug Panel -->
-            <div class="card mb-3 border-warning">
-                <div class="card-header bg-warning text-dark">
-                    <h6 class="mb-0"><i class="bi bi-bug me-2"></i> Debug Information (Current Date: <?= $current_date ?>)</h6>
+            <div class="card mb-3 border-warning border-0 shadow-sm">
+                <div class="card-header bg-warning text-dark border-0 py-2">
+                    <h6 class="mb-0"><i class="bi bi-bug me-2"></i>Debug Information (Current Date: <?= $current_date ?>)</h6>
                 </div>
                 <div class="card-body">
                     <div class="row text-center">
@@ -174,8 +175,8 @@ include 'layouts/sidebar.php';
             </div>
 
             <!-- Face Login Attendance (Fully Functional) -->
-            <div class="card mb-4 border-primary">
-                <div class="card-header bg-primary text-white">
+            <div class="card mb-4 border-primary border-0 shadow-sm">
+                <div class="card-header bg-primary text-white border-0 py-2">
                     <h6 class="mb-0">
                         <i class="bi bi-person-bounding-box me-2"></i>
                         Face Recognition Attendance
@@ -203,26 +204,43 @@ include 'layouts/sidebar.php';
             </div>
 
             <!-- Bulk Actions -->
-            <div class="card mb-4">
-                <div class="card-header"><h6 class="mb-0"><i class="bi bi-funnel me-2"></i> Bulk Actions</h6></div>
-                <div class="card-body d-flex gap-2 flex-wrap align-items-center">
-                    <span class="badge bg-info" id="selectedCount">0 selected</span>
-                    <button type="button" class="btn btn-success btn-lg" onclick="bulkPunchIn()"><i class="bi bi-box-arrow-in-right me-1"></i> Bulk Punch In</button>
-                    <button type="button" class="btn btn-danger btn-lg" onclick="bulkPunchOut()"><i class="bi bi-box-arrow-right me-1"></i> Bulk Punch Out</button>
-                    <button type="button" class="btn btn-outline-primary" onclick="selectAllEmployees()"><i class="bi bi-check-all me-1"></i> Select All</button>
-                    <button type="button" class="btn btn-outline-secondary" onclick="clearSelection()"><i class="bi bi-x-circle me-1"></i> Clear Selection</button>
+            <div class="card mb-4 border-0 shadow-sm">
+                <div class="card-header bg-light border-0 py-2">
+                    <h6 class="mb-0 text-dark"><i class="bi bi-funnel me-2"></i>Bulk Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex gap-2 flex-wrap align-items-center">
+                        <span class="badge bg-info" id="selectedCount">0 selected</span>
+                        <button type="button" class="btn btn-success btn-sm" onclick="bulkPunchIn()">
+                            <i class="bi bi-box-arrow-in-right me-1"></i> Bulk Punch In
+                        </button>
+                        <button type="button" class="btn btn-danger btn-sm" onclick="bulkPunchOut()">
+                            <i class="bi bi-box-arrow-right me-1"></i> Bulk Punch Out
+                        </button>
+                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="selectAllEmployees()">
+                            <i class="bi bi-check-all me-1"></i> Select All
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearSelection()">
+                            <i class="bi bi-x-circle me-1"></i> Clear Selection
+                        </button>
+                    </div>
                 </div>
             </div>
 
             <!-- Attendance Table -->
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h6 class="card-title mb-0"><i class="bi bi-people me-2"></i> Employee Attendance - <?= date('F j, Y', strtotime($current_date)) ?> <span class="badge bg-secondary ms-2"><?= count($employees) ?> employees</span></h6>
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light border-0 py-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="card-title mb-0 text-dark">
+                            <i class="bi bi-people me-2"></i>Employee Attendance - <?= date('F j, Y', strtotime($current_date)) ?>
+                            <span class="badge bg-secondary ms-2"><?= count($employees) ?> employees</span>
+                        </h6>
+                    </div>
                 </div>
-                <div class="card-body p-0">
+                <div class="card-body">
                     <div class="table-responsive">
-                        <table class="table table-hover mb-0" id="attendanceTable">
-                            <thead class="table-dark">
+                        <table class="table table-striped table-hover" id="attendanceTable">
+                            <thead>
                                 <tr>
                                     <th width="50"><input type="checkbox" id="selectAll" class="form-check-input"></th>
                                     <th width="80">Photo</th>
@@ -239,8 +257,22 @@ include 'layouts/sidebar.php';
                                 <?php foreach ($employees as $emp): ?>
                                 <tr id="employee-row-<?= $emp['employee_id'] ?>">
                                     <td><input type="checkbox" name="employee_ids[]" value="<?= $emp['employee_id'] ?>" class="form-check-input employee-checkbox"></td>
-                                    <td><?php if (!empty($emp['photo']) && file_exists($emp['photo'])): ?><img src="<?= htmlspecialchars($emp['photo']) ?>" class="rounded-circle" style="width: 50px; height: 50px; object-fit: cover;"><?php else: ?><div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;"><i class="bi bi-person text-white"></i></div><?php endif; ?></td>
-                                    <td><strong><?= htmlspecialchars($emp['name']) ?></strong><br><small class="text-muted"><?= htmlspecialchars($emp['employee_code']) ?></small><br><small class="text-muted"><?= htmlspecialchars($emp['phone']) ?></small></td>
+                                    <td>
+                                        <?php if (!empty($emp['photo']) && file_exists($emp['photo'])): ?>
+                                            <img src="<?= htmlspecialchars($emp['photo']) ?>" class="rounded-circle" style="width: 50px; height: 50px; object-fit: cover;">
+                                        <?php else: ?>
+                                            <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                                <i class="bi bi-person text-white"></i>
+                                            </div>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <div>
+                                            <strong><?= htmlspecialchars($emp['name']) ?></strong>
+                                            <br><small class="text-muted"><?= htmlspecialchars($emp['employee_code']) ?></small>
+                                            <br><small class="text-muted"><?= htmlspecialchars($emp['phone']) ?></small>
+                                        </div>
+                                    </td>
                                     <td><span class="badge bg-info"><?= htmlspecialchars($emp['position']) ?></span></td>
                                     <td><span class="badge bg-secondary" id="status-badge-<?= $emp['employee_id'] ?>"><?= $emp['status'] ?: 'Not Marked' ?></span></td>
                                     <td><div class="time-display" id="time-in-display-<?= $emp['employee_id'] ?>"><?= $emp['time_in'] ? date('h:i A', strtotime($emp['time_in'])) : '-' ?></div></td>
@@ -248,8 +280,20 @@ include 'layouts/sidebar.php';
                                     <td><div id="duration-display-<?= $emp['employee_id'] ?>"><?= $emp['work_duration'] ? $emp['work_duration'] : '-' ?></div></td>
                                     <td>
                                         <div class="btn-group btn-group-sm" role="group">
-                                            <button type="button" class="btn btn-success punch-in-btn" id="punch-in-btn-<?= $emp['employee_id'] ?>" onclick="punchIn(<?= $emp['employee_id'] ?>)" data-id="<?= $emp['employee_id'] ?>" data-bs-toggle="tooltip" title="Punch In"><i class="bi bi-box-arrow-in-right"></i></button>
-                                            <button type="button" class="btn btn-danger punch-out-btn" id="punch-out-btn-<?= $emp['employee_id'] ?>" onclick="punchOut(<?= $emp['employee_id'] ?>)" data-id="<?= $emp['employee_id'] ?>" data-bs-toggle="tooltip" title="Punch Out"><i class="bi bi-box-arrow-right"></i></button>
+                                            <button type="button" class="btn btn-success punch-in-btn" 
+                                                    id="punch-in-btn-<?= $emp['employee_id'] ?>" 
+                                                    onclick="punchIn(<?= $emp['employee_id'] ?>)" 
+                                                    data-id="<?= $emp['employee_id'] ?>" 
+                                                    data-bs-toggle="tooltip" title="Punch In">
+                                                <i class="bi bi-box-arrow-in-right"></i> In
+                                            </button>
+                                            <button type="button" class="btn btn-danger punch-out-btn" 
+                                                    id="punch-out-btn-<?= $emp['employee_id'] ?>" 
+                                                    onclick="punchOut(<?= $emp['employee_id'] ?>)" 
+                                                    data-id="<?= $emp['employee_id'] ?>" 
+                                                    data-bs-toggle="tooltip" title="Punch Out">
+                                                <i class="bi bi-box-arrow-left"></i> Out
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -263,9 +307,9 @@ include 'layouts/sidebar.php';
 
         <div class="col-lg-4">
             <!-- Today's Summary -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h6 class="mb-0"><i class="bi bi-graph-up me-2"></i>Today's Summary</h6>
+            <div class="card mb-4 border-0 shadow-sm">
+                <div class="card-header bg-light border-0 py-2">
+                    <h6 class="mb-0 text-dark"><i class="bi bi-graph-up me-2"></i>Today's Summary</h6>
                 </div>
                 <div class="card-body">
                     <?php
@@ -337,7 +381,9 @@ include 'layouts/sidebar.php';
                     <div class="mt-3">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <span>Attendance Rate</span>
-                            <strong><?= number_format($attendanceRate, 1) ?>%</strong>
+                            <strong class="<?= $attendanceRate >= 90 ? 'text-success' : ($attendanceRate >= 75 ? 'text-warning' : 'text-danger') ?>">
+                                <?= number_format($attendanceRate, 1) ?>%
+                            </strong>
                         </div>
                         <div class="progress">
                             <div class="progress-bar bg-success" style="width: <?= $attendanceRate ?>%"></div>
@@ -347,22 +393,22 @@ include 'layouts/sidebar.php';
             </div>
 
             <!-- Quick Actions -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h6 class="mb-0"><i class="bi bi-lightning me-2"></i>Quick Actions</h6>
+            <div class="card mb-4 border-0 shadow-sm">
+                <div class="card-header bg-light border-0 py-2">
+                    <h6 class="mb-0 text-dark"><i class="bi bi-lightning me-2"></i>Quick Actions</h6>
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
-                        <button type="button" class="btn btn-outline-success" onclick="markAllPresent()">
+                        <button type="button" class="btn btn-outline-success btn-sm" onclick="markAllPresent()">
                             <i class="bi bi-check-all"></i> Mark All Present
                         </button>
-                        <button type="button" class="btn btn-outline-primary" onclick="setDefaultTimes()">
+                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="setDefaultTimes()">
                             <i class="bi bi-clock"></i> Set Default Times
                         </button>
-                        <button type="button" class="btn btn-outline-info" onclick="openFaceRecognition()">
+                        <button type="button" class="btn btn-outline-info btn-sm" onclick="openFaceRecognition()">
                             <i class="bi bi-camera-fill"></i> Face Recognition
                         </button>
-                        <a href="attendance_preview.php" class="btn btn-outline-secondary">
+                        <a href="attendance_preview.php" class="btn btn-outline-secondary btn-sm">
                             <i class="bi bi-eye"></i> View Reports
                         </a>
                     </div>
@@ -370,9 +416,9 @@ include 'layouts/sidebar.php';
             </div>
 
             <!-- Recent Activity -->
-            <div class="card">
-                <div class="card-header">
-                    <h6 class="mb-0"><i class="bi bi-clock-history me-2"></i>Recent Activity</h6>
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light border-0 py-2">
+                    <h6 class="mb-0 text-dark"><i class="bi bi-clock-history me-2"></i>Recent Activity</h6>
                 </div>
                 <div class="card-body">
                     <div class="activity-feed">
@@ -425,14 +471,48 @@ include 'layouts/sidebar.php';
     </div>
 </div>
 
+    </div>
+</div>
+
 <!-- Include Face Recognition Modal -->
 <?php include 'includes/face_recognition_modal.php'; ?>
 
 <style>
-.live-clock { 
-    font-weight: 600; 
-    font-family: 'Courier New', monospace; 
+.live-clock {
+    color: #0d6efd;
+    font-size: 1.1rem;
+    padding: 8px 12px;
+    background: rgba(13, 110, 253, 0.1);
+    border-radius: 6px;
+    border: 1px solid rgba(13, 110, 253, 0.2);
 }
+
+.punch-btn {
+    font-size: 0.8rem;
+    padding: 4px 8px;
+    min-width: 45px;
+}
+
+.table th {
+    white-space: nowrap;
+    font-weight: 600;
+    background-color: #f8f9fa;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+.btn-group .btn {
+    font-size: 0.8rem;
+    padding: 4px 8px;
+    min-width: 45px;
+}
+
+.btn-group .btn:not(:last-child) {
+    border-right: none;
+}
+
 .face-login-box { 
     border: 2px dashed #0d6efd; 
     border-radius: 8px; 
@@ -440,16 +520,76 @@ include 'layouts/sidebar.php';
     text-align: center; 
     margin-bottom: 1.5rem; 
 }
+
 .face-login-box i { 
     font-size: 3rem; 
     color: #0d6efd; 
 }
+
 .activity-item {
     padding: 8px 0;
     border-bottom: 1px solid #eee;
 }
+
 .activity-item:last-child {
     border-bottom: none;
+}
+
+/* Loading and animation styles */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.spin {
+    animation: spin 1s linear infinite;
+}
+
+/* Toast notification slide in animation */
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+.toast-notification {
+    animation: slideIn 0.3s ease-out;
+}
+
+/* Form enhancements */
+.form-control:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+.form-select:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+/* Card hover effects */
+.card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Button loading state */
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Table responsive improvements */
+.table-responsive {
+    border-radius: 8px;
+}
+
+.table th {
+    border-bottom: 2px solid #dee2e6;
+    font-size: 0.875rem;
 }
 </style>
 
@@ -474,7 +614,17 @@ setInterval(updateLiveClock, 1000);
 
 // DataTable init
 $(document).ready(function() {
-    $('#attendanceTable').DataTable({ responsive: true });
+    $('#attendanceTable').DataTable({
+        responsive: true,
+        pageLength: 25,
+        order: [[2, 'asc']], // Order by employee name
+        columnDefs: [
+            { orderable: false, targets: [0, 8] } // Disable ordering on checkbox and actions columns
+        ]
+    });
+    
+    // Initialize tooltips
+    $('[data-bs-toggle="tooltip"]').tooltip();
 });
 
 // Select all/clear selection

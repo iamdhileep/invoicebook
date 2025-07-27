@@ -199,20 +199,21 @@ include 'layouts/sidebar.php';
 ?>
 
 <div class="main-content">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="h3 mb-0">Advanced Payroll Calculator</h1>
-            <p class="text-muted">Comprehensive salary calculations with deductions, allowances, and overtime for <?= date('F Y', mktime(0, 0, 0, $currentMonth, 1, $currentYear)) ?></p>
+    <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="h3 mb-0">Advanced Payroll Calculator</h1>
+                <p class="text-muted">Comprehensive salary calculations with deductions, allowances, and overtime for <?= date('F Y', mktime(0, 0, 0, $currentMonth, 1, $currentYear)) ?></p>
+            </div>
+            <div>
+                <button class="btn btn-outline-success" onclick="exportAdvancedPayroll()">
+                    <i class="bi bi-download"></i> Export Detailed Report
+                </button>
+                <button class="btn btn-outline-primary" onclick="printPayslips()">
+                    <i class="bi bi-printer"></i> Print Payslips
+                </button>
+            </div>
         </div>
-        <div>
-            <button class="btn btn-outline-success" onclick="exportAdvancedPayroll()">
-                <i class="bi bi-download"></i> Export Detailed Report
-            </button>
-            <button class="btn btn-outline-primary" onclick="printPayslips()">
-                <i class="bi bi-printer"></i> Print Payslips
-            </button>
-        </div>
-    </div>
 
     <!-- Payroll Configuration -->
     <div class="card mb-4">
@@ -618,5 +619,8 @@ function downloadPayslip(employeeId) {
     }
 }
 </style>
+
+    </div>
+</div>
 
 <?php include 'layouts/footer.php'; ?>

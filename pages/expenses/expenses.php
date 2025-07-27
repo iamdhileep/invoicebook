@@ -20,31 +20,32 @@ $success = isset($_GET['success']) && $_GET['success'] == '1';
 ?>
 
 <div class="main-content">
-    <?php if ($success): ?>
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="bi bi-check-circle me-2"></i>
-            Expense added successfully!
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    <div class="container-fluid">
+        <?php if ($success): ?>
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="bi bi-check-circle me-2"></i>
+                Expense added successfully!
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <?php endif; ?>
+        
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h1 class="h5 mb-0">💰 Daily Expenses</h1>
+                <p class="text-muted small">Record and track your daily business expenses</p>
+            </div>
+            <div>
+                <a href="../../expense_history.php" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-clock-history"></i> Expense History
+                </a>
+            </div>
         </div>
-    <?php endif; ?>
-    
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="h3 mb-0">Daily Expenses</h1>
-            <p class="text-muted">Record and track your daily business expenses</p>
-        </div>
-        <div>
-            <a href="../../expense_history.php" class="btn btn-outline-primary">
-                <i class="bi bi-clock-history"></i> Expense History
-            </a>
-        </div>
-    </div>
 
     <div class="row">
         <div class="col-lg-8">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="bi bi-cash-stack me-2"></i>Add New Expense</h5>
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light border-0 py-2">
+                    <h6 class="mb-0 text-dark"><i class="bi bi-cash-stack me-2"></i>Add New Expense</h6>
                 </div>
                 <div class="card-body">
                     <form action="../../save_expense.php" method="POST" enctype="multipart/form-data">
@@ -142,9 +143,9 @@ $success = isset($_GET['success']) && $_GET['success'] == '1';
         </div>
 
         <div class="col-lg-4">
-            <div class="card">
-                <div class="card-header">
-                    <h6 class="mb-0">Today's Summary</h6>
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light border-0 py-2">
+                    <h6 class="mb-0 text-dark">Today's Summary</h6>
                 </div>
                 <div class="card-body">
                     <?php
@@ -215,6 +216,7 @@ $success = isset($_GET['success']) && $_GET['success'] == '1';
         </div>
     </div>
     <?php endif; ?>
+    </div>
 </div>
 
 <?php include '../../layouts/footer.php'; ?>
