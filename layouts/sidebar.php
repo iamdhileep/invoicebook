@@ -129,19 +129,19 @@ if (strpos($_SERVER['SCRIPT_NAME'], '/pages/') === false) {
             <div class="nav-section-title">Portal Management</div>
         </div>
         <div class="nav-item">
-            <a href="<?= $basePath ?>pages/hr/hr_dashboard.php" class="nav-link <?= in_array($current_page, ['hr_dashboard']) ? 'active' : '' ?>">
+            <a href="<?= $basePath ?>pages/hr/hrms_admin_panel.php" class="nav-link <?= in_array($current_page, ['hrms_admin_panel']) ? 'active' : '' ?>">
                 <i class="bi bi-person-workspace"></i>
                 <span>HR Portal</span>
             </a>
         </div>
         <div class="nav-item">
-            <a href="<?= $basePath ?>pages/manager/manager_dashboard.php" class="nav-link <?= in_array($current_page, ['manager_dashboard']) ? 'active' : '' ?>">
+            <a href="<?= $basePath ?>pages/hr/team_manager_console.php" class="nav-link <?= in_array($current_page, ['team_manager_console']) ? 'active' : '' ?>">
                 <i class="bi bi-person-gear"></i>
                 <span>Manager Portal</span>
             </a>
         </div>
         <div class="nav-item">
-            <a href="<?= $basePath ?>pages/employee/employee_portal.php" class="nav-link <?= in_array($current_page, ['employee_portal']) ? 'active' : '' ?>">
+            <a href="<?= $basePath ?>pages/employee/staff_self_service.php" class="nav-link <?= in_array($current_page, ['staff_self_service']) ? 'active' : '' ?>">
                 <i class="bi bi-person-badge"></i>
                 <span>Employee Portal</span>
             </a>
@@ -151,29 +151,74 @@ if (strpos($_SERVER['SCRIPT_NAME'], '/pages/') === false) {
         <div class="nav-section">
             <div class="nav-section-title">Human Resources</div>
         </div>
+        
+        <!-- HR & Manager Portals -->
         <div class="nav-item">
-            <a href="<?= $basePath ?>pages/employees/employees.php" class="nav-link <?= $current_page === 'employees' ? 'active' : '' ?>">
+            <a href="<?= $basePath ?>pages/hr/hrms_admin_panel.php" class="nav-link <?= $current_page === 'hrms_admin_panel' ? 'active' : '' ?>">
+                <i class="bi bi-shield-check text-primary"></i>
+                <span>HR Portal</span>
+                <span class="badge bg-primary ms-auto">NEW</span>
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="<?= $basePath ?>pages/hr/team_manager_console.php" class="nav-link <?= $current_page === 'team_manager_console' ? 'active' : '' ?>">
+                <i class="bi bi-person-badge text-success"></i>
+                <span>Manager Portal</span>
+                <span class="badge bg-success ms-auto">NEW</span>
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="<?= $basePath ?>pages/employee/staff_self_service.php" class="nav-link <?= $current_page === 'staff_self_service' ? 'active' : '' ?>">
+                <i class="bi bi-person-circle text-info"></i>
+                <span>Employee Portal</span>
+                <span class="badge bg-info ms-auto">NEW</span>
+            </a>
+        </div>
+        
+        <!-- Employee Management -->
+        <div class="nav-item dropdown">
+            <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="collapse" data-bs-target="#employeeSubmenu" aria-expanded="false">
                 <i class="bi bi-people-fill"></i>
-                <span>Employee Directory</span>
+                <span>Employee Management</span>
+                <i class="bi bi-chevron-down ms-auto"></i>
             </a>
+            <div class="collapse" id="employeeSubmenu">
+                <div class="nav-submenu">
+                    <a href="<?= $basePath ?>pages/employees/employees.php" class="nav-link <?= $current_page === 'employees' ? 'active' : '' ?>">
+                        <i class="bi bi-person-lines-fill"></i>
+                        <span>Employee Directory</span>
+                    </a>
+                    <a href="<?= $basePath ?>add_employee.php" class="nav-link <?= $current_page === 'add_employee' ? 'active' : '' ?>">
+                        <i class="bi bi-person-plus"></i>
+                        <span>Add New Employee</span>
+                    </a>
+                </div>
+            </div>
         </div>
-        <div class="nav-item">
-            <a href="<?= $basePath ?>pages/attendance/attendance.php" class="nav-link <?= $current_page === 'attendance' ? 'active' : '' ?>">
+        
+        <!-- Attendance & Time Tracking -->
+        <div class="nav-item dropdown">
+            <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="collapse" data-bs-target="#attendanceSubmenu" aria-expanded="false">
                 <i class="bi bi-calendar-check-fill"></i>
-                <span>Mark Attendance</span>
+                <span>Attendance & Leaves</span>
+                <i class="bi bi-chevron-down ms-auto"></i>
             </a>
-        </div>
-        <div class="nav-item">
-            <a href="<?= $basePath ?>advanced_attendance.php" class="nav-link <?= $current_page === 'advanced_attendance' ? 'active' : '' ?>">
-                <i class="bi bi-stopwatch-fill"></i>
-                <span>Time Tracking</span>
-            </a>
-        </div>
-        <div class="nav-item">
-            <a href="<?= $basePath ?>attendance-calendar.php" class="nav-link <?= $current_page === 'attendance-calendar' ? 'active' : '' ?>">
-                <i class="bi bi-calendar3"></i>
-                <span>Attendance Calendar</span>
-            </a>
+            <div class="collapse" id="attendanceSubmenu">
+                <div class="nav-submenu">
+                    <a href="<?= $basePath ?>pages/attendance/attendance.php" class="nav-link <?= $current_page === 'attendance' ? 'active' : '' ?>">
+                        <i class="bi bi-calendar-check"></i>
+                        <span>Mark Attendance</span>
+                    </a>
+                    <a href="<?= $basePath ?>attendance-calendar.php" class="nav-link <?= $current_page === 'attendance-calendar' ? 'active' : '' ?>">
+                        <i class="bi bi-calendar3"></i>
+                        <span>Attendance Calendar</span>
+                    </a>
+                    <a href="<?= $basePath ?>advanced_attendance.php" class="nav-link <?= $current_page === 'advanced_attendance' ? 'active' : '' ?>">
+                        <i class="bi bi-stopwatch-fill"></i>
+                        <span>Time Tracking</span>
+                    </a>
+                </div>
+            </div>
         </div>
 
         <!-- Payroll System -->

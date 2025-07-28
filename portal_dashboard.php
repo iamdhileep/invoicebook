@@ -92,7 +92,7 @@ $pageTitle = "HRMS Dashboard - Portal Selection";
         <div class="row g-4 mb-5">
             <!-- Employee Portal -->
             <div class="col-lg-4 col-md-6">
-                <a href="pages/employee/employee_portal.php" class="portal-link">
+                <a href="pages/employee/staff_self_service.php" class="portal-link">
                     <div class="card portal-card h-100 text-center position-relative">
                         <div class="feature-badge">Self Service</div>
                         <div class="card-body p-4">
@@ -122,7 +122,7 @@ $pageTitle = "HRMS Dashboard - Portal Selection";
 
             <!-- Manager Dashboard -->
             <div class="col-lg-4 col-md-6">
-                <a href="pages/manager/manager_dashboard.php" class="portal-link">
+                <a href="pages/hr/team_manager_console.php" class="portal-link">
                     <div class="card portal-card h-100 text-center position-relative">
                         <div class="feature-badge">Team Management</div>
                         <div class="card-body p-4">
@@ -152,7 +152,7 @@ $pageTitle = "HRMS Dashboard - Portal Selection";
 
             <!-- HR Dashboard -->
             <div class="col-lg-4 col-md-6">
-                <a href="pages/hr/hr_dashboard.php" class="portal-link">
+                <a href="pages/hr/hrms_admin_panel.php" class="portal-link">
                     <div class="card portal-card h-100 text-center position-relative">
                         <div class="feature-badge">Admin Control</div>
                         <div class="card-body p-4">

@@ -1371,12 +1371,34 @@ function handleHRRequests($conn, $action) {
 
 function hrGetAllEmployees($conn) {
     try {
-        $query = $conn->prepare("SELECT * FROM employees ORDER BY name");
+        $query = $conn->prepare("SELECT 
+                                employee_id,
+                                COALESCE(first_name, SUBSTRING_INDEX(name, ' ', 1)) as first_name,
+                                COALESCE(last_name, SUBSTRING_INDEX(name, ' ', -1)) as last_name,
+                                name,
+                                email,
+                                employee_code,
+                                position,
+                                COALESCE(department_name, 'General') as department_name,
+                                hire_date,
+                                status,
+                                phone,
+                                monthly_salary
+                                FROM employees 
+                                WHERE status = 'active' 
+                                ORDER BY name");
         $query->execute();
         $result = $query->get_result();
         
         $employees = [];
         while ($row = $result->fetch_assoc()) {
+            // Ensure we have first_name and last_name
+            if (empty($row['first_name']) && !empty($row['name'])) {
+                $nameParts = explode(' ', $row['name'], 2);
+                $row['first_name'] = $nameParts[0];
+                $row['last_name'] = isset($nameParts[1]) ? $nameParts[1] : '';
+            }
+            
             $employees[] = $row;
         }
         
@@ -2443,69 +2465,6 @@ function employeeGPSAttendance($conn) {
 // ==============================================
 // ADVANCED MANAGER FUNCTIONS
 // ==============================================
-
-function managerGetTeamAnalytics($conn) {
-    try {
-        $manager_id = $_SESSION['employee_id'] ?? $_POST['manager_id'] ?? 0;
-        $period = $_POST['period'] ?? 'month';
-        
-        if (!$manager_id) {
-            throw new Exception('Manager ID is required');
-        }
-        
-        // Get team members
-        $team_query = $conn->prepare("SELECT employee_id FROM employees 
-                                    WHERE manager_id = ? OR department_id IN (
-                                        SELECT department_id FROM employees WHERE employee_id = ?
-                                    )");
-        $team_query->bind_param("ii", $manager_id, $manager_id);
-        $team_query->execute();
-        $team_result = $team_query->get_result();
-        
-        $team_ids = [];
-        while ($row = $team_result->fetch_assoc()) {
-            $team_ids[] = $row['employee_id'];
-        }
-        
-        if (empty($team_ids)) {
-            echo json_encode(['success' => true, 'data' => []]);
-            return;
-        }
-        
-        $ids_string = implode(',', $team_ids);
-        $date_condition = '';
-        
-        switch ($period) {
-            case 'week':
-                $date_condition = "attendance_date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)";
-                break;
-            case 'month':
-                $date_condition = "attendance_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)";
-                break;
-            case 'quarter':
-                $date_condition = "attendance_date >= DATE_SUB(CURDATE(), INTERVAL 90 DAY)";
-                break;
-        }
-        
-        $analytics_query = $conn->prepare("SELECT 
-                                         e.name,
-                                         COUNT(ea.id) as total_days,
-                                         SUM(CASE WHEN ea.status = 'present' THEN 1 ELSE 0 END) as present_days,
-                                         AVG(ea.total_hours) as avg_hours,
-                                         SUM(ea.overtime_hours) as total_overtime,
-                                         AVG(ea.late_minutes) as avg_late_minutes
-                                         FROM employees e
-                                         LEFT JOIN enhanced_attendance ea ON e.employee_id = ea.employee_id
-                                         WHERE e.employee_id IN ($ids_string) AND $date_condition
-                                         GROUP BY e.employee_id, e.name");
-        $analytics_query->execute();
-        $analytics = $analytics_query->get_result()->fetch_all(MYSQLI_ASSOC);
-        
-        echo json_encode(['success' => true, 'data' => $analytics]);
-    } catch (Exception $e) {
-        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
-    }
-}
 
 function managerApproveOvertime($conn) {
     try {
