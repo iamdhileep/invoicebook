@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CSS Path Test</title>
+    <link href="../../assets/css/dashboard-modern.css" rel="stylesheet">
+    <link href="../../assets/css/global-styles.css" rel="stylesheet">
+</head>
+<body>
+    <h1>CSS Path Test</h1>
+    <p>If you can see this page styled correctly, the CSS paths are working.</p>
+    <div class="dashboard-card" style="padding: 20px; margin: 20px;">
+        <p>This should have dashboard card styling if CSS is loading.</p>
+    </div>
+    
+    <script>
+        // Check if CSS files loaded
+        console.log('Checking CSS files...');
+        
+        // Check dashboard-modern.css
+        fetch('../../assets/css/dashboard-modern.css')
+        .then(response => {
+            if (response.ok) {
+                console.log('✅ dashboard-modern.css loaded successfully');
+            } else {
+                console.error('❌ dashboard-modern.css failed to load:', response.status);
+            }
+        })
+        .catch(error => console.error('❌ Error loading dashboard-modern.css:', error));
+        
+        // Check global-styles.css
+        fetch('../../assets/css/global-styles.css')
+        .then(response => {
+            if (response.ok) {
+                console.log('✅ global-styles.css loaded successfully');
+            } else {
+                console.error('❌ global-styles.css failed to load:', response.status);
+            }
+        })
+        .catch(error => console.error('❌ Error loading global-styles.css:', error));
+    </script>
+</body>
+</html>

@@ -2,8 +2,29 @@
 // Get current page name for active state
 $current_page = basename($_SERVER['PHP_SELF'], '.php');
 
-// Use absolute path from web root to avoid relative path issues
-$basePath = '/billbook/';
+// Simple and reliable base URL calculation
+// Get the protocol (http or https)
+$protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https://' : 'http://';
+// Get the host
+$host = $_SERVER['HTTP_HOST'];
+// Get the base path (directory where the application is installed)
+$scriptPath = dirname($_SERVER['SCRIPT_NAME']);
+$basePath = '';
+
+// If we're in a subdirectory (like /pages/something/), get back to root
+if (strpos($scriptPath, '/pages/') !== false) {
+    // We're in pages subdirectory, go back to root
+    $basePath = '../../';
+} else {
+    // We're in root directory
+    $basePath = './';
+}
+
+// For absolute URLs (more reliable)
+$baseURL = $protocol . $host . rtrim(dirname(dirname($_SERVER['SCRIPT_NAME'])), '/');
+if (strpos($_SERVER['SCRIPT_NAME'], '/pages/') === false) {
+    $baseURL = $protocol . $host . rtrim(dirname($_SERVER['SCRIPT_NAME']), '/');
+}
 ?>
 
 <!-- Sidebar -->
@@ -22,7 +43,7 @@ $basePath = '/billbook/';
             <div class="nav-section-title">Quick Actions</div>
         </div>
         <div class="nav-item">
-            <a href="<?= $basePath ?>invoice_form.php" class="nav-link <?= $current_page === 'invoice_form' ? 'active' : '' ?>">
+            <a href="<?= $basePath ?>pages/invoice/invoice.php" class="nav-link <?= $current_page === 'invoice' ? 'active' : '' ?>">
                 <i class="bi bi-receipt-cutoff"></i>
                 <span>New Invoice</span>
             </a>
@@ -57,12 +78,9 @@ $basePath = '/billbook/';
             </a>
         </div>
         <div class="nav-item">
-            <a href="<?= $basePath ?>summary_dashboard.php" class="nav-link <?= $current_page === 'summary_dashboard' ? 'active' : '' ?>" 
-               title="Summary Dashboard - Sales Analytics" style="position: relative;">
+            <a href="<?= $basePath ?>summary_dashboard.php" class="nav-link <?= $current_page === 'summary_dashboard' ? 'active' : '' ?>">
                 <i class="bi bi-graph-up-arrow"></i>
                 <span>Sales Summary</span>
-                <!-- Debug badge to verify visibility -->
-                <small class="badge bg-success ms-1" style="font-size: 10px;">✓</small>
             </a>
         </div>
 
@@ -110,35 +128,74 @@ $basePath = '/billbook/';
         <div class="nav-section">
             <div class="nav-section-title">Human Resources</div>
         </div>
+        
+        <!-- HR & Manager Portals -->
         <div class="nav-item">
-            <a href="<?= $basePath ?>pages/employees/employees.php" class="nav-link <?= $current_page === 'employees' ? 'active' : '' ?>">
+            <a href="<?= $basePath ?>pages/hr/hr_dashboard.php" class="nav-link <?= $current_page === 'hr_dashboard' ? 'active' : '' ?>">
+                <i class="bi bi-shield-check text-primary"></i>
+                <span>HR Portal</span>
+                <span class="badge bg-primary ms-auto">NEW</span>
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="<?= $basePath ?>pages/manager/manager_dashboard.php" class="nav-link <?= $current_page === 'manager_dashboard' ? 'active' : '' ?>">
+                <i class="bi bi-person-badge text-success"></i>
+                <span>Manager Portal</span>
+                <span class="badge bg-success ms-auto">NEW</span>
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="<?= $basePath ?>pages/employee/employee_portal.php" class="nav-link <?= $current_page === 'employee_portal' ? 'active' : '' ?>">
+                <i class="bi bi-person-circle text-info"></i>
+                <span>Employee Portal</span>
+                <span class="badge bg-info ms-auto">NEW</span>
+            </a>
+        </div>
+        
+        <!-- Employee Management -->
+        <div class="nav-item dropdown">
+            <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="collapse" data-bs-target="#employeeSubmenu" aria-expanded="false">
                 <i class="bi bi-people-fill"></i>
-                <span>Employee Directory</span>
+                <span>Employee Management</span>
+                <i class="bi bi-chevron-down ms-auto"></i>
             </a>
+            <div class="collapse" id="employeeSubmenu">
+                <div class="nav-submenu">
+                    <a href="<?= $basePath ?>pages/employees/employees.php" class="nav-link <?= $current_page === 'employees' ? 'active' : '' ?>">
+                        <i class="bi bi-person-lines-fill"></i>
+                        <span>Employee Directory</span>
+                    </a>
+                    <a href="<?= $basePath ?>add_employee.php" class="nav-link <?= $current_page === 'add_employee' ? 'active' : '' ?>">
+                        <i class="bi bi-person-plus"></i>
+                        <span>Add New Employee</span>
+                    </a>
+                </div>
+            </div>
         </div>
-        <div class="nav-item">
-            <a href="<?= $basePath ?>pages/attendance/attendance.php" class="nav-link <?= $current_page === 'attendance' ? 'active' : '' ?>">
+        
+        <!-- Attendance & Time Tracking -->
+        <div class="nav-item dropdown">
+            <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="collapse" data-bs-target="#attendanceSubmenu" aria-expanded="false">
                 <i class="bi bi-calendar-check-fill"></i>
-                <span>Mark Attendance</span>
+                <span>Attendance & Leaves</span>
+                <i class="bi bi-chevron-down ms-auto"></i>
             </a>
-        </div>
-        <div class="nav-item">
-            <a href="<?= $basePath ?>Employee_attendance.php" class="nav-link <?= $current_page === 'Employee_attendance' ? 'active' : '' ?>">
-                <i class="bi bi-person-check-fill"></i>
-                <span>Employee Attendance</span>
-            </a>
-        </div>
-        <div class="nav-item">
-            <a href="<?= $basePath ?>advanced_attendance.php" class="nav-link <?= $current_page === 'advanced_attendance' ? 'active' : '' ?>">
-                <i class="bi bi-stopwatch-fill"></i>
-                <span>Time Tracking</span>
-            </a>
-        </div>
-        <div class="nav-item">
-            <a href="<?= $basePath ?>attendance-calendar.php" class="nav-link <?= $current_page === 'attendance-calendar' ? 'active' : '' ?>">
-                <i class="bi bi-calendar3"></i>
-                <span>Attendance Calendar</span>
-            </a>
+            <div class="collapse" id="attendanceSubmenu">
+                <div class="nav-submenu">
+                    <a href="<?= $basePath ?>pages/attendance/attendance.php" class="nav-link <?= $current_page === 'attendance' ? 'active' : '' ?>">
+                        <i class="bi bi-calendar-check"></i>
+                        <span>Mark Attendance</span>
+                    </a>
+                    <a href="<?= $basePath ?>attendance-calendar.php" class="nav-link <?= $current_page === 'attendance-calendar' ? 'active' : '' ?>">
+                        <i class="bi bi-calendar3"></i>
+                        <span>Attendance Calendar</span>
+                    </a>
+                    <a href="<?= $basePath ?>advanced_attendance.php" class="nav-link <?= $current_page === 'advanced_attendance' ? 'active' : '' ?>">
+                        <i class="bi bi-stopwatch-fill"></i>
+                        <span>Time Tracking</span>
+                    </a>
+                </div>
+            </div>
         </div>
 
         <!-- Payroll System -->
@@ -169,7 +226,7 @@ $basePath = '/billbook/';
             <div class="nav-section-title">System</div>
         </div>
         <div class="nav-item">
-            <a href="<?= $basePath ?>settings.php" class="nav-link <?= $current_page === 'settings' ? 'active' : '' ?>">
+            <a href="#" class="nav-link" onclick="showSettings()">
                 <i class="bi bi-gear-fill"></i>
                 <span>Settings</span>
             </a>

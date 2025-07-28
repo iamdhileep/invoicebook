@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Attendance Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="card">
+            <div class="card-header">
+                <h5>🧪 Smart Attendance System Test</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-2 mb-3">
+                    <div class="col-md-6">
+                        <button class="btn btn-success w-100" onclick="openSmartAttendance()">
+                            <i class="bi bi-camera"></i> Test Smart Check-in Modal
+                        </button>
+                    </div>
+                    <div class="col-md-6">
+                        <button class="btn btn-info w-100" onclick="testAttendanceTable()">
+                            <i class="bi bi-table"></i> Test Attendance Table
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="row g-2">
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-success btn-sm w-100" onclick="startFaceRecognition()">
+                            <i class="bi bi-person-check"></i><br>Face Recognition
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-info btn-sm w-100" onclick="startQRScan()">
+                            <i class="bi bi-qr-code-scan"></i><br>QR Scan
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-warning btn-sm w-100" onclick="startGeoAttendance()">
+                            <i class="bi bi-geo-alt"></i><br>GPS Check-in
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-primary btn-sm w-100" onclick="startIPAttendance()">
+                            <i class="bi bi-router"></i><br>IP-based
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="testResults" class="mt-4 p-3 bg-light rounded" style="display: none;">
+                    <h6>Test Results:</h6>
+                    <div id="resultsContent"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Include the Smart Attendance Modal from the main file -->
+    <div class="modal fade" id="smartAttendanceModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">
+                        <i class="bi bi-camera-fill me-2"></i>Smart Touchless Attendance - TEST
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0"><i class="bi bi-person-check me-2"></i>Face Recognition</h6>
+                                </div>
+                                <div class="card-body text-center">
+                                    <div id="faceRecognitionArea" class="border rounded p-4 mb-3" style="min-height: 200px; background: #f8f9fa;">
+                                        <i class="bi bi-camera text-muted" style="font-size: 3rem;"></i>
+                                        <p class="text-muted mt-2">Click to enable camera for face recognition</p>
+                                    </div>
+                                    <button class="btn btn-primary" onclick="initFaceRecognition()">
+                                        <i class="bi bi-camera-video"></i> Start Face Recognition
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-header bg-info text-white">
+                                    <h6 class="mb-0"><i class="bi bi-qr-code-scan me-2"></i>QR Code Scanner</h6>
+                                </div>
+                                <div class="card-body text-center">
+                                    <div id="qrScannerArea" class="border rounded p-4 mb-3" style="min-height: 200px; background: #f8f9fa;">
+                                        <i class="bi bi-qr-code text-muted" style="font-size: 3rem;"></i>
+                                        <p class="text-muted mt-2">Scan your employee QR code</p>
+                                    </div>
+                                    <button class="btn btn-info" onclick="initQRScanner()">
+                                        <i class="bi bi-qr-code-scan"></i> Start QR Scanner
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-warning text-dark">
+                                    <h6 class="mb-0"><i class="bi bi-geo-alt me-2"></i>GPS Location</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div id="locationStatus" class="text-center">
+                                        <p class="mt-2">Click button to get location...</p>
+                                    </div>
+                                    <button class="btn btn-warning w-100" onclick="checkInWithGPS()" id="gpsCheckInBtn">
+                                        <i class="bi bi-geo-alt-fill"></i> Check-in with GPS
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-secondary text-white">
+                                    <h6 class="mb-0"><i class="bi bi-router me-2"></i>IP-based Check-in</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="text-center">
+                                        <p class="mb-2">Your IP: <strong id="userIP">Loading...</strong></p>
+                                        <p class="mb-3">Office Network: <span class="badge bg-success">Checking...</span></p>
+                                    </div>
+                                    <button class="btn btn-secondary w-100" onclick="checkInWithIP()" id="ipCheckInBtn">
+                                        <i class="bi bi-router-fill"></i> Check-in with IP
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-success" onclick="manualCheckIn()">
+                        <i class="bi bi-hand-index"></i> Manual Check-in
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Copy the smart attendance functions from the main file
+        function openSmartAttendance() {
+            console.log('🎯 Opening smart attendance modal...');
+            const modal = document.getElementById('smartAttendanceModal');
+            if (!modal) {
+                alert('❌ Smart attendance modal not found!');
+                return;
+            }
+            
+            try {
+                const bsModal = new bootstrap.Modal(modal);
+                bsModal.show();
+                
+                setTimeout(() => {
+                    console.log('🔄 Initializing smart attendance features...');
+                    getUserLocation();
+                    getUserIP();
+                }, 500);
+                
+                showTestResult('✅ Smart attendance modal opened successfully');
+            } catch (error) {
+                console.error('❌ Error opening modal:', error);
+                alert('❌ Error opening smart attendance modal');
+            }
+        }
+
+        function getUserLocation() {
+            console.log('🌍 Getting user location...');
+            const locationDiv = document.getElementById('locationStatus');
+            
+            if (!locationDiv) return;
+            
+            locationDiv.innerHTML = `
+                <div class="spinner-border text-warning" role="status">
+                    <span class="visually-hidden">Getting location...</span>
+                </div>
+                <p class="mt-2">Getting your location...</p>
+            `;
+            
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    position => {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+                        
+                        locationDiv.innerHTML = `
+                            <i class="bi bi-geo-alt text-success me-2"></i>
+                            <strong>Location Found</strong><br>
+                            <small class="text-muted">Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}</small>
+                        `;
+                        
+                        showTestResult('✅ GPS location obtained successfully');
+                    },
+                    error => {
+                        locationDiv.innerHTML = `
+                            <i class="bi bi-exclamation-triangle text-danger me-2"></i>
+                            <strong>Location Access Denied</strong>
+                        `;
+                        showTestResult('⚠️ GPS location access denied');
+                    }
+                );
+            } else {
+                locationDiv.innerHTML = `
+                    <i class="bi bi-exclamation-triangle text-warning me-2"></i>
+                    <strong>Geolocation Not Supported</strong>
+                `;
+                showTestResult('⚠️ Geolocation not supported');
+            }
+        }
+
+        function getUserIP() {
+            const ipDiv = document.getElementById('userIP');
+            if (!ipDiv) return;
+            
+            // Simulate IP detection
+            setTimeout(() => {
+                const sampleIP = '192.168.1.' + Math.floor(Math.random() * 255);
+                ipDiv.textContent = sampleIP;
+                showTestResult('✅ IP address detected: ' + sampleIP);
+            }, 1000);
+        }
+
+        function checkInWithGPS() {
+            showTestResult('📍 GPS check-in completed');
+            alert('📍 GPS check-in successful!');
+        }
+
+        function checkInWithIP() {
+            showTestResult('🌐 IP check-in completed');
+            alert('🌐 IP check-in successful!');
+        }
+
+        function manualCheckIn() {
+            showTestResult('✋ Manual check-in completed');
+            alert('✅ Manual check-in successful!');
+        }
+
+        function initFaceRecognition() {
+            showTestResult('👤 Face recognition initiated');
+            alert('👤 Face recognition started!');
+        }
+
+        function initQRScanner() {
+            showTestResult('📱 QR scanner initiated');
+            alert('📱 QR scanner started!');
+        }
+
+        function startFaceRecognition() {
+            openSmartAttendance();
+            setTimeout(() => initFaceRecognition(), 1000);
+        }
+
+        function startQRScan() {
+            openSmartAttendance();
+            setTimeout(() => initQRScanner(), 1000);
+        }
+
+        function startGeoAttendance() {
+            openSmartAttendance();
+            setTimeout(() => checkInWithGPS(), 1000);
+        }
+
+        function startIPAttendance() {
+            openSmartAttendance();
+            setTimeout(() => checkInWithIP(), 1000);
+        }
+
+        function testAttendanceTable() {
+            window.open('http://localhost/billbook/pages/attendance/attendance.php?debug=1', '_blank');
+            showTestResult('📊 Attendance table opened in new tab');
+        }
+
+        function showTestResult(message) {
+            const results = document.getElementById('testResults');
+            const content = document.getElementById('resultsContent');
+            
+            results.style.display = 'block';
+            content.innerHTML += '<div class="mb-1">' + new Date().toLocaleTimeString() + ': ' + message + '</div>';
+        }
+
+        console.log('🧪 Test page loaded successfully');
+    </script>
+</body>
+</html>

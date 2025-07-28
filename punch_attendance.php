@@ -17,12 +17,13 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-// Get JSON input
+// Get JSON input or form data
 $input = json_decode(file_get_contents('php://input'), true);
 
-$action = $input['action'] ?? '';
-$employee_id = intval($input['employee_id'] ?? 0);
-$attendance_date = $input['attendance_date'] ?? date('Y-m-d');
+// Handle both JSON and form data
+$action = $input['action'] ?? $_POST['action'] ?? '';
+$employee_id = intval($input['employee_id'] ?? $_POST['employee_id'] ?? 0);
+$attendance_date = $input['attendance_date'] ?? $_POST['attendance_date'] ?? date('Y-m-d');
 
 // Enhanced validation
 if (!$employee_id) {

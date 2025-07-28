@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Attendance JS Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="text-center">
+            <h2>Smart Attendance Test</h2>
+            <button class="btn btn-success btn-lg mt-3" onclick="openSmartAttendance()">
+                <i class="bi bi-camera"></i> Smart Check-in
+            </button>
+        </div>
+    </div>
+
+    <!-- Smart Attendance Modal -->
+    <div class="modal fade" id="smartAttendanceModal" tabindex="-1" aria-labelledby="smartAttendanceModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="smartAttendanceModalLabel">
+                        <i class="bi bi-camera-fill me-2"></i>Smart Touchless Attendance
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0"><i class="bi bi-person-check me-2"></i>Face Recognition</h6>
+                                </div>
+                                <div class="card-body text-center">
+                                    <div id="faceRecognitionArea" class="border rounded p-4 mb-3" style="min-height: 200px; background: #f8f9fa;">
+                                        <i class="bi bi-camera text-muted" style="font-size: 3rem;"></i>
+                                        <p class="text-muted mt-2">Click to enable camera for face recognition</p>
+                                    </div>
+                                    <button class="btn btn-primary" onclick="initFaceRecognition()">
+                                        <i class="bi bi-camera-video"></i> Start Face Recognition
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-header bg-info text-white">
+                                    <h6 class="mb-0"><i class="bi bi-qr-code-scan me-2"></i>QR Code Scanner</h6>
+                                </div>
+                                <div class="card-body text-center">
+                                    <div id="qrScannerArea" class="border rounded p-4 mb-3" style="min-height: 200px; background: #f8f9fa;">
+                                        <i class="bi bi-qr-code text-muted" style="font-size: 3rem;"></i>
+                                        <p class="text-muted mt-2">Scan your employee QR code</p>
+                                    </div>
+                                    <button class="btn btn-info" onclick="initQRScanner()">
+                                        <i class="bi bi-qr-code-scan"></i> Start QR Scanner
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-warning text-dark">
+                                    <h6 class="mb-0"><i class="bi bi-geo-alt me-2"></i>GPS Location</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div id="locationStatus" class="text-center">
+                                        <div class="spinner-border text-warning" role="status" id="locationSpinner">
+                                            <span class="visually-hidden">Getting location...</span>
+                                        </div>
+                                        <p class="mt-2" id="locationText">Getting your location...</p>
+                                    </div>
+                                    <button class="btn btn-warning w-100" onclick="checkInWithGPS()" id="gpsCheckInBtn" disabled>
+                                        <i class="bi bi-geo-alt-fill"></i> Check-in with GPS
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-secondary text-white">
+                                    <h6 class="mb-0"><i class="bi bi-router me-2"></i>IP-based Check-in</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="text-center">
+                                        <p class="mb-2">Your IP: <strong id="userIP">Loading...</strong></p>
+                                        <p class="mb-3">Office Network: <span class="badge bg-success">Detected</span></p>
+                                    </div>
+                                    <button class="btn btn-secondary w-100" onclick="checkInWithIP()">
+                                        <i class="bi bi-router-fill"></i> Check-in with IP
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-success" onclick="manualCheckIn()">
+                        <i class="bi bi-hand-index"></i> Manual Check-in
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Global state management
+        let modalStates = {
+            faceRecognitionInProgress: false,
+            qrScannerInProgress: false,
+            locationRequestInProgress: false,
+            ipRequestInProgress: false
+        };
+
+        let mediaStreams = {
+            faceRecognition: null
+        };
+
+        // Open Smart Attendance Modal
+        function openSmartAttendance() {
+            console.log('Opening smart attendance modal...');
+            const modal = document.getElementById('smartAttendanceModal');
+            if (!modal) {
+                console.error('Modal not found!');
+                return;
+            }
+            
+            if (modal.classList.contains('show')) {
+                console.log('Modal already open');
+                return;
+            }
+            
+            const bsModal = new bootstrap.Modal(modal);
+            bsModal.show();
+            
+            // Initialize location and IP after modal is shown
+            modal.addEventListener('shown.bs.modal', function() {
+                console.log('Modal shown, initializing...');
+                setTimeout(() => {
+                    getUserLocation();
+                    getUserIP();
+                }, 300);
+            }, { once: true });
+        }
+
+        // Face Recognition
+        function initFaceRecognition() {
+            console.log('Starting face recognition...');
+            if (modalStates.faceRecognitionInProgress) {
+                console.log('Face recognition already in progress');
+                return;
+            }
+            
+            const area = document.getElementById('faceRecognitionArea');
+            if (!area) {
+                console.error('Face recognition area not found!');
+                return;
+            }
+            
+            modalStates.faceRecognitionInProgress = true;
+            area.innerHTML = `
+                <div class="d-flex flex-column align-items-center">
+                    <div class="spinner-border text-primary mb-2" role="status"></div>
+                    <p class="mt-2 mb-0">Initializing camera...</p>
+                </div>
+            `;
+            
+            // Clean up existing stream
+            if (mediaStreams.faceRecognition) {
+                mediaStreams.faceRecognition.getTracks().forEach(track => track.stop());
+                mediaStreams.faceRecognition = null;
+            }
+            
+            navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                console.log('Camera access granted');
+                mediaStreams.faceRecognition = stream;
+                const video = document.createElement('video');
+                video.srcObject = stream;
+                video.autoplay = true;
+                video.playsInline = true;
+                video.style.cssText = 'width:100%;height:200px;object-fit:cover;border-radius:8px;';
+                
+                area.innerHTML = '';
+                area.appendChild(video);
+                
+                // Simulate recognition after 3 seconds
+                setTimeout(() => {
+                    if (modalStates.faceRecognitionInProgress) {
+                        completeFaceRecognition();
+                    }
+                }, 3000);
+            })
+            .catch(err => {
+                console.error('Camera error:', err);
+                area.innerHTML = `
+                    <div class="text-center">
+                        <i class="bi bi-exclamation-triangle text-danger" style="font-size: 3rem;"></i>
+                        <p class="text-danger mt-2">Camera access denied</p>
+                        <button class="btn btn-outline-primary btn-sm mt-2" onclick="initFaceRecognition()">
+                            Try Again
+                        </button>
+                    </div>
+                `;
+                modalStates.faceRecognitionInProgress = false;
+            });
+        }
+
+        function completeFaceRecognition() {
+            console.log('Completing face recognition...');
+            const area = document.getElementById('faceRecognitionArea');
+            if (!area) return;
+            
+            area.innerHTML = `
+                <div class="text-center success-state p-3 rounded">
+                    <i class="bi bi-person-check-fill text-success" style="font-size: 3rem;"></i>
+                    <div class="alert alert-success mt-3 mb-3">
+                        <strong>Face Recognized Successfully!</strong>
+                    </div>
+                    <button class="btn btn-success" onclick="finalizeFaceCheckIn()">
+                        <i class="bi bi-check-circle"></i> Complete Check-In
+                    </button>
+                </div>
+            `;
+        }
+
+        function finalizeFaceCheckIn() {
+            console.log('Finalizing face check-in...');
+            // Clean up camera stream
+            if (mediaStreams.faceRecognition) {
+                mediaStreams.faceRecognition.getTracks().forEach(track => track.stop());
+                mediaStreams.faceRecognition = null;
+            }
+            
+            showAlert('Face recognition check-in completed successfully!', 'success');
+            
+            const modal = bootstrap.Modal.getInstance(document.getElementById('smartAttendanceModal'));
+            if (modal) modal.hide();
+            
+            // Reset state
+            modalStates.faceRecognitionInProgress = false;
+        }
+
+        // QR Scanner
+        function initQRScanner() {
+            console.log('Starting QR scanner...');
+            if (modalStates.qrScannerInProgress) {
+                console.log('QR scanner already in progress');
+                return;
+            }
+            
+            const area = document.getElementById('qrScannerArea');
+            if (!area) {
+                console.error('QR scanner area not found!');
+                return;
+            }
+            
+            modalStates.qrScannerInProgress = true;
+            area.innerHTML = `
+                <div class="d-flex flex-column align-items-center">
+                    <div class="spinner-border text-info mb-2" role="status"></div>
+                    <p class="mt-2 mb-0">Starting QR scanner...</p>
+                </div>
+            `;
+            
+            setTimeout(() => {
+                if (modalStates.qrScannerInProgress) {
+                    area.innerHTML = `
+                        <div class="text-center success-state p-3 rounded">
+                            <i class="bi bi-qr-code-scan text-success" style="font-size: 3rem;"></i>
+                            <div class="alert alert-success mt-3 mb-3">
+                                <strong>QR Code Scanned Successfully!</strong>
+                            </div>
+                            <button class="btn btn-success" onclick="finalizeQRCheckIn()">
+                                <i class="bi bi-check-circle"></i> Complete Check-In
+                            </button>
+                        </div>
+                    `;
+                }
+                modalStates.qrScannerInProgress = false;
+            }, 2000);
+        }
+
+        function finalizeQRCheckIn() {
+            console.log('Finalizing QR check-in...');
+            showAlert('QR code check-in completed successfully!', 'success');
+            
+            const modal = bootstrap.Modal.getInstance(document.getElementById('smartAttendanceModal'));
+            if (modal) modal.hide();
+        }
+
+        // GPS Location
+        function getUserLocation() {
+            console.log('Getting user location...');
+            if (modalStates.locationRequestInProgress) {
+                console.log('Location request already in progress');
+                return;
+            }
+            
+            const spinner = document.getElementById('locationSpinner');
+            const text = document.getElementById('locationText');
+            const btn = document.getElementById('gpsCheckInBtn');
+            
+            if (!spinner || !text || !btn) {
+                console.error('Location elements not found!');
+                return;
+            }
+            
+            modalStates.locationRequestInProgress = true;
+            
+            const timeout = setTimeout(() => {
+                if (modalStates.locationRequestInProgress) {
+                    text.innerHTML = `
+                        <p class="text-warning">Location timeout</p>
+                        <button class="btn btn-outline-warning btn-sm" onclick="retryLocation()">
+                            <i class="bi bi-arrow-clockwise"></i> Retry
+                        </button>
+                    `;
+                    spinner.style.display = 'none';
+                    modalStates.locationRequestInProgress = false;
+                }
+            }, 10000);
+            
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    position => {
+                        console.log('Location obtained:', position.coords.latitude, position.coords.longitude);
+                        clearTimeout(timeout);
+                        if (modalStates.locationRequestInProgress) {
+                            spinner.style.display = 'none';
+                            text.innerHTML = `
+                                <p class="text-success">Location detected</p>
+                                <small>Lat: ${position.coords.latitude.toFixed(4)}</small><br>
+                                <small>Lng: ${position.coords.longitude.toFixed(4)}</small>
+                            `;
+                            btn.disabled = false;
+                            btn.classList.remove('btn-warning');
+                            btn.classList.add('btn-success');
+                            modalStates.locationRequestInProgress = false;
+                        }
+                    },
+                    error => {
+                        console.error('Location error:', error);
+                        clearTimeout(timeout);
+                        if (modalStates.locationRequestInProgress) {
+                            spinner.style.display = 'none';
+                            text.innerHTML = `
+                                <p class="text-danger">Location access denied</p>
+                                <button class="btn btn-outline-danger btn-sm" onclick="retryLocation()">
+                                    <i class="bi bi-arrow-clockwise"></i> Retry
+                                </button>
+                            `;
+                            modalStates.locationRequestInProgress = false;
+                        }
+                    }
+                );
+            } else {
+                clearTimeout(timeout);
+                spinner.style.display = 'none';
+                text.innerHTML = '<p class="text-danger">Geolocation not supported</p>';
+                modalStates.locationRequestInProgress = false;
+            }
+        }
+
+        function retryLocation() {
+            console.log('Retrying location...');
+            modalStates.locationRequestInProgress = false;
+            const spinner = document.getElementById('locationSpinner');
+            if (spinner) spinner.style.display = 'block';
+            getUserLocation();
+        }
+
+        // IP Detection
+        function getUserIP() {
+            console.log('Getting user IP...');
+            if (modalStates.ipRequestInProgress) {
+                console.log('IP request already in progress');
+                return;
+            }
+            
+            const ipElement = document.getElementById('userIP');
+            if (!ipElement) {
+                console.error('IP element not found!');
+                return;
+            }
+            
+            modalStates.ipRequestInProgress = true;
+            
+            const timeout = setTimeout(() => {
+                if (modalStates.ipRequestInProgress) {
+                    ipElement.textContent = 'Timeout';
+                    modalStates.ipRequestInProgress = false;
+                }
+            }, 5000);
+            
+            fetch('https://api.ipify.org?format=json')
+            .then(response => response.json())
+            .then(data => {
+                console.log('IP obtained:', data.ip);
+                clearTimeout(timeout);
+                if (modalStates.ipRequestInProgress) {
+                    ipElement.textContent = data.ip;
+                    modalStates.ipRequestInProgress = false;
+                }
+            })
+            .catch(error => {
+                console.error('IP error:', error);
+                clearTimeout(timeout);
+                if (modalStates.ipRequestInProgress) {
+                    ipElement.textContent = 'Unable to detect';
+                    modalStates.ipRequestInProgress = false;
+                }
+            });
+        }
+
+        // Check-in functions
+        function checkInWithGPS() {
+            console.log('GPS check-in...');
+            showAlert('GPS check-in completed successfully!', 'success');
+            const modal = bootstrap.Modal.getInstance(document.getElementById('smartAttendanceModal'));
+            if (modal) modal.hide();
+        }
+
+        function checkInWithIP() {
+            console.log('IP check-in...');
+            showAlert('IP-based check-in completed successfully!', 'success');
+            const modal = bootstrap.Modal.getInstance(document.getElementById('smartAttendanceModal'));
+            if (modal) modal.hide();
+        }
+
+        function manualCheckIn() {
+            console.log('Manual check-in...');
+            showAlert('Manual check-in completed successfully!', 'success');
+            const modal = bootstrap.Modal.getInstance(document.getElementById('smartAttendanceModal'));
+            if (modal) modal.hide();
+        }
+
+        // Show alert function
+        function showAlert(message, type = 'info') {
+            // Remove existing alerts
+            document.querySelectorAll('.custom-alert').forEach(alert => alert.remove());
+            
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed custom-alert`;
+            alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 10000; min-width: 350px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);';
+            
+            const iconMap = {
+                success: 'bi-check-circle',
+                danger: 'bi-exclamation-triangle',
+                warning: 'bi-exclamation-triangle',
+                info: 'bi-info-circle'
+            };
+            
+            alertDiv.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <i class="bi ${iconMap[type] || iconMap.info} me-2 fs-5"></i>
+                    <div class="flex-grow-1">${message}</div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            document.body.appendChild(alertDiv);
+            
+            // Auto remove
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.classList.remove('show');
+                    setTimeout(() => {
+                        if (alertDiv.parentNode) {
+                            alertDiv.parentNode.removeChild(alertDiv);
+                        }
+                    }, 300);
+                }
+            }, type === 'success' ? 5000 : 7000);
+        }
+
+        // Clean up on page unload
+        window.addEventListener('beforeunload', function() {
+            // Clean up all media streams
+            Object.values(mediaStreams).forEach(stream => {
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                }
+            });
+        });
+
+        console.log('Smart Attendance JS loaded successfully!');
+    </script>
+</body>
+</html>
