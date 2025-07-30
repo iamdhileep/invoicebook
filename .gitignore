@@ -71,6 +71,11 @@ email_setup_*.php
 employee_login_*.php
 mail_config_*.php
 
+# Status and Test Pages
+db_connection_test.php
+system_status.php
+status_check.html
+
 # OS and Editor Files
 .DS_Store
 .vscode/settings.json
