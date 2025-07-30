@@ -1,338 +1,91 @@
 <?php
-session_start();
-if (!isset($_SESSION['admin'])) {
-    header("Location: ../../login.php");
-    exit;
-}
-
-include '../../db.php';
-$page_title = 'Manager Dashboard';
-
-// Set timezone
-date_default_timezone_set('Asia/Kolkata');
-
-// Get manager information and team members
-$manager_id = $_SESSION['admin']; // In real implementation, get from user session
-$team_members = [];
-
-try {
-    // Get team members (employees under this manager)
-    $team_query = $conn->query("
-        SELECT employee_id, name, employee_code, position, email 
-        FROM employees 
-        WHERE status = 'active' 
-        ORDER BY name ASC
-    ");
-    
-    if ($team_query) {
-        while ($row = $team_query->fetch_assoc()) {
-            $team_members[] = $row;
-        }
-    }
-    
-} catch (Exception $e) {
-    error_log("Error fetching team members: " . $e->getMessage());
-}
-
-// Get dashboard statistics
-$stats = [
-    'pending_approvals' => 0,
-    'team_members' => count($team_members),
-    'today_present' => 0,
-    'this_month_leaves' => 0
-];
-
-try {
-    // Get pending approvals count
-    $pending_query = $conn->query("SELECT COUNT(*) as count FROM leave_requests WHERE status = 'pending'");
-    if ($pending_query && $row = $pending_query->fetch_assoc()) {
-        $stats['pending_approvals'] = $row['count'];
-    }
-    
-    // Get today's present count from team
-    $today = date('Y-m-d');
-    $present_query = $conn->query("
-        SELECT COUNT(*) as count 
-        FROM attendance a
-        JOIN employees e ON a.employee_id = e.employee_id
-        WHERE a.attendance_date = '$today' 
-        AND a.status IN ('Present', 'Late')
-        AND e.status = 'active'
-    ");
-    if ($present_query && $row = $present_query->fetch_assoc()) {
-        $stats['today_present'] = $row['count'];
-    }
-    
-    // Get this month's approved leaves
-    $month_leaves_query = $conn->query("
-        SELECT COUNT(*) as count 
-        FROM leave_requests lr
-        JOIN employees e ON lr.employee_id = e.employee_id
-        WHERE lr.status = 'approved' 
-        AND MONTH(lr.start_date) = MONTH(CURDATE())
-        AND YEAR(lr.start_date) = YEAR(CURDATE())
-        AND e.status = 'active'
-    ");
-    if ($month_leaves_query && $row = $month_leaves_query->fetch_assoc()) {
-        $stats['this_month_leaves'] = $row['count'];
-    }
-    
-} catch (Exception $e) {
-    error_log("Error fetching manager dashboard stats: " . $e->getMessage());
-}
-
-// Set base path for assets
-$basePath = '../../';
-
-include '../../layouts/header.php';
+// Redirect to the new working manager dashboard
+header('Location: manager_dashboard_new.php');
+exit;
+?>
 include '../../layouts/sidebar.php';
 ?>
 
 <div class="main-content">
-    <div class="container-fluid">
-        <!-- Page Header -->
-        <div class="d-flex justify-content-between align-items-center mb-2">
-            <div>
-                <h1 class="h5 mb-1">
-                    <i class="bi bi-person-badge me-2 text-success"></i>Manager Dashboard
-                </h1>
-                <p class="text-muted mb-0 small">Manage your team's attendance, leaves, and requests - <?= date('F j, Y') ?></p>
-                
-                <!-- Breadcrumb Navigation -->
-                <nav aria-label="breadcrumb" class="mt-1">
-                    <ol class="breadcrumb small mb-0">
-                        <li class="breadcrumb-item"><a href="../../dashboard.php">Dashboard</a></li>
-                        <li class="breadcrumb-item"><a href="../hr/hr_dashboard.php">HR Portal</a></li>
-                        <li class="breadcrumb-item active" aria-current="page">Manager Portal</li>
-                    </ol>
-                </nav>
-            </div>
-            <div class="d-flex gap-1">
-                <!-- Global Search -->
-                <div class="input-group input-group-sm" style="width: 180px;">
-                    <input type="text" class="form-control" placeholder="Search team..." id="managerGlobalSearch">
-                    <button class="btn btn-outline-secondary" type="button" onclick="performManagerSearch()">
-                        <i class="bi bi-search"></i>
-                    </button>
-                </div>
-                
-                <!-- Quick Actions -->
-                <div class="btn-group btn-group-sm" role="group">
-                    <button class="btn btn-outline-success btn-sm" onclick="exportTeamData()" title="Export Team Data">
-                        <i class="bi bi-download me-1"></i>Export
-                    </button>
-                    <button class="btn btn-outline-primary btn-sm" onclick="refreshManagerDashboard()" title="Refresh Dashboard">
-                        <i class="bi bi-arrow-clockwise me-1"></i>Refresh
-                    </button>
-                    <div class="btn-group" role="group">
-                        <button type="button" class="btn btn-success btn-sm dropdown-toggle" data-bs-toggle="dropdown">
-                            <i class="bi bi-gear me-1"></i>Manager Tools
-                        </button>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="#" onclick="openTeamSettingsModal()">
-                                <i class="bi bi-gear me-2"></i>Team Settings
-                            </a></li>
-                            <li><a class="dropdown-item" href="#" onclick="openPerformanceModal()">
-                                <i class="bi bi-graph-up me-2"></i>Performance Review
-                            </a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="#" onclick="generateTeamReport()">
-                                <i class="bi bi-file-earmark-text me-2"></i>Generate Team Report
-                            </a></li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Real-time Alert System -->
-        <div id="managerAlertContainer" class="mb-2"></div>
-            <div class="d-flex gap-1">
-                <button class="btn btn-outline-primary btn-sm" onclick="refreshDashboard()">
-                    <i class="bi bi-arrow-clockwise"></i>
-                </button>
-                <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#teamAnalyticsModal">
-                    <i class="bi bi-graph-up"></i>
-                </button>
-            </div>
-        </div>
-
-        <!-- Statistics Cards -->
-        <div class="row g-2 mb-3">
-            <div class="col-md-3">
-                <div class="card border-0 shadow-sm h-100 bg-gradient-warning">
-                    <div class="card-body text-white p-2">
-                        <div class="d-flex align-items-center">
-                            <div class="flex-shrink-0">
-                                <i class="bi bi-clock-history fs-4"></i>
+    <div class="container-fluid p-4">
+        <!-- Welcome Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card welcome-header">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <h3 class="mb-0">Manager Dashboard</h3>
+                                <p class="text-muted mb-0">Team management and oversight system</p>
                             </div>
-                            <div class="flex-grow-1 ms-2">
-                                <h6 class="mb-0 fw-bold"><?= $stats['pending_approvals'] ?></h6>
-                                <p class="mb-0 small opacity-75">Pending Approvals</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card border-0 shadow-sm h-100 bg-gradient-primary">
-                    <div class="card-body text-white p-2">
-                        <div class="d-flex align-items-center">
-                            <div class="flex-shrink-0">
-                                <i class="bi bi-people fs-4"></i>
-                            </div>
-                            <div class="flex-grow-1 ms-2">
-                                <h6 class="mb-0 fw-bold"><?= $stats['team_members'] ?></h6>
-                                <p class="mb-0 small opacity-75">Team Members</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card border-0 shadow-sm h-100 bg-gradient-success">
-                    <div class="card-body text-white p-2">
-                        <div class="d-flex align-items-center">
-                            <div class="flex-shrink-0">
-                                <i class="bi bi-person-check fs-4"></i>
-                            </div>
-                            <div class="flex-grow-1 ms-2">
-                                <h6 class="mb-0 fw-bold"><?= $stats['today_present'] ?></h6>
-                                <p class="mb-0 small opacity-75">Present Today</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card border-0 shadow-sm h-100 bg-gradient-info">
-                    <div class="card-body text-white p-2">
-                        <div class="d-flex align-items-center">
-                            <div class="flex-shrink-0">
-                                <i class="bi bi-calendar-event fs-4"></i>
-                            </div>
-                            <div class="flex-grow-1 ms-2">
-                                <h6 class="mb-0 fw-bold"><?= $stats['this_month_leaves'] ?></h6>
-                                <p class="mb-0 small opacity-75">Leaves This Month</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="row">
-            <!-- Pending Approvals -->
-            <div class="col-lg-8">
-                <div class="card border-0 shadow-sm">
-                    <div class="card-header bg-light border-0">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h6 class="mb-0">
-                                <i class="bi bi-clock-history me-2 text-warning"></i>Pending Approvals
-                            </h6>
-                            <div class="d-flex gap-2">
-                                <select class="form-select form-select-sm" id="priorityFilter" onchange="filterPendingRequests()">
-                                    <option value="">All Priorities</option>
-                                    <option value="emergency">Emergency</option>
-                                    <option value="urgent">Urgent</option>
-                                    <option value="normal">Normal</option>
-                                </select>
-                                <button class="btn btn-success btn-sm" onclick="loadPendingRequests()">
-                                    <i class="bi bi-arrow-clockwise"></i>
+                            <div class="col-md-4 text-end">
+                                <button class="btn btn-primary" onclick="refreshDashboard()">
+                                    <i class="fas fa-sync-alt"></i> Refresh
                                 </button>
                             </div>
                         </div>
                     </div>
-                    <div class="card-body p-0">
-                        <div id="pendingRequestsContainer">
-                            <div class="text-center py-4">
-                                <div class="spinner-border text-primary" role="status">
-                                    <span class="visually-hidden">Loading...</span>
-                                </div>
-                                <p class="mt-2 text-muted">Loading pending requests...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Stats -->
+        <div class="row mb-4" id="dashboardStats">
+            <div class="col-md-3">
+                <div class="card stat-card bg-primary text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6>Team Members</h6>
+                                <h3 id="teamMembers">-</h3>
+                            </div>
+                            <div class="stat-icon">
+                                <i class="fas fa-users fa-2x"></i>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <!-- Team Overview & Quick Actions -->
-            <div class="col-lg-4">
-                <!-- Team Quick View -->
-                <div class="card border-0 shadow-sm mb-3">
-                    <div class="card-header bg-light border-0">
-                        <h6 class="mb-0">
-                            <i class="bi bi-people me-2"></i>Team Overview
-                        </h6>
-                    </div>
+            <div class="col-md-3">
+                <div class="card stat-card bg-warning text-white">
                     <div class="card-body">
-                        <div class="row g-2 mb-3">
-                            <div class="col-6">
-                                <div class="card bg-success text-white text-center">
-                                    <div class="card-body p-2">
-                                        <div class="fw-bold" id="teamPresentCount"><?= $stats['today_present'] ?></div>
-                                        <small>Present</small>
-                                    </div>
-                                </div>
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6>Pending Approvals</h6>
+                                <h3 id="pendingApprovals">-</h3>
                             </div>
-                            <div class="col-6">
-                                <div class="card bg-danger text-white text-center">
-                                    <div class="card-body p-2">
-                                        <div class="fw-bold" id="teamAbsentCount"><?= $stats['team_members'] - $stats['today_present'] ?></div>
-                                        <small>Absent</small>
-                                    </div>
-                                </div>
+                            <div class="stat-icon">
+                                <i class="fas fa-clock fa-2x"></i>
                             </div>
-                        </div>
-                        
-                        <div class="d-grid gap-2">
-                            <button class="btn btn-outline-primary btn-sm" onclick="viewTeamAttendance()">
-                                <i class="bi bi-calendar-check me-1"></i>View Team Attendance
-                            </button>
-                            <button class="btn btn-outline-info btn-sm" onclick="viewTeamLeaveCalendar()">
-                                <i class="bi bi-calendar3 me-1"></i>Team Leave Calendar
-                            </button>
                         </div>
                     </div>
                 </div>
-
-                <!-- Manager Quick Actions -->
-                <div class="card border-0 shadow-sm mb-3">
-                    <div class="card-header bg-light border-0">
-                        <h6 class="mb-0">
-                            <i class="bi bi-lightning me-2"></i>Quick Manager Actions
-                        </h6>
-                    </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card bg-success text-white">
                     <div class="card-body">
-                        <div class="d-grid gap-2">
-                            <button class="btn btn-outline-success btn-sm" onclick="bulkApproveSelected()">
-                                <i class="bi bi-check-all me-1"></i>Bulk Approve
-                            </button>
-                            <button class="btn btn-outline-warning btn-sm" data-bs-toggle="modal" data-bs-target="#teamLeaveBalanceModal">
-                                <i class="bi bi-wallet2 me-1"></i>Team Leave Balance
-                            </button>
-                            <button class="btn btn-outline-info btn-sm" onclick="generateTeamReport()">
-                                <i class="bi bi-file-text me-1"></i>Generate Report
-                            </button>
-                            <button class="btn btn-outline-primary btn-sm" onclick="sendTeamNotification()">
-                                <i class="bi bi-bell me-1"></i>Send Notification
-                            </button>
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6>Team Present</h6>
+                                <h3 id="teamPresent">-</h3>
+                            </div>
+                            <div class="stat-icon">
+                                <i class="fas fa-check-circle fa-2x"></i>
+                            </div>
                         </div>
                     </div>
                 </div>
-
-                <!-- Quick Team Status -->
-                <div class="card border-0 shadow-sm">
-                    <div class="card-header bg-light border-0">
-                        <h6 class="mb-0">
-                            <i class="bi bi-speedometer2 me-2"></i>Today's Team Status
-                        </h6>
-                    </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card bg-info text-white">
                     <div class="card-body">
-                        <div id="teamStatusContainer">
-                            <div class="text-center py-3">
-                                <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
-                                <p class="mt-2 text-muted small">Loading team status...</p>
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6>Performance Score</h6>
+                                <h3 id="performanceScore">-</h3>
+                            </div>
+                            <div class="stat-icon">
+                                <i class="fas fa-chart-line fa-2x"></i>
                             </div>
                         </div>
                     </div>
@@ -340,54 +93,395 @@ include '../../layouts/sidebar.php';
             </div>
         </div>
 
-        <!-- Team Performance Section -->
-        <div class="row mt-4">
-            <div class="col-12">
-                <div class="card border-0 shadow-sm">
-                    <div class="card-header bg-light border-0">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h6 class="mb-0">
-                                <i class="bi bi-graph-up me-2"></i>Team Performance Dashboard
-                            </h6>
-                            <div class="btn-group">
-                                <button class="btn btn-outline-primary btn-sm" onclick="loadWeeklyView()">Weekly</button>
-                                <button class="btn btn-outline-primary btn-sm active" onclick="loadMonthlyView()">Monthly</button>
-                                <button class="btn btn-outline-primary btn-sm" onclick="loadQuarterlyView()">Quarterly</button>
-                            </div>
+        <!-- Navigation Tabs -->
+        <ul class="nav nav-tabs" id="managerTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="team-tab" data-bs-toggle="tab" data-bs-target="#team" type="button" role="tab">
+                    <i class="fas fa-users"></i> Team Management
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="approvals-tab" data-bs-toggle="tab" data-bs-target="#approvals" type="button" role="tab">
+                    <i class="fas fa-check-square"></i> Leave Approvals
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="attendance-tab" data-bs-toggle="tab" data-bs-target="#attendance" type="button" role="tab">
+                    <i class="fas fa-calendar-check"></i> Team Attendance
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="performance-tab" data-bs-toggle="tab" data-bs-target="#performance" type="button" role="tab">
+                    <i class="fas fa-star"></i> Performance Reviews
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="reports-tab" data-bs-toggle="tab" data-bs-target="#reports" type="button" role="tab">
+                    <i class="fas fa-chart-bar"></i> Team Reports
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="analytics-tab" data-bs-toggle="tab" data-bs-target="#analytics" type="button" role="tab">
+                    <i class="fas fa-chart-line"></i> Team Analytics
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="overtime-tab" data-bs-toggle="tab" data-bs-target="#overtime" type="button" role="tab">
+                    <i class="fas fa-clock"></i> Overtime Management
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="shifts-tab" data-bs-toggle="tab" data-bs-target="#shifts" type="button" role="tab">
+                    <i class="fas fa-calendar-alt"></i> Shift Management
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="anomalies-tab" data-bs-toggle="tab" data-bs-target="#anomalies" type="button" role="tab">
+                    <i class="fas fa-exclamation-triangle"></i> Attendance Anomalies
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="managerTabContent">
+            <!-- Team Management Tab -->
+            <div class="tab-pane fade show active" id="team" role="tabpanel">
+                <div class="card mt-3">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Team Overview</h5>
+                        <div>
+                            <button class="btn btn-primary" onclick="loadTeamMembers()">
+                                <i class="fas fa-sync"></i> Refresh Team
+                            </button>
                         </div>
                     </div>
                     <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-8">
-                                <canvas id="teamPerformanceChart" width="400" height="200"></canvas>
+                        <div class="table-responsive">
+                            <table class="table table-striped" id="teamTable">
+                                <thead>
+                                    <tr>
+                                        <th>Employee</th>
+                                        <th>Position</th>
+                                        <th>Status</th>
+                                        <th>Today's Status</th>
+                                        <th>Performance</th>
+                                        <th>Contact</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="teamTableBody">
+                                    <tr><td colspan="7" class="text-center">Loading...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Leave Approvals Tab -->
+            <div class="tab-pane fade" id="approvals" role="tabpanel">
+                <div class="card mt-3">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Team Leave Requests</h5>
+                        <div>
+                            <select class="form-select d-inline-block w-auto" id="approvalStatusFilter">
+                                <option value="pending">Pending Approvals</option>
+                                <option value="all">All Requests</option>
+                                <option value="approved">Approved</option>
+                                <option value="rejected">Rejected</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped" id="approvalsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Employee</th>
+                                        <th>Leave Type</th>
+                                        <th>From Date</th>
+                                        <th>To Date</th>
+                                        <th>Days</th>
+                                        <th>Reason</th>
+                                        <th>Applied</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="approvalsTableBody">
+                                    <tr><td colspan="9" class="text-center">Loading...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Team Attendance Tab -->
+            <div class="tab-pane fade" id="attendance" role="tabpanel">
+                <div class="card mt-3">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Team Attendance Monitoring</h5>
+                        <div>
+                            <input type="date" class="form-control d-inline-block w-auto me-2" id="attendanceDate" value="<?php echo date('Y-m-d'); ?>">
+                            <button class="btn btn-primary" onclick="loadTeamAttendance()">
+                                <i class="fas fa-search"></i> Load
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped" id="attendanceTable">
+                                <thead>
+                                    <tr>
+                                        <th>Employee</th>
+                                        <th>Date</th>
+                                        <th>Check In</th>
+                                        <th>Check Out</th>
+                                        <th>Work Hours</th>
+                                        <th>Status</th>
+                                        <th>Late By</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="attendanceTableBody">
+                                    <tr><td colspan="8" class="text-center">Loading...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Reviews Tab -->
+            <div class="tab-pane fade" id="performance" role="tabpanel">
+                <div class="card mt-3">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Team Performance Management</h5>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addReviewModal">
+                            <i class="fas fa-plus"></i> Add Review
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="row" id="performanceCards">
+                            <div class="col-12 text-center">
+                                <p>Loading performance data...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Team Reports Tab -->
+            <div class="tab-pane fade" id="reports" role="tabpanel">
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">Team Analytics & Reports</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row" id="teamReports">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">Team Attendance Summary</h6>
+                                    </div>
+                                    <div class="card-body" id="attendanceReport">
+                                        <p class="text-center">Loading...</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">Leave Utilization</h6>
+                                    </div>
+                                    <div class="card-body" id="leaveUtilizationReport">
+                                        <p class="text-center">Loading...</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mt-3">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">Performance Metrics</h6>
+                                    </div>
+                                    <div class="card-body" id="performanceMetrics">
+                                        <p class="text-center">Loading...</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mt-3">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">Team Productivity</h6>
+                                    </div>
+                                    <div class="card-body" id="productivityReport">
+                                        <p class="text-center">Loading...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Team Analytics Tab -->
+            <div class="tab-pane fade" id="analytics" role="tabpanel">
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Advanced Team Analytics</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-4">
+                            <div class="col-md-3">
+                                <select class="form-select" id="analyticsFilter">
+                                    <option value="week">Last 7 Days</option>
+                                    <option value="month" selected>Last 30 Days</option>
+                                    <option value="quarter">Last 90 Days</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <button class="btn btn-primary" onclick="loadTeamAnalytics()">
+                                    <i class="fas fa-sync me-2"></i>Refresh Analytics
+                                </button>
+                            </div>
+                        </div>
+                        <div id="teamAnalyticsContainer">
+                            <div class="text-center py-4">
+                                <div class="loading-spinner me-2"></div>
+                                Loading team analytics...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Overtime Management Tab -->
+            <div class="tab-pane fade" id="overtime" role="tabpanel">
+                <div class="card mt-3">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Overtime Management</h5>
+                        <button class="btn btn-success" onclick="bulkApproveOvertime()">
+                            <i class="fas fa-check-double me-2"></i>Bulk Approve
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="overtimeTable">
+                                <thead>
+                                    <tr>
+                                        <th><input type="checkbox" id="selectAllOvertime"></th>
+                                        <th>Employee</th>
+                                        <th>Date</th>
+                                        <th>Regular Hours</th>
+                                        <th>Overtime Hours</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td colspan="7" class="text-center py-4">
+                                            <div class="loading-spinner me-2"></div>
+                                            Loading overtime records...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Shift Management Tab -->
+            <div class="tab-pane fade" id="shifts" role="tabpanel">
+                <div class="card mt-3">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Team Shift Scheduling</h5>
+                        <button class="btn btn-primary" onclick="showShiftScheduleModal()">
+                            <i class="fas fa-plus me-2"></i>Schedule Shifts
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Week Starting</label>
+                                <input type="date" class="form-control" id="shiftWeekStart" value="">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Shift Template</label>
+                                <select class="form-select" id="shiftTemplate">
+                                    <option value="">Select Template</option>
+                                    <option value="standard">Standard (9 AM - 5 PM)</option>
+                                    <option value="early">Early (7 AM - 3 PM)</option>
+                                    <option value="late">Late (1 PM - 9 PM)</option>
+                                    <option value="night">Night (10 PM - 6 AM)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="shiftCalendar">
+                            <div class="text-center py-4">
+                                <div class="loading-spinner me-2"></div>
+                                Loading shift calendar...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Attendance Anomalies Tab -->
+            <div class="tab-pane fade" id="anomalies" role="tabpanel">
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Attendance Anomalies & Exceptions</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <div class="card border-0 bg-warning bg-opacity-10">
+                                    <div class="card-body text-center">
+                                        <div class="h3 text-warning mb-1" id="lateArrivals">0</div>
+                                        <small class="text-muted">Late Arrivals</small>
+                                    </div>
+                                </div>
                             </div>
                             <div class="col-md-4">
-                                <h6 class="text-muted mb-3">Team Metrics</h6>
-                                <div class="mb-3">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span>Average Attendance:</span>
-                                        <span class="badge bg-success">92.5%</span>
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span>On-time Arrival:</span>
-                                        <span class="badge bg-info">88.3%</span>
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span>Leave Utilization:</span>
-                                        <span class="badge bg-warning">67.2%</span>
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span>Team Productivity:</span>
-                                        <span class="badge bg-primary">94.1%</span>
+                                <div class="card border-0 bg-danger bg-opacity-10">
+                                    <div class="card-body text-center">
+                                        <div class="h3 text-danger mb-1" id="earlyDepartures">0</div>
+                                        <small class="text-muted">Early Departures</small>
                                     </div>
                                 </div>
                             </div>
+                            <div class="col-md-4">
+                                <div class="card border-0 bg-info bg-opacity-10">
+                                    <div class="card-body text-center">
+                                        <div class="h3 text-info mb-1" id="longBreaks">0</div>
+                                        <small class="text-muted">Extended Breaks</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="anomaliesTable">
+                                <thead>
+                                    <tr>
+                                        <th>Employee</th>
+                                        <th>Date</th>
+                                        <th>Anomaly Type</th>
+                                        <th>Details</th>
+                                        <th>Severity</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4">
+                                            <div class="loading-spinner me-2"></div>
+                                            Loading anomalies...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -396,680 +490,981 @@ include '../../layouts/sidebar.php';
     </div>
 </div>
 
-<!-- Request Detail Modal -->
-<div class="modal fade" id="requestDetailModal" tabindex="-1">
+<!-- Leave Action Modal -->
+<div class="modal fade" id="leaveActionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="leaveActionTitle">Leave Action</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="leaveActionForm">
+                <input type="hidden" name="leave_id" id="actionLeaveId">
+                <input type="hidden" name="action_type" id="actionType">
+                <div class="modal-body">
+                    <div class="mb-3" id="leaveDetailsSection">
+                        <!-- Leave details will be populated here -->
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Manager Comments</label>
+                        <textarea class="form-control" name="manager_comments" rows="3" placeholder="Add your comments for this decision..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn" id="leaveActionBtn">Action</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Performance Review Modal -->
+<div class="modal fade" id="addReviewModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">
-                    <i class="bi bi-calendar-event me-2"></i>Request Details
-                </h5>
+                <h5 class="modal-title">Add Performance Review</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body" id="requestDetailContent">
-                <!-- Content will be loaded dynamically -->
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-danger" onclick="rejectRequest()">
-                    <i class="bi bi-x-circle me-1"></i>Reject
-                </button>
-                <button type="button" class="btn btn-success" onclick="approveRequest()">
-                    <i class="bi bi-check-circle me-1"></i>Approve
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Team Analytics Modal -->
-<div class="modal fade" id="teamAnalyticsModal" tabindex="-1">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header bg-success text-white">
-                <h5 class="modal-title">
-                    <i class="bi bi-graph-up me-2"></i>Detailed Team Analytics
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="row mb-3">
-                    <div class="col-md-4">
-                        <select class="form-select" id="analyticsTimeRange">
-                            <option value="week">This Week</option>
-                            <option value="month" selected>This Month</option>
-                            <option value="quarter">This Quarter</option>
-                            <option value="year">This Year</option>
-                        </select>
+            <form id="addReviewForm">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Employee *</label>
+                                <select class="form-select" name="employee_id" required id="reviewEmployee">
+                                    <option value="">Select Employee</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Review Period *</label>
+                                <select class="form-select" name="review_period" required>
+                                    <option value="">Select Period</option>
+                                    <option value="monthly">Monthly</option>
+                                    <option value="quarterly">Quarterly</option>
+                                    <option value="annual">Annual</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
-                    <div class="col-md-4">
-                        <select class="form-select" id="analyticsEmployee">
-                            <option value="">All Team Members</option>
-                            <?php foreach ($team_members as $member): ?>
-                                <option value="<?= $member['employee_id'] ?>"><?= htmlspecialchars($member['name']) ?></option>
-                            <?php endforeach; ?>
-                        </select>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Technical Skills (1-5)</label>
+                                <select class="form-select" name="technical_rating">
+                                    <option value="1">1 - Poor</option>
+                                    <option value="2">2 - Below Average</option>
+                                    <option value="3">3 - Average</option>
+                                    <option value="4">4 - Good</option>
+                                    <option value="5">5 - Excellent</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Communication (1-5)</label>
+                                <select class="form-select" name="communication_rating">
+                                    <option value="1">1 - Poor</option>
+                                    <option value="2">2 - Below Average</option>
+                                    <option value="3">3 - Average</option>
+                                    <option value="4">4 - Good</option>
+                                    <option value="5">5 - Excellent</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Teamwork (1-5)</label>
+                                <select class="form-select" name="teamwork_rating">
+                                    <option value="1">1 - Poor</option>
+                                    <option value="2">2 - Below Average</option>
+                                    <option value="3">3 - Average</option>
+                                    <option value="4">4 - Good</option>
+                                    <option value="5">5 - Excellent</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
-                    <div class="col-md-4">
-                        <button class="btn btn-primary w-100" onclick="loadTeamAnalytics()">
-                            <i class="bi bi-bar-chart me-1"></i>Load Analytics
-                        </button>
+                    <div class="mb-3">
+                        <label class="form-label">Achievements</label>
+                        <textarea class="form-control" name="achievements" rows="3" placeholder="Key achievements during this period..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Areas for Improvement</label>
+                        <textarea class="form-control" name="improvement_areas" rows="3" placeholder="Areas where employee can improve..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Goals for Next Period</label>
+                        <textarea class="form-control" name="next_goals" rows="3" placeholder="Goals and objectives for next review period..."></textarea>
                     </div>
                 </div>
-                <div id="teamAnalyticsContent">
-                    <!-- Analytics content will be loaded here -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Review</button>
                 </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Team Leave Balance Modal -->
-<div class="modal fade" id="teamLeaveBalanceModal" tabindex="-1">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header bg-warning text-dark">
-                <h5 class="modal-title">
-                    <i class="bi bi-wallet2 me-2"></i>Team Leave Balance Overview
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="table-responsive">
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th>Employee</th>
-                                <th>Casual Leave</th>
-                                <th>Sick Leave</th>
-                                <th>Earned Leave</th>
-                                <th>Comp-off</th>
-                                <th>Total Available</th>
-                                <th>This Month Used</th>
-                            </tr>
-                        </thead>
-                        <tbody id="teamLeaveBalanceTableBody">
-                            <!-- Dynamic content -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+            </form>
         </div>
     </div>
 </div>
 
 <style>
-.bg-gradient-primary {
-    background: linear-gradient(135deg, #007bff, #0056b3);
+.stat-card {
+    transition: transform 0.2s;
 }
-
-.bg-gradient-success {
-    background: linear-gradient(135deg, #28a745, #1e7e34);
+.stat-card:hover {
+    transform: translateY(-5px);
 }
-
-.bg-gradient-warning {
-    background: linear-gradient(135deg, #ffc107, #e0a800);
+.stat-icon {
+    opacity: 0.3;
 }
-
-.bg-gradient-info {
-    background: linear-gradient(135deg, #17a2b8, #138496);
+.welcome-header {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
 }
-
-.card {
-    transition: all 0.3s ease;
-}
-
-.card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-}
-
-.modal-content {
-    border: none;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-}
-
-.table th {
-    border-top: none;
-    font-weight: 600;
+.nav-tabs .nav-link {
     color: #495057;
+    border: none;
+    background: none;
+    padding: 12px 20px;
 }
-
-.badge {
-    font-size: 0.75rem;
+.nav-tabs .nav-link.active {
+    background: #28a745;
+    color: white;
+    border-radius: 5px;
 }
-
-/* Chart container */
-canvas {
-    max-width: 100%;
-    height: auto;
+.nav-tabs .nav-link:hover {
+    background: #f8f9fa;
+    border-radius: 5px;
 }
-
-/* Team status indicators */
-.status-indicator {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    display: inline-block;
-    margin-right: 8px;
+.table th {
+    background: #f8f9fa;
+    border-top: none;
 }
-
-.status-present { background-color: #28a745; }
-.status-absent { background-color: #dc3545; }
-.status-late { background-color: #ffc107; }
-.status-leave { background-color: #17a2b8; }
+.btn-action {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+.performance-card {
+    border-left: 4px solid #28a745;
+    transition: transform 0.2s;
+}
+.performance-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+.rating-stars {
+    color: #ffc107;
+}
 </style>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
 <script>
-// Initialize Manager Dashboard
-document.addEventListener('DOMContentLoaded', function() {
-    loadPendingRequests();
-    loadTeamStatus();
-    initializeTeamPerformanceChart();
+$(document).ready(function() {
+    loadDashboardStats();
+    loadTeamMembers();
+    loadTeamLeaveRequests();
+    loadTeamReports();
+    
+    // Tab change events
+    $('#managerTabs button[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
+        const target = e.target.getAttribute('data-bs-target');
+        if (target === '#attendance') {
+            loadTeamAttendance();
+        } else if (target === '#performance') {
+            loadPerformanceReviews();
+        }
+    });
+    
+    // Leave status filter
+    $('#approvalStatusFilter').change(function() {
+        loadTeamLeaveRequests($(this).val());
+    });
 });
 
-let currentRequestId = null;
+// Dashboard Functions
+function refreshDashboard() {
+    loadDashboardStats();
+    loadTeamMembers();
+    loadTeamLeaveRequests();
+    loadTeamReports();
+    showAlert('Dashboard refreshed successfully', 'success');
+}
 
-// Load pending requests
-function loadPendingRequests() {
-    const container = document.getElementById('pendingRequestsContainer');
-    container.innerHTML = `
-        <div class="text-center py-4">
-            <div class="spinner-border text-primary" role="status"></div>
-            <p class="mt-2 text-muted">Loading pending requests...</p>
-        </div>
-    `;
-    
-    fetch('../hr/hr_api.php?action=get_leave_requests&status=pending')
-        .then(response => response.json())
-        .then(data => {
-            if (data.success && data.requests.length > 0) {
-                displayPendingRequests(data.requests);
-            } else {
-                container.innerHTML = `
-                    <div class="text-center py-4 text-muted">
-                        <i class="bi bi-check-circle fs-1 text-success"></i>
-                        <p class="mt-2">No pending approvals! All caught up.</p>
-                    </div>
+function loadDashboardStats() {
+    $.post('../../api/global_hrms_api.php', {
+        module: 'manager',
+        action: 'get_dashboard_stats'
+    }, function(response) {
+        if (response.success) {
+            const stats = response.data;
+            $('#teamMembers').text(stats.team_members || 0);
+            $('#pendingApprovals').text(stats.pending_approvals || 0);
+            $('#teamPresent').text(stats.team_present || 0);
+            $('#performanceScore').text((stats.performance_score || 0) + '%');
+        }
+    }, 'json');
+}
+
+// Team Management Functions
+function loadTeamMembers() {
+    $.post('../../api/global_hrms_api.php', {
+        module: 'manager',
+        action: 'get_team_members'
+    }, function(response) {
+        if (response.success) {
+            let html = '';
+            response.data.forEach(function(member) {
+                const statusBadge = member.status === 'active' ? 'bg-success' : 'bg-secondary';
+                const attendanceBadge = member.today_status === 'present' ? 'bg-success' : 
+                                       member.today_status === 'late' ? 'bg-warning' : 'bg-danger';
+                const performanceStars = generateStars(member.performance_rating || 0);
+                
+                html += `
+                    <tr>
+                        <td>
+                            <div>
+                                <strong>${member.name}</strong><br>
+                                <small class="text-muted">${member.employee_code}</small>
+                            </div>
+                        </td>
+                        <td>${member.position || '-'}</td>
+                        <td><span class="badge ${statusBadge}">${member.status}</span></td>
+                        <td><span class="badge ${attendanceBadge}">${member.today_status || 'absent'}</span></td>
+                        <td>${performanceStars}</td>
+                        <td>${member.phone || '-'}</td>
+                        <td>
+                            <button class="btn btn-sm btn-info btn-action" onclick="viewMemberDetails(${member.employee_id})">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-sm btn-warning btn-action" onclick="reviewMember(${member.employee_id})">
+                                <i class="fas fa-star"></i>
+                            </button>
+                        </td>
+                    </tr>
                 `;
+            });
+            $('#teamTableBody').html(html || '<tr><td colspan="7" class="text-center">No team members found</td></tr>');
+            
+            // Store team data for performance review modal
+            sessionStorage.setItem('teamMembers', JSON.stringify(response.data));
+            populateReviewEmployeeSelect(response.data);
+        } else {
+            $('#teamTableBody').html('<tr><td colspan="7" class="text-center text-danger">Error loading team members</td></tr>');
+        }
+    }, 'json');
+}
+
+function populateReviewEmployeeSelect(teamMembers) {
+    let options = '<option value="">Select Employee</option>';
+    teamMembers.forEach(function(member) {
+        options += `<option value="${member.employee_id}">${member.name} (${member.employee_code})</option>`;
+    });
+    $('#reviewEmployee').html(options);
+}
+
+function generateStars(rating) {
+    let stars = '';
+    for (let i = 1; i <= 5; i++) {
+        if (i <= rating) {
+            stars += '<i class="fas fa-star rating-stars"></i>';
+        } else {
+            stars += '<i class="far fa-star rating-stars"></i>';
+        }
+    }
+    return stars;
+}
+
+function viewMemberDetails(employeeId) {
+    // Implementation for viewing member details
+    showAlert('Member details view will be implemented', 'info');
+}
+
+function reviewMember(employeeId) {
+    $('#reviewEmployee').val(employeeId);
+    $('#addReviewModal').modal('show');
+}
+
+// Leave Approval Functions
+function loadTeamLeaveRequests(status = 'pending') {
+    $.post('../../api/global_hrms_api.php', {
+        module: 'manager',
+        action: 'get_team_leave_requests',
+        status: status
+    }, function(response) {
+        if (response.success) {
+            let html = '';
+            response.data.forEach(function(leave) {
+                const statusClass = {
+                    'pending': 'bg-warning',
+                    'approved': 'bg-success',
+                    'rejected': 'bg-danger'
+                }[leave.status] || 'bg-secondary';
+                
+                const actionButtons = leave.status === 'pending' ? `
+                    <button class="btn btn-sm btn-success btn-action" onclick="approveLeave(${leave.id}, '${leave.employee_name}', '${leave.leave_type}', '${leave.from_date}', '${leave.to_date}')">
+                        <i class="fas fa-check"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger btn-action" onclick="rejectLeave(${leave.id}, '${leave.employee_name}', '${leave.leave_type}', '${leave.from_date}', '${leave.to_date}')">
+                        <i class="fas fa-times"></i>
+                    </button>
+                ` : '-';
+                
+                html += `
+                    <tr>
+                        <td>${leave.employee_name}</td>
+                        <td>${leave.leave_type}</td>
+                        <td>${leave.from_date}</td>
+                        <td>${leave.to_date}</td>
+                        <td>${leave.days_requested}</td>
+                        <td title="${leave.reason}">${leave.reason.length > 30 ? leave.reason.substring(0, 30) + '...' : leave.reason}</td>
+                        <td>${new Date(leave.applied_date).toLocaleDateString()}</td>
+                        <td><span class="badge ${statusClass}">${leave.status}</span></td>
+                        <td>${actionButtons}</td>
+                    </tr>
+                `;
+            });
+            $('#approvalsTableBody').html(html || '<tr><td colspan="9" class="text-center">No leave requests found</td></tr>');
+        } else {
+            $('#approvalsTableBody').html('<tr><td colspan="9" class="text-center text-danger">Error loading leave requests</td></tr>');
+        }
+    }, 'json');
+}
+
+function approveLeave(leaveId, employeeName, leaveType, fromDate, toDate) {
+    $('#actionLeaveId').val(leaveId);
+    $('#actionType').val('approve');
+    $('#leaveActionTitle').text('Approve Leave Request');
+    $('#leaveActionBtn').removeClass('btn-danger').addClass('btn-success').text('Approve');
+    
+    $('#leaveDetailsSection').html(`
+        <div class="alert alert-info">
+            <strong>Employee:</strong> ${employeeName}<br>
+            <strong>Leave Type:</strong> ${leaveType}<br>
+            <strong>Period:</strong> ${fromDate} to ${toDate}
+        </div>
+    `);
+    
+    $('#leaveActionModal').modal('show');
+}
+
+function rejectLeave(leaveId, employeeName, leaveType, fromDate, toDate) {
+    $('#actionLeaveId').val(leaveId);
+    $('#actionType').val('reject');
+    $('#leaveActionTitle').text('Reject Leave Request');
+    $('#leaveActionBtn').removeClass('btn-success').addClass('btn-danger').text('Reject');
+    
+    $('#leaveDetailsSection').html(`
+        <div class="alert alert-warning">
+            <strong>Employee:</strong> ${employeeName}<br>
+            <strong>Leave Type:</strong> ${leaveType}<br>
+            <strong>Period:</strong> ${fromDate} to ${toDate}
+        </div>
+    `);
+    
+    $('#leaveActionModal').modal('show');
+}
+
+$('#leaveActionForm').submit(function(e) {
+    e.preventDefault();
+    
+    const actionType = $('#actionType').val();
+    const action = actionType === 'approve' ? 'approve_leave' : 'reject_leave';
+    
+    $.post('../../api/global_hrms_api.php', {
+        module: 'manager',
+        action: action,
+        leave_id: $('#actionLeaveId').val(),
+        manager_comments: $('textarea[name="manager_comments"]').val()
+    }, function(response) {
+        if (response.success) {
+            $('#leaveActionModal').modal('hide');
+            loadTeamLeaveRequests($('#approvalStatusFilter').val());
+            loadDashboardStats();
+            showAlert('Leave request ' + actionType + 'd successfully', 'success');
+        } else {
+            showAlert('Error: ' + response.message, 'danger');
+        }
+    }, 'json');
+});
+
+// Attendance Functions
+function loadTeamAttendance() {
+    const date = $('#attendanceDate').val();
+    
+    $.post('../../api/global_hrms_api.php', {
+        module: 'manager',
+        action: 'get_team_attendance',
+        date: date
+    }, function(response) {
+        if (response.success) {
+            let html = '';
+            response.data.forEach(function(attendance) {
+                const duration = attendance.work_duration ? parseFloat(attendance.work_duration).toFixed(2) + ' hrs' : '-';
+                const lateBy = attendance.late_minutes ? attendance.late_minutes + ' min' : '-';
+                const statusClass = attendance.status === 'present' ? 'bg-success' : 
+                                   attendance.status === 'late' ? 'bg-warning' : 'bg-danger';
+                
+                html += `
+                    <tr>
+                        <td>${attendance.employee_name}</td>
+                        <td>${attendance.attendance_date}</td>
+                        <td>${attendance.punch_in_time || '-'}</td>
+                        <td>${attendance.punch_out_time || '-'}</td>
+                        <td>${duration}</td>
+                        <td><span class="badge ${statusClass}">${attendance.status}</span></td>
+                        <td>${lateBy}</td>
+                        <td>
+                            <button class="btn btn-sm btn-info btn-action" onclick="viewAttendanceDetail(${attendance.id})">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            $('#attendanceTableBody').html(html || '<tr><td colspan="8" class="text-center">No attendance records found</td></tr>');
+        } else {
+            $('#attendanceTableBody').html('<tr><td colspan="8" class="text-center text-danger">Error loading attendance</td></tr>');
+        }
+    }, 'json');
+}
+
+function viewAttendanceDetail(attendanceId) {
+    // Implementation for viewing attendance details
+    showAlert('Attendance detail view will be implemented', 'info');
+}
+
+// Performance Review Functions
+function loadPerformanceReviews() {
+    $.post('../../api/global_hrms_api.php', {
+        module: 'manager',
+        action: 'get_performance_reviews'
+    }, function(response) {
+        if (response.success) {
+            let html = '';
+            if (response.data.length === 0) {
+                html = '<div class="col-12 text-center"><p>No performance reviews found. Start by adding a review!</p></div>';
+            } else {
+                response.data.forEach(function(review) {
+                    const avgRating = ((parseInt(review.technical_rating || 0) + 
+                                       parseInt(review.communication_rating || 0) + 
+                                       parseInt(review.teamwork_rating || 0)) / 3).toFixed(1);
+                    
+                    html += `
+                        <div class="col-md-6 mb-3">
+                            <div class="card performance-card">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h6 class="card-title">${review.employee_name}</h6>
+                                            <p class="text-muted small">${review.review_period} Review</p>
+                                        </div>
+                                        <div class="text-end">
+                                            <div class="h4 text-primary">${avgRating}/5</div>
+                                            <div>${generateStars(avgRating)}</div>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="col-4 text-center">
+                                            <small class="text-muted">Technical</small>
+                                            <div class="fw-bold">${review.technical_rating || 0}/5</div>
+                                        </div>
+                                        <div class="col-4 text-center">
+                                            <small class="text-muted">Communication</small>
+                                            <div class="fw-bold">${review.communication_rating || 0}/5</div>
+                                        </div>
+                                        <div class="col-4 text-center">
+                                            <small class="text-muted">Teamwork</small>
+                                            <div class="fw-bold">${review.teamwork_rating || 0}/5</div>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3">
+                                        <small class="text-muted">Review Date: ${new Date(review.review_date).toLocaleDateString()}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
             }
-        })
-        .catch(error => {
-            console.error('Error loading pending requests:', error);
-            container.innerHTML = `
-                <div class="text-center py-4 text-danger">
-                    <i class="bi bi-exclamation-triangle fs-1"></i>
-                    <p class="mt-2">Error loading pending requests</p>
+            $('#performanceCards').html(html);
+        }
+    }, 'json');
+}
+
+$('#addReviewForm').submit(function(e) {
+    e.preventDefault();
+    
+    $.post('../../api/global_hrms_api.php', {
+        module: 'manager',
+        action: 'add_performance_review',
+        ...Object.fromEntries(new FormData(this))
+    }, function(response) {
+        if (response.success) {
+            $('#addReviewModal').modal('hide');
+            $('#addReviewForm')[0].reset();
+            loadPerformanceReviews();
+            showAlert('Performance review added successfully', 'success');
+        } else {
+            showAlert('Error: ' + response.message, 'danger');
+        }
+    }, 'json');
+});
+
+// Reports Functions
+function loadTeamReports() {
+    $.post('../../api/global_hrms_api.php', {
+        module: 'manager',
+        action: 'get_team_reports'
+    }, function(response) {
+        if (response.success) {
+            const reports = response.data;
+            
+            // Attendance Report
+            let attendanceHtml = `
+                <p><strong>Team Size:</strong> ${reports.attendance.total_members || 0}</p>
+                <p><strong>Average Attendance:</strong> ${reports.attendance.avg_attendance || 0}%</p>
+                <p><strong>On Time Rate:</strong> ${reports.attendance.on_time_rate || 0}%</p>
+            `;
+            $('#attendanceReport').html(attendanceHtml);
+            
+            // Leave Utilization Report
+            let leaveHtml = `
+                <p><strong>Pending Requests:</strong> ${reports.leaves.pending || 0}</p>
+                <p><strong>Approved This Month:</strong> ${reports.leaves.approved || 0}</p>
+                <p><strong>Average Leave Days:</strong> ${reports.leaves.avg_days || 0}</p>
+            `;
+            $('#leaveUtilizationReport').html(leaveHtml);
+            
+            // Performance Metrics
+            let performanceHtml = `
+                <p><strong>Reviews Completed:</strong> ${reports.performance.total_reviews || 0}</p>
+                <p><strong>Average Rating:</strong> ${reports.performance.avg_rating || 0}/5</p>
+                <p><strong>Top Performers:</strong> ${reports.performance.top_performers || 0}</p>
+            `;
+            $('#performanceMetrics').html(performanceHtml);
+            
+            // Productivity Report
+            let productivityHtml = `
+                <p><strong>Team Productivity:</strong> ${reports.productivity.score || 0}%</p>
+                <p><strong>Work Hours This Month:</strong> ${reports.productivity.total_hours || 0}</p>
+                <p><strong>Average Daily Hours:</strong> ${reports.productivity.avg_daily || 0}</p>
+            `;
+            $('#productivityReport').html(productivityHtml);
+        }
+    }, 'json');
+}
+
+// Advanced Manager Functions
+function loadTeamAnalytics() {
+    const period = $('#analyticsFilter').val();
+    
+    $.post('../../api/global_hrms_api.php', {
+        module: 'manager',
+        action: 'get_team_analytics',
+        period: period
+    }).done(function(response) {
+        if (response.success) {
+            displayTeamAnalytics(response.data);
+        } else {
+            $('#teamAnalyticsContainer').html('<div class="alert alert-danger">' + response.message + '</div>');
+        }
+    }).fail(function() {
+        $('#teamAnalyticsContainer').html('<div class="alert alert-danger">Failed to load analytics</div>');
+    });
+}
+
+function displayTeamAnalytics(data) {
+    let html = '<div class="row g-4">';
+    
+    if (data.length === 0) {
+        html += '<div class="col-12 text-center"><p class="text-muted">No analytics data available</p></div>';
+    } else {
+        data.forEach(function(employee) {
+            const attendancePercentage = employee.total_days > 0 ? 
+                ((employee.present_days / employee.total_days) * 100).toFixed(1) : 0;
+            
+            html += `
+                <div class="col-md-6 col-lg-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="mb-0">${employee.name}</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row text-center">
+                                <div class="col-6">
+                                    <div class="h5 text-success">${attendancePercentage}%</div>
+                                    <small class="text-muted">Attendance</small>
+                                </div>
+                                <div class="col-6">
+                                    <div class="h5 text-info">${(employee.avg_hours || 0).toFixed(1)}h</div>
+                                    <small class="text-muted">Avg Hours</small>
+                                </div>
+                                <div class="col-6 mt-2">
+                                    <div class="h6 text-warning">${employee.total_overtime || 0}h</div>
+                                    <small class="text-muted">Overtime</small>
+                                </div>
+                                <div class="col-6 mt-2">
+                                    <div class="h6 text-primary">${(employee.avg_late_minutes || 0).toFixed(0)}m</div>
+                                    <small class="text-muted">Avg Late</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             `;
         });
-}
-
-// Display pending requests
-function displayPendingRequests(requests) {
-    const container = document.getElementById('pendingRequestsContainer');
-    
-    let html = '<div class="list-group list-group-flush">';
-    
-    requests.forEach(request => {
-        const priorityColor = {
-            'emergency': 'danger',
-            'urgent': 'warning', 
-            'normal': 'secondary'
-        };
-        
-        const priorityIcons = {
-            'emergency': '🚨',
-            'urgent': '⚡',
-            'normal': '📋'
-        };
-        
-        const leaveTypeIcon = getLeaveTypeIcon(request.leave_type);
-        
-        html += `
-            <div class="list-group-item border-0 px-3 py-3">
-                <div class="row align-items-center">
-                    <div class="col-md-6">
-                        <div class="d-flex align-items-center">
-                            <div class="avatar-sm bg-light rounded-circle me-3 d-flex align-items-center justify-content-center">
-                                <i class="bi bi-person text-muted"></i>
-                            </div>
-                            <div>
-                                <h6 class="mb-1">${request.employee_name}</h6>
-                                <small class="text-muted">${request.employee_code} • ${request.department || 'N/A'}</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="text-center">
-                            <span class="badge bg-light text-dark mb-1">
-                                ${leaveTypeIcon} ${request.leave_type}
-                            </span>
-                            <br>
-                            <small class="text-muted">${request.duration_days} days</small>
-                            <br>
-                            <small class="text-muted">${request.start_date} - ${request.end_date}</small>
-                        </div>
-                    </div>
-                    <div class="col-md-2 text-center">
-                        <span class="badge bg-${priorityColor[request.priority]}">
-                            ${priorityIcons[request.priority]} ${request.priority.toUpperCase()}
-                        </span>
-                        <br>
-                        <small class="text-muted">${request.applied_date}</small>
-                    </div>
-                    <div class="col-md-1">
-                        <div class="btn-group-vertical btn-group-sm">
-                            <button class="btn btn-outline-primary mb-1" onclick="viewRequestDetails(${request.id})" 
-                                    data-bs-toggle="tooltip" title="View Details">
-                                <i class="bi bi-eye"></i>
-                            </button>
-                            <button class="btn btn-outline-success mb-1" onclick="quickApproveRequest(${request.id})"
-                                    data-bs-toggle="tooltip" title="Quick Approve">
-                                <i class="bi bi-check"></i>
-                            </button>
-                            <button class="btn btn-outline-danger" onclick="quickRejectRequest(${request.id})"
-                                    data-bs-toggle="tooltip" title="Quick Reject">
-                                <i class="bi bi-x"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-    });
+    }
     
     html += '</div>';
-    container.innerHTML = html;
-    
-    // Initialize tooltips
-    const tooltips = container.querySelectorAll('[data-bs-toggle="tooltip"]');
-    tooltips.forEach(tooltip => new bootstrap.Tooltip(tooltip));
+    $('#teamAnalyticsContainer').html(html);
 }
 
-// Load team status
-function loadTeamStatus() {
-    const container = document.getElementById('teamStatusContainer');
-    
-    // Mock team status - in real implementation, fetch from server
-    setTimeout(() => {
-        container.innerHTML = `
-            <div class="list-group list-group-flush">
-                <div class="list-group-item border-0 px-0 py-2">
-                    <div class="d-flex align-items-center">
-                        <span class="status-indicator status-present"></span>
-                        <div class="flex-grow-1">
-                            <small class="fw-bold">John Doe</small>
-                            <br><small class="text-muted">In Office - 9:15 AM</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="list-group-item border-0 px-0 py-2">
-                    <div class="d-flex align-items-center">
-                        <span class="status-indicator status-leave"></span>
-                        <div class="flex-grow-1">
-                            <small class="fw-bold">Jane Smith</small>
-                            <br><small class="text-muted">On Leave - Casual</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="list-group-item border-0 px-0 py-2">
-                    <div class="d-flex align-items-center">
-                        <span class="status-indicator status-late"></span>
-                        <div class="flex-grow-1">
-                            <small class="fw-bold">Mike Johnson</small>
-                            <br><small class="text-muted">Late - 10:30 AM</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="list-group-item border-0 px-0 py-2">
-                    <div class="d-flex align-items-center">
-                        <span class="status-indicator status-present"></span>
-                        <div class="flex-grow-1">
-                            <small class="fw-bold">Sarah Wilson</small>
-                            <br><small class="text-muted">WFH - Online</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-    }, 1500);
-}
-
-// Initialize team performance chart
-function initializeTeamPerformanceChart() {
-    const ctx = document.getElementById('teamPerformanceChart').getContext('2d');
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
-            datasets: [{
-                label: 'Attendance Rate',
-                data: [95, 88, 92, 90],
-                borderColor: '#007bff',
-                backgroundColor: 'rgba(0, 123, 255, 0.1)',
-                tension: 0.4
-            }, {
-                label: 'Productivity Score',
-                data: [88, 92, 85, 94],
-                borderColor: '#28a745',
-                backgroundColor: 'rgba(40, 167, 69, 0.1)',
-                tension: 0.4
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                title: {
-                    display: true,
-                    text: 'Team Performance Trends'
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    max: 100
-                }
-            }
-        }
-    });
-}
-
-// Helper function for leave type icons
-function getLeaveTypeIcon(leaveType) {
-    const icons = {
-        'sick': '🤒',
-        'casual': '🏖️',
-        'earned': '🎯',
-        'maternity': '👶',
-        'paternity': '👨‍👶',
-        'comp-off': '⚖️',
-        'wfh': '🏠',
-        'half-day': '⏰',
-        'short-leave': '🏃',
-        'emergency': '🚨'
-    };
-    return icons[leaveType] || '📅';
-}
-
-// View request details
-function viewRequestDetails(requestId) {
-    currentRequestId = requestId;
-    
-    fetch(`../hr/hr_api.php?action=get_leave_request_details&id=${requestId}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                displayRequestDetails(data.request);
-                const modal = new bootstrap.Modal(document.getElementById('requestDetailModal'));
-                modal.show();
-            } else {
-                showAlert('Error loading request details', 'danger');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showAlert('Network error', 'danger');
-        });
-}
-
-// Display request details
-function displayRequestDetails(request) {
-    const content = document.getElementById('requestDetailContent');
-    const leaveTypeIcon = getLeaveTypeIcon(request.leave_type);
-    
-    content.innerHTML = `
-        <div class="row">
-            <div class="col-md-6">
-                <h6 class="text-primary">Employee Information</h6>
-                <table class="table table-borderless table-sm">
-                    <tr>
-                        <td><strong>Name:</strong></td>
-                        <td>${request.employee_name}</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Employee Code:</strong></td>
-                        <td>${request.employee_code || 'N/A'}</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Department:</strong></td>
-                        <td>${request.department || 'N/A'}</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Email:</strong></td>
-                        <td>${request.employee_email || 'N/A'}</td>
-                    </tr>
-                </table>
-            </div>
-            <div class="col-md-6">
-                <h6 class="text-primary">Leave Details</h6>
-                <table class="table table-borderless table-sm">
-                    <tr>
-                        <td><strong>Leave Type:</strong></td>
-                        <td>${leaveTypeIcon} ${request.leave_type}</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Duration:</strong></td>
-                        <td>${request.duration_days} days</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Dates:</strong></td>
-                        <td>${request.start_date} to ${request.end_date}</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Priority:</strong></td>
-                        <td><span class="badge bg-warning">${request.priority.toUpperCase()}</span></td>
-                    </tr>
-                </table>
-            </div>
-        </div>
-        
-        <div class="row mt-3">
-            <div class="col-12">
-                <h6 class="text-primary">Reason for Leave</h6>
-                <div class="bg-light p-3 rounded">
-                    <p class="mb-0">${request.reason}</p>
-                </div>
-            </div>
-        </div>
-        
-        ${request.emergency_contact ? `
-            <div class="row mt-3">
-                <div class="col-md-6">
-                    <h6 class="text-primary">Emergency Contact</h6>
-                    <p class="mb-0">${request.emergency_contact}</p>
-                </div>
-            </div>
-        ` : ''}
-        
-        ${request.handover_details ? `
-            <div class="row mt-3">
-                <div class="col-12">
-                    <h6 class="text-primary">Work Handover Details</h6>
-                    <div class="bg-light p-3 rounded">
-                        <p class="mb-0">${request.handover_details}</p>
-                    </div>
-                </div>
-            </div>
-        ` : ''}
-        
-        <div class="row mt-3">
-            <div class="col-12">
-                <h6 class="text-primary">Manager Comments</h6>
-                <textarea class="form-control" id="managerComments" rows="3" 
-                          placeholder="Add your comments for approval/rejection...">${request.manager_comments || ''}</textarea>
-            </div>
-        </div>
-    `;
-}
-
-// Quick approve
-function quickApproveRequest(requestId) {
-    if (confirm('Are you sure you want to approve this leave request?')) {
-        processRequest(requestId, 'approved', '');
-    }
-}
-
-// Quick reject
-function quickRejectRequest(requestId) {
-    const reason = prompt('Please provide a reason for rejection:');
-    if (reason !== null && reason.trim() !== '') {
-        processRequest(requestId, 'rejected', reason);
-    }
-}
-
-// Approve from modal
-function approveRequest() {
-    const comments = document.getElementById('managerComments').value;
-    processRequest(currentRequestId, 'approved', comments);
-}
-
-// Reject from modal
-function rejectRequest() {
-    const comments = document.getElementById('managerComments').value;
-    if (!comments.trim()) {
-        showAlert('Please provide comments for rejection', 'warning');
-        return;
-    }
-    processRequest(currentRequestId, 'rejected', comments);
-}
-
-// Process request
-function processRequest(requestId, status, comments) {
-    const formData = new FormData();
-    formData.append('action', 'process_leave_request');
-    formData.append('request_id', requestId);
-    formData.append('status', status);
-    formData.append('comments', comments);
-    
-    fetch('../hr/hr_api.php', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showAlert(`Request ${status} successfully!`, 'success');
-            loadPendingRequests(); // Refresh the list
-            
-            // Close modal if open
-            const modal = bootstrap.Modal.getInstance(document.getElementById('requestDetailModal'));
-            if (modal) modal.hide();
+function loadOvertimeRecords() {
+    $.post('../../api/global_hrms_api.php', {
+        module: 'manager',
+        action: 'get_attendance_anomalies'
+    }).done(function(response) {
+        if (response.success) {
+            displayOvertimeRecords(response.data);
         } else {
-            showAlert(`Error: ${data.message}`, 'danger');
+            $('#overtimeTable tbody').html('<tr><td colspan="7" class="text-center text-danger">' + response.message + '</td></tr>');
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showAlert('Network error', 'danger');
     });
 }
 
-// Other functions
-// Enhanced Manager Dashboard Functions
-function performManagerSearch() {
-    const searchTerm = document.getElementById('managerGlobalSearch').value.trim();
-    if (searchTerm.length < 2) {
-        showAlert('Please enter at least 2 characters to search', 'warning');
+function displayOvertimeRecords(records) {
+    let html = '';
+    
+    if (records.length === 0) {
+        html = '<tr><td colspan="7" class="text-center text-muted">No overtime records found</td></tr>';
+    } else {
+        records.forEach(function(record) {
+            let statusClass = 'warning';
+            let statusText = 'Pending';
+            
+            if (record.approved_by) {
+                statusClass = 'success';
+                statusText = 'Approved';
+            }
+            
+            html += `
+                <tr>
+                    <td><input type="checkbox" class="overtime-checkbox" value="${record.id}"></td>
+                    <td>${record.employee_name}</td>
+                    <td>${record.attendance_date}</td>
+                    <td>${record.total_hours}h</td>
+                    <td>${record.overtime_hours}h</td>
+                    <td><span class="badge bg-${statusClass}">${statusText}</span></td>
+                    <td>
+                        ${!record.approved_by ? `
+                            <button class="btn btn-sm btn-success me-1" onclick="approveOvertime(${record.id})">
+                                <i class="fas fa-check"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="rejectOvertime(${record.id})">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        ` : `
+                            <span class="text-muted">Processed</span>
+                        `}
+                    </td>
+                </tr>
+            `;
+        });
+    }
+    
+    $('#overtimeTable tbody').html(html);
+}
+
+function approveOvertime(attendanceId) {
+    $.post('../../api/global_hrms_api.php', {
+        module: 'manager',
+        action: 'approve_overtime',
+        attendance_id: attendanceId,
+        action: 'approve'
+    }).done(function(response) {
+        if (response.success) {
+            showAlert('Overtime approved successfully', 'success');
+            loadOvertimeRecords();
+        } else {
+            showAlert(response.message, 'danger');
+        }
+    });
+}
+
+function rejectOvertime(attendanceId) {
+    $.post('../../api/global_hrms_api.php', {
+        module: 'manager',
+        action: 'approve_overtime',
+        attendance_id: attendanceId,
+        action: 'reject'
+    }).done(function(response) {
+        if (response.success) {
+            showAlert('Overtime rejected', 'warning');
+            loadOvertimeRecords();
+        } else {
+            showAlert(response.message, 'danger');
+        }
+    });
+}
+
+function bulkApproveOvertime() {
+    const selectedIds = [];
+    $('.overtime-checkbox:checked').each(function() {
+        selectedIds.push($(this).val());
+    });
+    
+    if (selectedIds.length === 0) {
+        showAlert('Please select overtime records to approve', 'warning');
         return;
     }
     
-    showAlert(`Searching team for: ${searchTerm}...`, 'info');
-    // Implement actual search functionality here
-}
-
-function exportTeamData() {
-    showAlert('Preparing team data export...', 'info');
-    setTimeout(() => {
-        showAlert('Team data exported successfully!', 'success');
-    }, 2000);
-}
-
-function refreshManagerDashboard() {
-    loadPendingRequests();
-    loadTeamStatus();
-    showAlert('Manager dashboard refreshed successfully!', 'success');
-}
-
-function openTeamSettingsModal() {
-    showAlert('Team settings modal opening...', 'info');
-    // Implement team settings
-}
-
-function openPerformanceModal() {
-    showAlert('Performance review modal opening...', 'info');
-    // Implement performance review
-}
-
-function generateTeamReport() {
-    showAlert('Generating team report...', 'info');
-    setTimeout(() => {
-        showAlert('Team report generated successfully!', 'success');
-    }, 3000);
-}
-
-function refreshDashboard() {
-    loadPendingRequests();
-    loadTeamStatus();
-    showAlert('Dashboard refreshed successfully!', 'success');
-}
-
-function filterPendingRequests() {
-    loadPendingRequests(); // In real implementation, pass filter parameter
-}
-
-function viewTeamAttendance() {
-    window.location.href = '../attendance/attendance.php';
-}
-
-function viewTeamLeaveCalendar() {
-    showAlert('Team Leave Calendar feature coming soon!', 'info');
-}
-
-function bulkApproveSelected() {
-    showAlert('Bulk Approval feature coming soon!', 'info');
-}
-
-function generateTeamReport() {
-    showAlert('Team Report generation feature coming soon!', 'info');
-}
-
-function sendTeamNotification() {
-    showAlert('Team Notification feature coming soon!', 'info');
-}
-
-function loadWeeklyView() {
-    showAlert('Weekly view loaded!', 'info');
-}
-
-function loadMonthlyView() {
-    showAlert('Monthly view loaded!', 'info');
-}
-
-function loadQuarterlyView() {
-    showAlert('Quarterly view loaded!', 'info');
-}
-
-function loadTeamAnalytics() {
-    showAlert('Team Analytics loaded!', 'info');
-}
-
-// Utility function to show alerts
-function showAlert(message, type = 'info') {
-    const alertDiv = document.createElement('div');
-    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
-    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-    alertDiv.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
-    document.body.appendChild(alertDiv);
-    
-    setTimeout(() => {
-        if (alertDiv.parentNode) {
-            alertDiv.remove();
+    $.post('../../api/global_hrms_api.php', {
+        module: 'manager',
+        action: 'bulk_attendance_approval',
+        attendance_ids: selectedIds,
+        action: 'approve'
+    }).done(function(response) {
+        if (response.success) {
+            showAlert(response.message, 'success');
+            loadOvertimeRecords();
+        } else {
+            showAlert(response.message, 'danger');
         }
+    });
+}
+
+function loadAttendanceAnomalies() {
+    $.post('../../api/global_hrms_api.php', {
+        module: 'manager',
+        action: 'get_attendance_anomalies'
+    }).done(function(response) {
+        if (response.success) {
+            displayAttendanceAnomalies(response.data);
+        } else {
+            $('#anomaliesTable tbody').html('<tr><td colspan="6" class="text-center text-danger">' + response.message + '</td></tr>');
+        }
+    });
+}
+
+function displayAttendanceAnomalies(anomalies) {
+    let html = '';
+    let lateCount = 0, earlyCount = 0, longBreakCount = 0;
+    
+    if (anomalies.length === 0) {
+        html = '<tr><td colspan="6" class="text-center text-muted">No anomalies found</td></tr>';
+    } else {
+        anomalies.forEach(function(anomaly) {
+            let severityClass = 'info';
+            let anomalyType = 'Unknown';
+            
+            if (anomaly.late_minutes > 0) {
+                anomalyType = 'Late Arrival';
+                severityClass = 'warning';
+                lateCount++;
+            } else if (anomaly.early_departure_minutes > 0) {
+                anomalyType = 'Early Departure';
+                severityClass = 'danger';
+                earlyCount++;
+            } else if (anomaly.total_hours < 4) {
+                anomalyType = 'Short Hours';
+                severityClass = 'warning';
+            }
+            
+            let details = '';
+            if (anomaly.late_minutes > 0) {
+                details = `${anomaly.late_minutes} minutes late`;
+            } else if (anomaly.early_departure_minutes > 0) {
+                details = `${anomaly.early_departure_minutes} minutes early`;
+            } else {
+                details = `Only ${anomaly.total_hours} hours worked`;
+            }
+            
+            html += `
+                <tr>
+                    <td>${anomaly.employee_name}</td>
+                    <td>${anomaly.attendance_date}</td>
+                    <td><span class="badge bg-${severityClass}">${anomalyType}</span></td>
+                    <td>${details}</td>
+                    <td><span class="badge bg-${severityClass}">${severityClass.toUpperCase()}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="viewAttendanceDetails(${anomaly.id})">
+                            <i class="fas fa-eye"></i> View
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+    
+    $('#anomaliesTable tbody').html(html);
+    $('#lateArrivals').text(lateCount);
+    $('#earlyDepartures').text(earlyCount);
+    $('#longBreaks').text(longBreakCount);
+}
+
+function viewAttendanceDetails(attendanceId) {
+    showAlert('Attendance details view will be implemented', 'info');
+}
+
+function showShiftScheduleModal() {
+    const modal = `
+        <div class="modal fade" id="shiftScheduleModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Schedule Team Shifts</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form id="shiftScheduleForm">
+                        <div class="modal-body">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Employee *</label>
+                                    <select class="form-select" name="employee_id" required>
+                                        <option value="">Select Employee</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Shift Name *</label>
+                                    <input type="text" class="form-control" name="shift_name" required>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Start Time *</label>
+                                    <input type="time" class="form-control" name="start_time" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">End Time *</label>
+                                    <input type="time" class="form-control" name="end_time" required>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Effective From *</label>
+                                    <input type="date" class="form-control" name="effective_from" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Effective To</label>
+                                    <input type="date" class="form-control" name="effective_to">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Schedule Shift</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    $('body').append(modal);
+    $('#shiftScheduleModal').modal('show');
+    
+    // Load team members for dropdown
+    loadTeamMembersForShift();
+    
+    $('#shiftScheduleForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const shiftData = [{
+            employee_id: $('select[name="employee_id"]').val(),
+            shift_name: $('input[name="shift_name"]').val(),
+            start_time: $('input[name="start_time"]').val(),
+            end_time: $('input[name="end_time"]').val(),
+            effective_from: $('input[name="effective_from"]').val()
+        }];
+        
+        $.post('../../api/global_hrms_api.php', {
+            module: 'manager',
+            action: 'schedule_team_shifts',
+            shifts: shiftData
+        }).done(function(response) {
+            if (response.success) {
+                $('#shiftScheduleModal').modal('hide');
+                showAlert(response.message, 'success');
+                loadShiftCalendar();
+            } else {
+                showAlert(response.message, 'danger');
+            }
+        });
+    });
+    
+    $('#shiftScheduleModal').on('hidden.bs.modal', function() {
+        $(this).remove();
+    });
+}
+
+function loadTeamMembersForShift() {
+    $.post('../../api/global_hrms_api.php', {
+        module: 'manager',
+        action: 'get_team_members'
+    }).done(function(response) {
+        if (response.success) {
+            let options = '<option value="">Select Employee</option>';
+            response.data.forEach(function(member) {
+                options += `<option value="${member.employee_id}">${member.name}</option>`;
+            });
+            $('select[name="employee_id"]').html(options);
+        }
+    });
+}
+
+function loadShiftCalendar() {
+    $('#shiftCalendar').html('<div class="text-center py-4"><p class="text-muted">Shift calendar will be implemented with full calendar integration</p></div>');
+}
+
+// Tab event handlers for lazy loading
+$('button[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
+    const target = $(e.target).attr('data-bs-target');
+    
+    switch(target) {
+        case '#analytics':
+            loadTeamAnalytics();
+            break;
+        case '#overtime':
+            loadOvertimeRecords();
+            break;
+        case '#shifts':
+            loadShiftCalendar();
+            break;
+        case '#anomalies':
+            loadAttendanceAnomalies();
+            break;
+    }
+});
+
+// Initialize select all checkbox for overtime
+$(document).on('change', '#selectAllOvertime', function() {
+    $('.overtime-checkbox').prop('checked', $(this).is(':checked'));
+});
+
+// Set default date for shift week start
+$(document).ready(function() {
+    const today = new Date();
+    const monday = new Date(today.setDate(today.getDate() - today.getDay() + 1));
+    $('#shiftWeekStart').val(monday.toISOString().split('T')[0]);
+});
+
+// Utility Functions
+function showAlert(message, type) {
+    const alertDiv = `
+        <div class="alert alert-${type} alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999;">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    $('body').append(alertDiv);
+    
+    setTimeout(function() {
+        $('.alert').fadeOut();
     }, 5000);
 }
 </script>

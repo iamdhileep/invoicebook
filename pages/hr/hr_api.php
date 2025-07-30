@@ -1,749 +1,597 @@
 <?php
 session_start();
 header('Content-Type: application/json');
+include '../../db.php';
 
-// Check if user is admin
+// Enable error reporting for debugging
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+// Check authentication
 if (!isset($_SESSION['admin'])) {
     echo json_encode(['success' => false, 'message' => 'Unauthorized access']);
     exit;
 }
 
-include '../../db.php';
+$action = $_POST['action'] ?? $_GET['action'] ?? '';
 
-// Set timezone
-date_default_timezone_set('Asia/Kolkata');
-
-$action = $_GET['action'] ?? $_POST['action'] ?? '';
-
-switch ($action) {
-    case 'get_leave_requests':
-        getLeaveRequests();
-        break;
-    case 'get_leave_request_details':
-        getLeaveRequestDetails();
-        break;
-    case 'process_leave_request':
-        processLeaveRequest();
-        break;
-    case 'get_employee_leave_balance':
-        getEmployeeLeaveBalance();
-        break;
-    case 'update_leave_balance':
-        updateLeaveBalance();
-        break;
-    case 'get_hr_analytics':
-        getHRAnalytics();
-        break;
-    case 'bulk_approve_leaves':
-        bulkApproveLeaves();
-        break;
-    case 'get_recent_activity':
-        getRecentActivity();
-        break;
-    case 'save_hr_settings':
-        saveHRSettings();
-        break;
-    case 'generate_employee_report':
-        generateEmployeeReport();
-        break;
-    default:
-        echo json_encode(['success' => false, 'message' => 'Invalid action']);
-        break;
+try {
+    switch ($action) {
+        case 'get_employees':
+            getEmployees($conn);
+            break;
+            
+        case 'add_employee':
+            addEmployee($conn);
+            break;
+            
+        case 'delete_employee':
+            deleteEmployee($conn);
+            break;
+            
+        case 'get_leave_requests':
+            getLeaveRequests($conn);
+            break;
+            
+        case 'process_leave':
+            processLeaveRequest($conn);
+            break;
+            
+        case 'get_attendance':
+            getAttendance($conn);
+            break;
+            
+        case 'get_payroll':
+            getPayroll($conn);
+            break;
+            
+        case 'generate_payroll':
+            generatePayroll($conn);
+            break;
+            
+        case 'attendance_report':
+            generateAttendanceReport($conn);
+            break;
+            
+        case 'leave_report':
+            generateLeaveReport($conn);
+            break;
+            
+        case 'export_employees':
+            exportEmployees($conn);
+            break;
+            
+        case 'export_leaves':
+            exportLeaves($conn);
+            break;
+            
+        case 'export_payroll':
+            exportPayroll($conn);
+            break;
+            
+        default:
+            echo json_encode(['success' => false, 'message' => 'Invalid action']);
+    }
+} catch (Exception $e) {
+    echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
 }
 
-function getLeaveRequests() {
-    global $conn;
-    
-    $status_filter = $_GET['status'] ?? '';
-    $limit = $_GET['limit'] ?? 50;
-    $offset = $_GET['offset'] ?? 0;
-    
+// Employee Management Functions
+function getEmployees($conn) {
     try {
-        $query = "
-            SELECT 
-                lr.id,
-                lr.employee_id,
-                lr.leave_type,
-                lr.start_date,
-                lr.end_date,
-                lr.duration_days,
-                lr.reason,
-                lr.status,
-                lr.priority,
-                lr.applied_date,
-                lr.manager_comments,
-                lr.emergency_contact,
-                lr.handover_details,
-                lr.attachment_path,
-                e.name as employee_name,
-                e.employee_code,
-                e.position as department
-            FROM leave_requests lr
-            LEFT JOIN employees e ON lr.employee_id = e.employee_id
-            WHERE 1=1
-        ";
-        
-        if (!empty($status_filter)) {
-            $query .= " AND lr.status = '" . mysqli_real_escape_string($conn, $status_filter) . "'";
-        }
-        
-        $query .= " ORDER BY 
-            CASE 
-                WHEN lr.priority = 'emergency' THEN 1
-                WHEN lr.priority = 'urgent' THEN 2
-                ELSE 3
-            END,
-            CASE 
-                WHEN lr.status = 'pending' THEN 1
-                WHEN lr.status = 'approved' THEN 2
-                ELSE 3
-            END,
-            lr.applied_date DESC
-            LIMIT $limit OFFSET $offset
-        ";
-        
+        $query = "SELECT * FROM employees ORDER BY name ASC";
         $result = $conn->query($query);
         
-        if (!$result) {
-            throw new Exception("Database query failed: " . $conn->error);
+        $employees = [];
+        if ($result && $result->num_rows > 0) {
+            while ($row = $result->fetch_assoc()) {
+                $employees[] = $row;
+            }
         }
         
-        $requests = [];
-        while ($row = $result->fetch_assoc()) {
-            // Format dates
-            $row['applied_date'] = date('M j, Y', strtotime($row['applied_date']));
-            $row['start_date'] = date('M j, Y', strtotime($row['start_date']));
-            $row['end_date'] = date('M j, Y', strtotime($row['end_date']));
-            
-            $requests[] = $row;
-        }
-        
-        echo json_encode([
-            'success' => true,
-            'requests' => $requests,
-            'total' => count($requests)
-        ]);
-        
+        echo json_encode(['success' => true, 'employees' => $employees]);
     } catch (Exception $e) {
-        error_log("Error in getLeaveRequests: " . $e->getMessage());
-        echo json_encode([
-            'success' => false,
-            'message' => 'Failed to fetch leave requests: ' . $e->getMessage()
-        ]);
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
     }
 }
 
-function getLeaveRequestDetails() {
-    global $conn;
-    
-    $request_id = $_GET['id'] ?? '';
-    
-    if (empty($request_id)) {
-        echo json_encode(['success' => false, 'message' => 'Request ID is required']);
-        return;
-    }
-    
+function addEmployee($conn) {
     try {
-        $query = "
-            SELECT 
-                lr.*,
-                e.name as employee_name,
-                e.employee_code,
-                e.position as department,
-                e.email as employee_email
-            FROM leave_requests lr
-            LEFT JOIN employees e ON lr.employee_id = e.employee_id
-            WHERE lr.id = ?
-        ";
+        $name = trim($_POST['name'] ?? '');
+        $employee_code = trim($_POST['employee_code'] ?? '');
+        $email = trim($_POST['email'] ?? '');
+        $phone = trim($_POST['phone'] ?? '');
+        $department = trim($_POST['department'] ?? '');
+        $position = trim($_POST['position'] ?? '');
+        $salary = floatval($_POST['salary'] ?? 0);
+        $hire_date = $_POST['hire_date'] ?? null;
+        $address = trim($_POST['address'] ?? '');
+        $emergency_contact = trim($_POST['emergency_contact'] ?? '');
+        $emergency_phone = trim($_POST['emergency_phone'] ?? '');
+        
+        if (empty($name) || empty($employee_code)) {
+            throw new Exception('Name and Employee Code are required');
+        }
+        
+        // Check if employee code already exists
+        $checkQuery = "SELECT employee_id FROM employees WHERE employee_code = ?";
+        $checkStmt = $conn->prepare($checkQuery);
+        $checkStmt->bind_param('s', $employee_code);
+        $checkStmt->execute();
+        if ($checkStmt->get_result()->num_rows > 0) {
+            throw new Exception('Employee code already exists');
+        }
+        
+        $query = "INSERT INTO employees (name, employee_code, email, phone, department, position, salary, hire_date, address, emergency_contact, emergency_phone, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')";
         
         $stmt = $conn->prepare($query);
-        $stmt->bind_param("i", $request_id);
+        $stmt->bind_param('ssssssdssss', $name, $employee_code, $email, $phone, $department, $position, $salary, $hire_date, $address, $emergency_contact, $emergency_phone);
+        
+        if ($stmt->execute()) {
+            $employee_id = $conn->insert_id;
+            
+            // Create initial leave balance for the employee
+            $currentYear = date('Y');
+            $leaveBalanceQuery = "INSERT INTO leave_balance (employee_id, year) VALUES (?, ?)";
+            $leaveStmt = $conn->prepare($leaveBalanceQuery);
+            $leaveStmt->bind_param('ii', $employee_id, $currentYear);
+            $leaveStmt->execute();
+            
+            echo json_encode(['success' => true, 'message' => 'Employee added successfully', 'employee_id' => $employee_id]);
+        } else {
+            throw new Exception('Failed to add employee');
+        }
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    }
+}
+
+function deleteEmployee($conn) {
+    try {
+        $employee_id = intval($_POST['employee_id'] ?? 0);
+        
+        if ($employee_id <= 0) {
+            throw new Exception('Invalid employee ID');
+        }
+        
+        // Soft delete by setting status to inactive
+        $query = "UPDATE employees SET status = 'inactive' WHERE employee_id = ?";
+        $stmt = $conn->prepare($query);
+        $stmt->bind_param('i', $employee_id);
+        
+        if ($stmt->execute()) {
+            echo json_encode(['success' => true, 'message' => 'Employee deleted successfully']);
+        } else {
+            throw new Exception('Failed to delete employee');
+        }
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    }
+}
+
+// Leave Management Functions
+function getLeaveRequests($conn) {
+    try {
+        $status = $_POST['status'] ?? '';
+        
+        $query = "SELECT lr.*, e.name as employee_name, e.employee_code 
+                  FROM leave_requests lr 
+                  JOIN employees e ON lr.employee_id = e.employee_id";
+        
+        if (!empty($status)) {
+            $query .= " WHERE lr.status = ?";
+        }
+        
+        $query .= " ORDER BY lr.applied_date DESC";
+        
+        $stmt = $conn->prepare($query);
+        if (!empty($status)) {
+            $stmt->bind_param('s', $status);
+        }
         $stmt->execute();
         $result = $stmt->get_result();
         
-        if ($row = $result->fetch_assoc()) {
-            // Format dates
-            $row['applied_date'] = date('M j, Y', strtotime($row['applied_date']));
-            $row['start_date'] = date('M j, Y', strtotime($row['start_date']));
-            $row['end_date'] = date('M j, Y', strtotime($row['end_date']));
+        $leaves = [];
+        while ($row = $result->fetch_assoc()) {
+            $leaves[] = $row;
+        }
+        
+        echo json_encode(['success' => true, 'leaves' => $leaves]);
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    }
+}
+
+function processLeaveRequest($conn) {
+    try {
+        $leave_id = intval($_POST['leave_id'] ?? 0);
+        $status = $_POST['status'] ?? '';
+        $comments = trim($_POST['comments'] ?? '');
+        $approved_by = $_SESSION['employee_id'] ?? 1; // Default admin ID
+        
+        if ($leave_id <= 0 || !in_array($status, ['approved', 'rejected'])) {
+            throw new Exception('Invalid leave request or status');
+        }
+        
+        $query = "UPDATE leave_requests SET status = ?, approved_by = ?, approved_date = NOW(), approver_comments = ? WHERE leave_id = ?";
+        $stmt = $conn->prepare($query);
+        $stmt->bind_param('sisi', $status, $approved_by, $comments, $leave_id);
+        
+        if ($stmt->execute()) {
+            // If approved, update leave balance
+            if ($status === 'approved') {
+                updateLeaveBalance($conn, $leave_id);
+            }
             
-            echo json_encode([
-                'success' => true,
-                'request' => $row
-            ]);
+            echo json_encode(['success' => true, 'message' => 'Leave request processed successfully']);
         } else {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Leave request not found'
-            ]);
+            throw new Exception('Failed to process leave request');
         }
-        
     } catch (Exception $e) {
-        error_log("Error in getLeaveRequestDetails: " . $e->getMessage());
-        echo json_encode([
-            'success' => false,
-            'message' => 'Failed to fetch request details: ' . $e->getMessage()
-        ]);
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
     }
 }
 
-function processLeaveRequest() {
-    global $conn;
-    
-    $request_id = $_POST['request_id'] ?? '';
-    $status = $_POST['status'] ?? '';
-    $comments = $_POST['comments'] ?? '';
-    $processed_by = $_SESSION['admin'] ?? 'HR';
-    
-    if (empty($request_id) || empty($status)) {
-        echo json_encode(['success' => false, 'message' => 'Request ID and status are required']);
-        return;
-    }
-    
-    if (!in_array($status, ['approved', 'rejected'])) {
-        echo json_encode(['success' => false, 'message' => 'Invalid status']);
-        return;
-    }
-    
+function updateLeaveBalance($conn, $leave_id) {
     try {
-        $conn->autocommit(FALSE);
+        // Get leave request details
+        $query = "SELECT employee_id, leave_type, days_requested FROM leave_requests WHERE leave_id = ?";
+        $stmt = $conn->prepare($query);
+        $stmt->bind_param('i', $leave_id);
+        $stmt->execute();
+        $leave = $stmt->get_result()->fetch_assoc();
         
-        // Update leave request
-        $update_query = "
-            UPDATE leave_requests 
-            SET status = ?, 
-                manager_comments = ?, 
-                processed_by = ?,
-                processed_date = NOW()
-            WHERE id = ?
-        ";
-        
-        $stmt = $conn->prepare($update_query);
-        $stmt->bind_param("sssi", $status, $comments, $processed_by, $request_id);
-        
-        if (!$stmt->execute()) {
-            throw new Exception("Failed to update leave request");
+        if ($leave) {
+            $year = date('Y');
+            $column = $leave['leave_type'] . '_leave_balance';
+            
+            // Update leave balance
+            $updateQuery = "UPDATE leave_balance SET $column = $column - ? WHERE employee_id = ? AND year = ?";
+            $updateStmt = $conn->prepare($updateQuery);
+            $updateStmt->bind_param('iii', $leave['days_requested'], $leave['employee_id'], $year);
+            $updateStmt->execute();
         }
-        
-        // Get request details for further processing
-        $details_query = "
-            SELECT lr.*, e.name as employee_name, e.email 
-            FROM leave_requests lr
-            LEFT JOIN employees e ON lr.employee_id = e.employee_id
-            WHERE lr.id = ?
-        ";
-        $details_stmt = $conn->prepare($details_query);
-        $details_stmt->bind_param("i", $request_id);
-        $details_stmt->execute();
-        $request_details = $details_stmt->get_result()->fetch_assoc();
-        
-        // If approved, update leave balance
-        if ($status === 'approved' && $request_details) {
-            updateEmployeeLeaveBalance($request_details['employee_id'], $request_details['leave_type'], $request_details['duration_days']);
-        }
-        
-        // Log the activity
-        logHRActivity($processed_by, "Leave request {$status}", "Employee: {$request_details['employee_name']}, Type: {$request_details['leave_type']}, Days: {$request_details['duration_days']}");
-        
-        $conn->commit();
-        
-        echo json_encode([
-            'success' => true,
-            'message' => "Leave request {$status} successfully!"
-        ]);
-        
-    } catch (Exception $e) {
-        $conn->rollback();
-        error_log("Error in processLeaveRequest: " . $e->getMessage());
-        echo json_encode([
-            'success' => false,
-            'message' => 'Failed to process leave request: ' . $e->getMessage()
-        ]);
-    } finally {
-        $conn->autocommit(TRUE);
-    }
-}
-
-function updateEmployeeLeaveBalance($employee_id, $leave_type, $days_taken) {
-    global $conn;
-    
-    try {
-        // Check if leave balance record exists
-        $check_query = "SELECT id FROM employee_leave_balance WHERE employee_id = ? AND year = YEAR(CURDATE())";
-        $check_stmt = $conn->prepare($check_query);
-        $check_stmt->bind_param("i", $employee_id);
-        $check_stmt->execute();
-        $balance_exists = $check_stmt->get_result()->num_rows > 0;
-        
-        if (!$balance_exists) {
-            // Create new balance record with default values
-            $create_query = "
-                INSERT INTO employee_leave_balance 
-                (employee_id, year, casual_leave_balance, sick_leave_balance, earned_leave_balance, comp_off_balance) 
-                VALUES (?, YEAR(CURDATE()), 12, 7, 21, 5)
-            ";
-            $create_stmt = $conn->prepare($create_query);
-            $create_stmt->bind_param("i", $employee_id);
-            $create_stmt->execute();
-        }
-        
-        // Update the specific leave balance
-        $balance_field = '';
-        switch ($leave_type) {
-            case 'casual':
-                $balance_field = 'casual_leave_balance';
-                break;
-            case 'sick':
-                $balance_field = 'sick_leave_balance';
-                break;
-            case 'earned':
-                $balance_field = 'earned_leave_balance';
-                break;
-            case 'comp-off':
-                $balance_field = 'comp_off_balance';
-                break;
-            default:
-                return; // Don't deduct for other leave types
-        }
-        
-        if ($balance_field) {
-            $update_query = "
-                UPDATE employee_leave_balance 
-                SET {$balance_field} = GREATEST(0, {$balance_field} - ?)
-                WHERE employee_id = ? AND year = YEAR(CURDATE())
-            ";
-            $update_stmt = $conn->prepare($update_query);
-            $update_stmt->bind_param("di", $days_taken, $employee_id);
-            $update_stmt->execute();
-        }
-        
     } catch (Exception $e) {
         error_log("Error updating leave balance: " . $e->getMessage());
     }
 }
 
-function getEmployeeLeaveBalance() {
-    global $conn;
-    
+// Attendance Functions
+function getAttendance($conn) {
     try {
-        $query = "
-            SELECT 
-                e.employee_id,
-                e.name,
-                e.employee_code,
-                COALESCE(elb.casual_leave_balance, 12) as casual_balance,
-                COALESCE(elb.sick_leave_balance, 7) as sick_balance,
-                COALESCE(elb.earned_leave_balance, 21) as earned_balance,
-                COALESCE(elb.comp_off_balance, 5) as comp_off_balance
-            FROM employees e
-            LEFT JOIN employee_leave_balance elb ON e.employee_id = elb.employee_id AND elb.year = YEAR(CURDATE())
-            WHERE e.status = 'active'
-            ORDER BY e.name
-        ";
+        $date = $_POST['date'] ?? date('Y-m-d');
         
-        $result = $conn->query($query);
+        $query = "SELECT a.*, e.name as employee_name, e.employee_code,
+                         CASE 
+                             WHEN a.time_in IS NOT NULL AND a.time_out IS NOT NULL 
+                             THEN ROUND(TIME_TO_SEC(TIMEDIFF(a.time_out, a.time_in)) / 3600, 2)
+                             ELSE 0 
+                         END as working_hours
+                  FROM employees e
+                  LEFT JOIN attendance a ON e.employee_id = a.employee_id AND a.attendance_date = ?
+                  WHERE e.status = 'active'
+                  ORDER BY e.name";
         
-        if (!$result) {
-            throw new Exception("Database query failed: " . $conn->error);
-        }
-        
-        $balances = [];
-        while ($row = $result->fetch_assoc()) {
-            $balances[] = $row;
-        }
-        
-        echo json_encode([
-            'success' => true,
-            'balances' => $balances
-        ]);
-        
-    } catch (Exception $e) {
-        error_log("Error in getEmployeeLeaveBalance: " . $e->getMessage());
-        echo json_encode([
-            'success' => false,
-            'message' => 'Failed to fetch leave balances: ' . $e->getMessage()
-        ]);
-    }
-}
-
-function getHRAnalytics() {
-    global $conn;
-    
-    try {
-        $analytics = [];
-        
-        // Leave type distribution
-        $leave_types_query = "
-            SELECT leave_type, COUNT(*) as count 
-            FROM leave_requests 
-            WHERE applied_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
-            GROUP BY leave_type
-        ";
-        $leave_types_result = $conn->query($leave_types_query);
-        $analytics['leave_types'] = [];
-        while ($row = $leave_types_result->fetch_assoc()) {
-            $analytics['leave_types'][] = $row;
-        }
-        
-        // Monthly attendance trends
-        $attendance_trends_query = "
-            SELECT 
-                DATE_FORMAT(attendance_date, '%Y-%m') as month,
-                COUNT(CASE WHEN status IN ('Present', 'Late') THEN 1 END) as present_count,
-                COUNT(*) as total_count
-            FROM attendance 
-            WHERE attendance_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
-            GROUP BY DATE_FORMAT(attendance_date, '%Y-%m')
-            ORDER BY month
-        ";
-        $attendance_trends_result = $conn->query($attendance_trends_query);
-        $analytics['attendance_trends'] = [];
-        while ($row = $attendance_trends_result->fetch_assoc()) {
-            $row['attendance_rate'] = $row['total_count'] > 0 ? round(($row['present_count'] / $row['total_count']) * 100, 2) : 0;
-            $analytics['attendance_trends'][] = $row;
-        }
-        
-        // Department wise statistics
-        $dept_stats_query = "
-            SELECT 
-                e.position as department,
-                COUNT(DISTINCT e.employee_id) as total_employees,
-                COUNT(lr.id) as leave_requests_count
-            FROM employees e
-            LEFT JOIN leave_requests lr ON e.employee_id = lr.employee_id 
-                AND lr.applied_date >= DATE_SUB(CURDATE(), INTERVAL 1 MONTH)
-            WHERE e.status = 'active'
-            GROUP BY e.position
-        ";
-        $dept_stats_result = $conn->query($dept_stats_query);
-        $analytics['department_stats'] = [];
-        while ($row = $dept_stats_result->fetch_assoc()) {
-            $analytics['department_stats'][] = $row;
-        }
-        
-        echo json_encode([
-            'success' => true,
-            'analytics' => $analytics
-        ]);
-        
-    } catch (Exception $e) {
-        error_log("Error in getHRAnalytics: " . $e->getMessage());
-        echo json_encode([
-            'success' => false,
-            'message' => 'Failed to fetch analytics: ' . $e->getMessage()
-        ]);
-    }
-}
-
-function bulkApproveLeaves() {
-    global $conn;
-    
-    $request_ids = $_POST['request_ids'] ?? [];
-    $comments = $_POST['comments'] ?? '';
-    $processed_by = $_SESSION['admin'] ?? 'HR';
-    
-    if (empty($request_ids)) {
-        echo json_encode(['success' => false, 'message' => 'No requests selected']);
-        return;
-    }
-    
-    try {
-        $conn->autocommit(FALSE);
-        
-        $approved_count = 0;
-        $placeholders = str_repeat('?,', count($request_ids) - 1) . '?';
-        
-        // Update all selected requests
-        $update_query = "
-            UPDATE leave_requests 
-            SET status = 'approved', 
-                manager_comments = ?, 
-                processed_by = ?,
-                processed_date = NOW()
-            WHERE id IN ($placeholders) AND status = 'pending'
-        ";
-        
-        $stmt = $conn->prepare($update_query);
-        $params = array_merge([$comments, $processed_by], $request_ids);
-        $types = 'ss' . str_repeat('i', count($request_ids));
-        $stmt->bind_param($types, ...$params);
-        
-        if ($stmt->execute()) {
-            $approved_count = $stmt->affected_rows;
-        }
-        
-        // Log the activity
-        logHRActivity($processed_by, "Bulk approval", "Approved {$approved_count} leave requests");
-        
-        $conn->commit();
-        
-        echo json_encode([
-            'success' => true,
-            'message' => "Successfully approved {$approved_count} leave requests"
-        ]);
-        
-    } catch (Exception $e) {
-        $conn->rollback();
-        error_log("Error in bulkApproveLeaves: " . $e->getMessage());
-        echo json_encode([
-            'success' => false,
-            'message' => 'Failed to bulk approve leaves: ' . $e->getMessage()
-        ]);
-    } finally {
-        $conn->autocommit(TRUE);
-    }
-}
-
-function getRecentActivity() {
-    global $conn;
-    
-    try {
-        $query = "
-            SELECT 
-                activity_type,
-                description,
-                performed_by,
-                activity_date
-            FROM hr_activity_log 
-            ORDER BY activity_date DESC 
-            LIMIT 20
-        ";
-        
-        $result = $conn->query($query);
-        
-        $activities = [];
-        if ($result) {
-            while ($row = $result->fetch_assoc()) {
-                $row['time_ago'] = timeAgo($row['activity_date']);
-                $activities[] = $row;
-            }
-        }
-        
-        echo json_encode([
-            'success' => true,
-            'activities' => $activities
-        ]);
-        
-    } catch (Exception $e) {
-        error_log("Error in getRecentActivity: " . $e->getMessage());
-        echo json_encode([
-            'success' => false,
-            'message' => 'Failed to fetch recent activity: ' . $e->getMessage()
-        ]);
-    }
-}
-
-function logHRActivity($performed_by, $activity_type, $description) {
-    global $conn;
-    
-    try {
-        // Create table if it doesn't exist
-        $create_table_query = "
-            CREATE TABLE IF NOT EXISTS hr_activity_log (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                activity_type VARCHAR(100) NOT NULL,
-                description TEXT,
-                performed_by VARCHAR(100) NOT NULL,
-                activity_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                INDEX idx_activity_date (activity_date),
-                INDEX idx_performed_by (performed_by)
-            )
-        ";
-        $conn->query($create_table_query);
-        
-        $insert_query = "
-            INSERT INTO hr_activity_log (activity_type, description, performed_by) 
-            VALUES (?, ?, ?)
-        ";
-        
-        $stmt = $conn->prepare($insert_query);
-        $stmt->bind_param("sss", $activity_type, $description, $performed_by);
-        $stmt->execute();
-        
-    } catch (Exception $e) {
-        error_log("Error logging HR activity: " . $e->getMessage());
-    }
-}
-
-function saveHRSettings() {
-    global $conn;
-    
-    $settings = $_POST['settings'] ?? [];
-    
-    try {
-        // Create settings table if it doesn't exist
-        $create_table_query = "
-            CREATE TABLE IF NOT EXISTS hr_settings (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                setting_key VARCHAR(100) UNIQUE NOT NULL,
-                setting_value TEXT,
-                updated_by VARCHAR(100),
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-            )
-        ";
-        $conn->query($create_table_query);
-        
-        // Save each setting
-        foreach ($settings as $key => $value) {
-            $insert_query = "
-                INSERT INTO hr_settings (setting_key, setting_value, updated_by) 
-                VALUES (?, ?, ?)
-                ON DUPLICATE KEY UPDATE 
-                    setting_value = VALUES(setting_value),
-                    updated_by = VALUES(updated_by),
-                    updated_at = CURRENT_TIMESTAMP
-            ";
-            
-            $stmt = $conn->prepare($insert_query);
-            $updated_by = $_SESSION['admin'] ?? 'HR';
-            $stmt->bind_param("sss", $key, $value, $updated_by);
-            $stmt->execute();
-        }
-        
-        logHRActivity($_SESSION['admin'] ?? 'HR', "Settings updated", "HR system settings modified");
-        
-        echo json_encode([
-            'success' => true,
-            'message' => 'HR settings saved successfully'
-        ]);
-        
-    } catch (Exception $e) {
-        error_log("Error in saveHRSettings: " . $e->getMessage());
-        echo json_encode([
-            'success' => false,
-            'message' => 'Failed to save settings: ' . $e->getMessage()
-        ]);
-    }
-}
-
-function generateEmployeeReport() {
-    global $conn;
-    
-    $report_type = $_POST['report_type'] ?? 'attendance';
-    $start_date = $_POST['start_date'] ?? date('Y-m-01');
-    $end_date = $_POST['end_date'] ?? date('Y-m-t');
-    $employee_id = $_POST['employee_id'] ?? '';
-    
-    try {
-        $report_data = [];
-        
-        switch ($report_type) {
-            case 'attendance':
-                $query = "
-                    SELECT 
-                        e.name,
-                        e.employee_code,
-                        COUNT(CASE WHEN a.status = 'Present' THEN 1 END) as present_days,
-                        COUNT(CASE WHEN a.status = 'Absent' THEN 1 END) as absent_days,
-                        COUNT(CASE WHEN a.status = 'Late' THEN 1 END) as late_days,
-                        COUNT(CASE WHEN a.status = 'Half Day' THEN 1 END) as half_days
-                    FROM employees e
-                    LEFT JOIN attendance a ON e.employee_id = a.employee_id 
-                        AND a.attendance_date BETWEEN ? AND ?
-                    WHERE e.status = 'active'
-                ";
-                if (!empty($employee_id)) {
-                    $query .= " AND e.employee_id = ?";
-                }
-                $query .= " GROUP BY e.employee_id ORDER BY e.name";
-                
-                $stmt = $conn->prepare($query);
-                if (!empty($employee_id)) {
-                    $stmt->bind_param("ssi", $start_date, $end_date, $employee_id);
-                } else {
-                    $stmt->bind_param("ss", $start_date, $end_date);
-                }
-                break;
-                
-            case 'leave':
-                $query = "
-                    SELECT 
-                        e.name,
-                        e.employee_code,
-                        lr.leave_type,
-                        lr.start_date,
-                        lr.end_date,
-                        lr.duration_days,
-                        lr.status
-                    FROM employees e
-                    LEFT JOIN leave_requests lr ON e.employee_id = lr.employee_id 
-                        AND lr.start_date BETWEEN ? AND ?
-                    WHERE e.status = 'active'
-                ";
-                if (!empty($employee_id)) {
-                    $query .= " AND e.employee_id = ?";
-                }
-                $query .= " ORDER BY e.name, lr.start_date DESC";
-                
-                $stmt = $conn->prepare($query);
-                if (!empty($employee_id)) {
-                    $stmt->bind_param("ssi", $start_date, $end_date, $employee_id);
-                } else {
-                    $stmt->bind_param("ss", $start_date, $end_date);
-                }
-                break;
-                
-            default:
-                throw new Exception("Invalid report type");
-        }
-        
+        $stmt = $conn->prepare($query);
+        $stmt->bind_param('s', $date);
         $stmt->execute();
         $result = $stmt->get_result();
         
+        $attendance = [];
         while ($row = $result->fetch_assoc()) {
-            $report_data[] = $row;
+            // Set default values if no attendance record
+            if (!$row['attendance_id']) {
+                $row['status'] = 'Absent';
+                $row['time_in'] = '';
+                $row['time_out'] = '';
+                $row['working_hours'] = 0;
+                $row['attendance_date'] = $date;
+            }
+            $attendance[] = $row;
         }
         
-        echo json_encode([
-            'success' => true,
-            'report_data' => $report_data,
-            'report_type' => $report_type,
-            'date_range' => ['start' => $start_date, 'end' => $end_date]
-        ]);
-        
+        echo json_encode(['success' => true, 'attendance' => $attendance]);
     } catch (Exception $e) {
-        error_log("Error in generateEmployeeReport: " . $e->getMessage());
-        echo json_encode([
-            'success' => false,
-            'message' => 'Failed to generate report: ' . $e->getMessage()
-        ]);
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
     }
 }
 
-// Utility function to calculate time ago
-function timeAgo($datetime) {
-    $time = time() - strtotime($datetime);
-    
-    if ($time < 60) return 'just now';
-    if ($time < 3600) return floor($time/60) . 'm ago';
-    if ($time < 86400) return floor($time/3600) . 'h ago';
-    if ($time < 2592000) return floor($time/86400) . 'd ago';
-    
-    return date('M j, Y', strtotime($datetime));
+// Payroll Functions
+function getPayroll($conn) {
+    try {
+        $month = intval($_POST['month'] ?? date('n'));
+        $year = intval($_POST['year'] ?? date('Y'));
+        
+        $monthYear = $year . '-' . str_pad($month, 2, '0', STR_PAD_LEFT);
+        
+        $query = "SELECT p.*, e.name as employee_name, e.employee_code, e.monthly_salary,
+                         p.calculated_pay as basic_salary, p.calculated_pay as gross_salary,
+                         0 as total_deductions, p.calculated_pay as net_salary,
+                         'processed' as status
+                  FROM employees e
+                  LEFT JOIN payroll p ON e.employee_id = p.employee_id AND p.month_year = ?
+                  WHERE e.status = 'active'
+                  ORDER BY e.name";
+        
+        $stmt = $conn->prepare($query);
+        $stmt->bind_param('s', $monthYear);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        $payroll = [];
+        while ($row = $result->fetch_assoc()) {
+            // Set default values if no payroll record
+            if (!$row['id']) {
+                $row['basic_salary'] = $row['monthly_salary'] ?? 0;
+                $row['gross_salary'] = $row['monthly_salary'] ?? 0;
+                $row['total_deductions'] = 0;
+                $row['net_salary'] = $row['monthly_salary'] ?? 0;
+                $row['status'] = 'draft';
+                $row['present_days'] = 0;
+                $row['absent_days'] = 0;
+            }
+            $payroll[] = $row;
+        }
+        
+        echo json_encode(['success' => true, 'payroll' => $payroll]);
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    }
 }
 
-// Create necessary database tables if they don't exist
-function createRequiredTables() {
-    global $conn;
-    
-    // Employee leave balance table
-    $conn->query("
-        CREATE TABLE IF NOT EXISTS employee_leave_balance (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            employee_id INT NOT NULL,
-            year YEAR NOT NULL,
-            casual_leave_balance DECIMAL(4,1) DEFAULT 12.0,
-            sick_leave_balance DECIMAL(4,1) DEFAULT 7.0,
-            earned_leave_balance DECIMAL(4,1) DEFAULT 21.0,
-            comp_off_balance DECIMAL(4,1) DEFAULT 5.0,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            UNIQUE KEY unique_employee_year (employee_id, year),
-            FOREIGN KEY (employee_id) REFERENCES employees(employee_id) ON DELETE CASCADE
-        )
-    ");
+function generatePayroll($conn) {
+    try {
+        $month = intval($_POST['month'] ?? date('n'));
+        $year = intval($_POST['year'] ?? date('Y'));
+        
+        $startDate = "$year-" . str_pad($month, 2, '0', STR_PAD_LEFT) . "-01";
+        $endDate = date('Y-m-t', strtotime($startDate));
+        
+        // Get all active employees
+        $employeesQuery = "SELECT * FROM employees WHERE status = 'active'";
+        $employeesResult = $conn->query($employeesQuery);
+        
+        $generated = 0;
+        while ($employee = $employeesResult->fetch_assoc()) {
+            $employee_id = $employee['employee_id'];
+            $basic_salary = floatval($employee['salary']);
+            
+            // Check if payroll already exists for this month
+            $monthYear = $year . '-' . str_pad($month, 2, '0', STR_PAD_LEFT);
+            $checkQuery = "SELECT id FROM payroll WHERE employee_id = ? AND month_year = ?";
+            $checkStmt = $conn->prepare($checkQuery);
+            $checkStmt->bind_param('is', $employee_id, $monthYear);
+            $checkStmt->execute();
+            
+            if ($checkStmt->get_result()->num_rows > 0) {
+                continue; // Skip if already exists
+            }
+            
+            // Calculate working days and present days
+            $workingDays = getWorkingDays($startDate, $endDate);
+            $presentDays = getPresentDays($conn, $employee_id, $startDate, $endDate);
+            
+            // Calculate salary components
+            $dailySalary = $basic_salary / $workingDays;
+            $earnedSalary = $dailySalary * $presentDays;
+            
+            $allowances = $earnedSalary * 0.2; // 20% allowances
+            $overtime_pay = 0; // Can be calculated based on overtime hours
+            $bonus = 0;
+            
+            $gross_salary = $earnedSalary + $allowances + $overtime_pay + $bonus;
+            
+            // Calculate deductions
+            $tax_deduction = $gross_salary * 0.1; // 10% tax
+            $pf_deduction = $basic_salary * 0.12; // 12% PF
+            $other_deductions = 0;
+            
+            $total_deductions = $tax_deduction + $pf_deduction + $other_deductions;
+            $net_salary = $gross_salary - $total_deductions;
+            
+            // Insert payroll record using existing table structure
+            $monthYear = $year . '-' . str_pad($month, 2, '0', STR_PAD_LEFT);
+            $absentDays = $workingDays - $presentDays;
+            
+            $insertQuery = "INSERT INTO payroll (employee_id, month_year, present_days, absent_days, calculated_pay) VALUES (?, ?, ?, ?, ?)";
+            
+            $insertStmt = $conn->prepare($insertQuery);
+            $insertStmt->bind_param('isiid', $employee_id, $monthYear, $presentDays, $absentDays, $net_salary);
+            
+            if ($insertStmt->execute()) {
+                $generated++;
+            }
+        }
+        
+        echo json_encode(['success' => true, 'message' => "Payroll generated for $generated employees"]);
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    }
 }
 
-// Initialize tables on first run
-createRequiredTables();
+function getWorkingDays($startDate, $endDate) {
+    $workingDays = 0;
+    $current = strtotime($startDate);
+    $end = strtotime($endDate);
+    
+    while ($current <= $end) {
+        $dayOfWeek = date('N', $current);
+        if ($dayOfWeek < 6) { // Monday to Friday
+            $workingDays++;
+        }
+        $current = strtotime('+1 day', $current);
+    }
+    
+    return $workingDays;
+}
+
+function getPresentDays($conn, $employee_id, $startDate, $endDate) {
+    $query = "SELECT COUNT(*) as present_days FROM attendance WHERE employee_id = ? AND attendance_date BETWEEN ? AND ? AND status IN ('Present', 'Late')";
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param('iss', $employee_id, $startDate, $endDate);
+    $stmt->execute();
+    $result = $stmt->get_result()->fetch_assoc();
+    
+    return intval($result['present_days'] ?? 0);
+}
+
+// Report Functions
+function generateAttendanceReport($conn) {
+    try {
+        $start_date = $_POST['start_date'] ?? '';
+        $end_date = $_POST['end_date'] ?? '';
+        
+        if (empty($start_date) || empty($end_date)) {
+            throw new Exception('Start date and end date are required');
+        }
+        
+        $query = "SELECT e.name as employee_name, e.employee_code, e.department,
+                         COUNT(CASE WHEN a.status = 'Present' THEN 1 END) as present_days,
+                         COUNT(CASE WHEN a.status = 'Absent' THEN 1 END) as absent_days,
+                         COUNT(CASE WHEN a.status = 'Late' THEN 1 END) as late_days,
+                         COUNT(CASE WHEN a.status = 'Half Day' THEN 1 END) as half_days,
+                         ROUND(AVG(CASE WHEN a.working_hours > 0 THEN a.working_hours END), 2) as avg_working_hours
+                  FROM employees e
+                  LEFT JOIN attendance a ON e.employee_id = a.employee_id 
+                      AND a.attendance_date BETWEEN ? AND ?
+                  WHERE e.status = 'active'
+                  GROUP BY e.employee_id
+                  ORDER BY e.name";
+        
+        $stmt = $conn->prepare($query);
+        $stmt->bind_param('ss', $start_date, $end_date);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        $report = [];
+        while ($row = $result->fetch_assoc()) {
+            $report[] = $row;
+        }
+        
+        echo json_encode(['success' => true, 'report' => $report]);
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    }
+}
+
+function generateLeaveReport($conn) {
+    try {
+        $department = $_POST['department'] ?? '';
+        
+        $query = "SELECT e.name as employee_name, e.employee_code, e.department,
+                         COUNT(CASE WHEN lr.leave_type = 'sick' AND lr.status = 'approved' THEN 1 END) as sick_leaves,
+                         COUNT(CASE WHEN lr.leave_type = 'casual' AND lr.status = 'approved' THEN 1 END) as casual_leaves,
+                         COUNT(CASE WHEN lr.leave_type = 'annual' AND lr.status = 'approved' THEN 1 END) as annual_leaves,
+                         COUNT(CASE WHEN lr.status = 'approved' THEN 1 END) as total_approved_leaves,
+                         COUNT(CASE WHEN lr.status = 'pending' THEN 1 END) as pending_leaves
+                  FROM employees e
+                  LEFT JOIN leave_requests lr ON e.employee_id = lr.employee_id
+                  WHERE e.status = 'active'";
+        
+        if (!empty($department)) {
+            $query .= " AND e.department = ?";
+        }
+        
+        $query .= " GROUP BY e.employee_id ORDER BY e.name";
+        
+        $stmt = $conn->prepare($query);
+        if (!empty($department)) {
+            $stmt->bind_param('s', $department);
+        }
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        $report = [];
+        while ($row = $result->fetch_assoc()) {
+            $report[] = $row;
+        }
+        
+        echo json_encode(['success' => true, 'report' => $report]);
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    }
+}
+
+// Export Functions
+function exportEmployees($conn) {
+    try {
+        header('Content-Type: text/csv');
+        header('Content-Disposition: attachment; filename="employees_' . date('Y-m-d') . '.csv"');
+        
+        $query = "SELECT name, employee_code, email, phone, department, position, salary, hire_date, status FROM employees ORDER BY name";
+        $result = $conn->query($query);
+        
+        $output = fopen('php://output', 'w');
+        fputcsv($output, ['Name', 'Employee Code', 'Email', 'Phone', 'Department', 'Position', 'Salary', 'Hire Date', 'Status']);
+        
+        while ($row = $result->fetch_assoc()) {
+            fputcsv($output, $row);
+        }
+        
+        fclose($output);
+    } catch (Exception $e) {
+        echo "Error: " . $e->getMessage();
+    }
+}
+
+function exportLeaves($conn) {
+    try {
+        header('Content-Type: text/csv');
+        header('Content-Disposition: attachment; filename="leave_requests_' . date('Y-m-d') . '.csv"');
+        
+        $query = "SELECT e.name as employee_name, e.employee_code, lr.leave_type, lr.from_date, lr.to_date, lr.days_requested, lr.reason, lr.status, lr.applied_date 
+                  FROM leave_requests lr 
+                  JOIN employees e ON lr.employee_id = e.employee_id 
+                  ORDER BY lr.applied_date DESC";
+        $result = $conn->query($query);
+        
+        $output = fopen('php://output', 'w');
+        fputcsv($output, ['Employee Name', 'Employee Code', 'Leave Type', 'From Date', 'To Date', 'Days', 'Reason', 'Status', 'Applied Date']);
+        
+        while ($row = $result->fetch_assoc()) {
+            fputcsv($output, $row);
+        }
+        
+        fclose($output);
+    } catch (Exception $e) {
+        echo "Error: " . $e->getMessage();
+    }
+}
+
+function exportPayroll($conn) {
+    try {
+        $month = intval($_GET['month'] ?? date('n'));
+        $year = intval($_GET['year'] ?? date('Y'));
+        
+        header('Content-Type: text/csv');
+        header('Content-Disposition: attachment; filename="payroll_' . $year . '_' . str_pad($month, 2, '0', STR_PAD_LEFT) . '.csv"');
+        
+        $monthYear = $year . '-' . str_pad($month, 2, '0', STR_PAD_LEFT);
+        
+        $query = "SELECT e.name as employee_name, e.employee_code, p.calculated_pay as basic_salary, 
+                         0 as allowances, p.calculated_pay as gross_salary, 0 as tax_deduction, 
+                         0 as pf_deduction, 0 as total_deductions, p.calculated_pay as net_salary, 
+                         30 as working_days, p.present_days, 'processed' as status
+                  FROM payroll p
+                  JOIN employees e ON p.employee_id = e.employee_id
+                  WHERE p.month_year = ?
+                  ORDER BY e.name";
+        
+        $stmt = $conn->prepare($query);
+        $stmt->bind_param('s', $monthYear);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        $output = fopen('php://output', 'w');
+        fputcsv($output, ['Employee Name', 'Employee Code', 'Basic Salary', 'Allowances', 'Gross Salary', 'Tax Deduction', 'PF Deduction', 'Total Deductions', 'Net Salary', 'Working Days', 'Present Days', 'Status']);
+        
+        while ($row = $result->fetch_assoc()) {
+            fputcsv($output, $row);
+        }
+        
+        fclose($output);
+    } catch (Exception $e) {
+        echo "Error: " . $e->getMessage();
+    }
+}
 ?>
