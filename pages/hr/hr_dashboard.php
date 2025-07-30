@@ -15,7 +15,7 @@ if (!isset($_SESSION['user_id']) && !isset($_SESSION['admin'])) {
 }
 
 // Include optimized database connection
-require_once '../../db_optimized.php';
+require_once '../../db_simple_optimized.php';
 
 $page_title = 'HR Dashboard';
 
@@ -32,38 +32,38 @@ $stats = [
 // Fetch dashboard data with caching and error handling
 try {
     // Use optimized queries with caching
-    $optimizedDB = OptimizedDB::getInstance();
+    $optimizedDB = SimpleOptimizedDB::getInstance();
     
     // Total employees (cached for 5 minutes)
-    $result = $optimizedDB->query("SELECT COUNT(*) as total FROM employees", [], 'total_employees');
-    if (is_array($result) && !empty($result)) {
+    $result = $optimizedDB->queryCached("SELECT COUNT(*) as total FROM employees", 'total_employees', 5);
+    if (!empty($result)) {
         $stats['total_employees'] = $result[0]['total'];
     }
     
     // Active employees (cached)
-    $result = $optimizedDB->query("SELECT COUNT(*) as total FROM employees WHERE status = 'active'", [], 'active_employees');
-    if (is_array($result) && !empty($result)) {
+    $result = $optimizedDB->queryCached("SELECT COUNT(*) as total FROM employees WHERE status = 'active'", 'active_employees', 5);
+    if (!empty($result)) {
         $stats['active_employees'] = $result[0]['total'];
     }
     
     // Today's attendance (cached for 1 minute since it changes frequently)
-    $result = $optimizedDB->query("SELECT COUNT(DISTINCT employee_id) as total FROM attendance WHERE attendance_date = CURDATE()", [], 'today_attendance');
-    if (is_array($result) && !empty($result)) {
+    $result = $optimizedDB->queryCached("SELECT COUNT(DISTINCT employee_id) as total FROM attendance WHERE attendance_date = CURDATE()", 'today_attendance', 1);
+    if (!empty($result)) {
         $stats['today_attendance'] = $result[0]['total'];
     }
     
     // Check if leave_requests table exists (cached)
     $table_check = $conn->query("SHOW TABLES LIKE 'leave_requests'");
     if ($table_check && $table_check->num_rows > 0) {
-        $result = $optimizedDB->query("SELECT COUNT(*) as total FROM leave_requests WHERE status = 'pending'", [], 'pending_leaves');
-        if (is_array($result) && !empty($result)) {
+        $result = $optimizedDB->queryCached("SELECT COUNT(*) as total FROM leave_requests WHERE status = 'pending'", 'pending_leaves', 2);
+        if (!empty($result)) {
             $stats['pending_leaves'] = $result[0]['total'];
         }
     }
     
     // Total payroll (cached)
-    $result = $optimizedDB->query("SELECT SUM(monthly_salary) as total FROM employees WHERE status = 'active'", [], 'total_payroll');
-    if (is_array($result) && !empty($result)) {
+    $result = $optimizedDB->queryCached("SELECT SUM(monthly_salary) as total FROM employees WHERE status = 'active'", 'total_payroll', 10);
+    if (!empty($result)) {
         $stats['total_payroll'] = $result[0]['total'] ?? 0;
     }
     
@@ -74,18 +74,16 @@ try {
 // Get recent activities (optimized query with limit)
 $recent_activities = [];
 try {
-    $recent_activities = $optimizedDB->query("
+    $recent_activities = $optimizedDB->queryCached("
         SELECT e.name, a.attendance_date, a.punch_in_time, a.punch_out_time 
         FROM attendance a 
-        JOIN employees e ON a.employee_id = e.employee_id 
+        INNER JOIN employees e ON a.employee_id = e.employee_id 
         WHERE a.attendance_date >= DATE_SUB(CURDATE(), INTERVAL 3 DAYS)
         ORDER BY a.attendance_date DESC, a.punch_in_time DESC 
         LIMIT 8
-    ", [], 'recent_activities');
+    ", 'recent_activities', 2);
     
-    if (!is_array($recent_activities)) {
-        $recent_activities = [];
-    }
+    
 } catch (Exception $e) {
     error_log("Recent activities error: " . $e->getMessage());
     $recent_activities = [];
@@ -94,17 +92,25 @@ try {
 // Get employee list for quick access (optimized)
 $employees = [];
 try {
-    $employees = $optimizedDB->query("
+    $employees = $optimizedDB->queryCached("
         SELECT employee_id, name, position, status 
         FROM employees 
         WHERE status = 'active' 
         ORDER BY name 
         LIMIT 15
-    ", [], 'active_employees_list');
+    ", 'active_employees_list', 5);
+} catch (Exception $e) {
+    error_log("Employee list error: " . $e->getMessage());
+    $employees = [];
+}
+
+// Include the global layout files
+include '../../layouts/header.php';
+include '../../layouts/sidebar.php';
+?>
+
+<div class="main-content"
     
-    if (!is_array($employees)) {
-        $employees = [];
-    }
 } catch (Exception $e) {
     error_log("Employee list error: " . $e->getMessage());
     $employees = [];

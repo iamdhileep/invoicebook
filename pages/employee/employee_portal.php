@@ -15,7 +15,7 @@ if (!isset($_SESSION['user_id']) && !isset($_SESSION['employee_id'])) {
 }
 
 // Include optimized database connection and auth check
-require_once '../../db_optimized.php';
+require_once '../../db.php';
 require_once '../../auth_check.php';
 
 $pageTitle = "Employee Portal";
@@ -32,13 +32,15 @@ $monthly_stats = [
 ];
 
 try {
-    $optimizedDB = OptimizedDB::getInstance();
-    
-    // Get employee details (cached for 10 minutes)
-    $result = $optimizedDB->query("SELECT * FROM employees WHERE employee_id = ?", [$employee_id], "employee_details_$employee_id");
-    if (is_array($result) && !empty($result)) {
-        $employee = $result[0];
+    // Get employee details
+    $stmt = $conn->prepare("SELECT * FROM employees WHERE employee_id = ?");
+    $stmt->bind_param("i", $employee_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($result && $result->num_rows > 0) {
+        $employee = $result->fetch_assoc();
     }
+    $stmt->close();
     
     // Get today's attendance (not cached as it changes frequently)
     $stmt = $conn->prepare("
@@ -55,7 +57,7 @@ try {
     $stmt->close();
     
     // Get monthly statistics (cached for 1 hour)
-    $result = $optimizedDB->query("
+    $stmt = $conn->prepare("
         SELECT 
             COUNT(DISTINCT attendance_date) as days_present,
             SUM(work_duration) as total_hours,
@@ -65,14 +67,16 @@ try {
         AND MONTH(attendance_date) = MONTH(CURDATE()) 
         AND YEAR(attendance_date) = YEAR(CURDATE())
         AND punch_in_time IS NOT NULL
-    ", [$employee_id], "monthly_stats_$employee_id");
-    
-    if (is_array($result) && !empty($result)) {
-        $row = $result[0];
+    ");
+    $stmt->bind_param("i", $employee_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($result && $row = $result->fetch_assoc()) {
         $monthly_stats['days_present'] = $row['days_present'] ?? 0;
         $monthly_stats['total_hours'] = round($row['total_hours'] ?? 0, 2);
         $monthly_stats['avg_hours'] = round($row['avg_hours'] ?? 0, 2);
     }
+    $stmt->close();
     
 } catch (Exception $e) {
     error_log("Employee Portal database error: " . $e->getMessage());

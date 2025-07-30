@@ -1,6 +1,6 @@
 <?php
-// Optimized Database Connection with Performance Enhancements
-class OptimizedDB {
+// Simplified Optimized Database Connection
+class SimpleOptimizedDB {
     private static $instance = null;
     private $connection;
     private $query_cache = [];
@@ -24,7 +24,6 @@ class OptimizedDB {
         $password = "";
         $dbname = "billing_demo";
         
-        // Enable persistent connections for better performance
         $this->connection = new mysqli($host, $user, $password, $dbname);
         
         if ($this->connection->connect_error) {
@@ -33,8 +32,6 @@ class OptimizedDB {
         
         // Set optimal MySQL settings for performance
         $this->connection->set_charset("utf8mb4");
-        $this->connection->query("SET SESSION sql_mode = ''");
-        $this->connection->query("SET SESSION query_cache_type = ON");
     }
     
     public function getConnection() {
@@ -45,55 +42,47 @@ class OptimizedDB {
         return $this->connection;
     }
     
-    public function query($sql, $params = [], $cache_key = null) {
-        $conn = $this->getConnection();
-        
+    public function queryCached($sql, $cache_key = null, $cache_minutes = 5) {
         // Check cache first if enabled and cache key provided
         if ($this->cache_enabled && $cache_key && isset($this->query_cache[$cache_key])) {
-            if (time() - $this->query_cache[$cache_key]['timestamp'] < $this->cache_ttl) {
+            $cache_age = time() - $this->query_cache[$cache_key]['timestamp'];
+            if ($cache_age < ($cache_minutes * 60)) {
                 return $this->query_cache[$cache_key]['data'];
             }
         }
         
-        // Prepare and execute query
-        if (!empty($params)) {
-            $stmt = $conn->prepare($sql);
-            if ($stmt) {
-                // Bind parameters properly
-                if (!empty($params)) {
-                    $types = str_repeat('s', count($params)); // Default to string type
-                    // Detect parameter types
-                    foreach ($params as $param) {
-                        if (is_int($param)) {
-                            $types = str_replace('s', 'i', $types, 1);
-                        } elseif (is_float($param)) {
-                            $types = str_replace('s', 'd', $types, 1);
-                        }
-                    }
-                    $stmt->bind_param($types, ...$params);
-                }
-                $stmt->execute();
-                $result = $stmt->get_result();
-                $stmt->close();
-            } else {
-                throw new Exception("Query preparation failed: " . $conn->error);
-            }
-        } else {
-            $result = $conn->query($sql);
-        }
+        $conn = $this->getConnection();
+        $result = $conn->query($sql);
         
         if (!$result) {
             throw new Exception("Query execution failed: " . $conn->error);
         }
         
+        // Convert result to array for caching
+        $data = [];
+        if ($result instanceof mysqli_result) {
+            while ($row = $result->fetch_assoc()) {
+                $data[] = $row;
+            }
+        }
+        
         // Cache the result if cache key provided
-        if ($this->cache_enabled && $cache_key && $result instanceof mysqli_result) {
-            $data = $result->fetch_all(MYSQLI_ASSOC);
+        if ($this->cache_enabled && $cache_key) {
             $this->query_cache[$cache_key] = [
                 'data' => $data,
                 'timestamp' => time()
             ];
-            return $data;
+        }
+        
+        return $data;
+    }
+    
+    public function query($sql) {
+        $conn = $this->getConnection();
+        $result = $conn->query($sql);
+        
+        if (!$result) {
+            throw new Exception("Query execution failed: " . $conn->error);
         }
         
         return $result;
@@ -107,12 +96,12 @@ class OptimizedDB {
         }
     }
     
-    public function disableCache() {
-        $this->cache_enabled = false;
-    }
-    
-    public function enableCache() {
-        $this->cache_enabled = true;
+    public function getCacheStats() {
+        return [
+            'entries' => count($this->query_cache),
+            'enabled' => $this->cache_enabled,
+            'ttl' => $this->cache_ttl
+        ];
     }
 }
 
@@ -131,5 +120,5 @@ if ($conn->connect_error) {
 $conn->set_charset("utf8mb4");
 
 // Get optimized DB instance for high-performance queries
-$optimizedDB = OptimizedDB::getInstance();
+$simpleOptimizedDB = SimpleOptimizedDB::getInstance();
 ?>

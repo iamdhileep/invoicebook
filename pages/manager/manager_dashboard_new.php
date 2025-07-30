@@ -15,7 +15,7 @@ if (!isset($_SESSION['user_id']) && !isset($_SESSION['employee_id'])) {
 }
 
 // Include optimized database connection and auth check
-require_once '../../db_optimized.php';
+require_once '../../db_simple_optimized.php';
 require_once '../../auth_check.php';
 
 $pageTitle = "Manager Dashboard";
@@ -32,31 +32,31 @@ $stats = [
 
 // Get manager's team data with caching
 try {
-    $optimizedDB = OptimizedDB::getInstance();
+    $optimizedDB = SimpleOptimizedDB::getInstance();
     
     // Team members count (cached)
-    $result = $optimizedDB->query("SELECT COUNT(*) as total FROM employees WHERE status = 'active'", [], 'manager_team_count');
-    if (is_array($result) && !empty($result)) {
+    $result = $optimizedDB->queryCached("SELECT COUNT(*) as total FROM employees WHERE status = 'active'", 'manager_team_count', 5);
+    if (!empty($result)) {
         $stats['team_members'] = $result[0]['total'];
     }
     
     // Pending approvals (leave requests) - cached for 2 minutes
     $table_check = $conn->query("SHOW TABLES LIKE 'leave_requests'");
     if ($table_check && $table_check->num_rows > 0) {
-        $result = $optimizedDB->query("SELECT COUNT(*) as total FROM leave_requests WHERE status = 'pending'", [], 'manager_pending_approvals');
-        if (is_array($result) && !empty($result)) {
+        $result = $optimizedDB->queryCached("SELECT COUNT(*) as total FROM leave_requests WHERE status = 'pending'", 'manager_pending_approvals', 2);
+        if (!empty($result)) {
             $stats['pending_approvals'] = $result[0]['total'];
         }
     }
     
     // Team present today (cached for 30 minutes)
-    $result = $optimizedDB->query("
+    $result = $optimizedDB->queryCached("
         SELECT COUNT(DISTINCT a.employee_id) as total 
         FROM attendance a 
         INNER JOIN employees e ON a.employee_id = e.employee_id 
         WHERE a.attendance_date = CURDATE() AND e.status = 'active'
-    ", [], 'manager_team_present');
-    if (is_array($result) && !empty($result)) {
+    ", 'manager_team_present', 30);
+    if (!empty($result)) {
         $stats['team_present'] = $result[0]['total'];
     }
     
