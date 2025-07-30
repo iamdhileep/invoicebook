@@ -75,6 +75,9 @@ mail_config_*.php
 db_connection_test.php
 system_status.php
 status_check.html
+performance_analysis.php
+performance_results.php
+optimize_database.sql
 
 # OS and Editor Files
 .DS_Store

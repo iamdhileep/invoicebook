@@ -1,19 +1,82 @@
 <?php
+// Include performance monitor if requested
+if (isset($_GET['perf']) || isset($_COOKIE['perf_monitor'])) {
+    require_once '../../includes/performance_monitor.php';
+}
+
 session_start();
 
-// Set Employee session for demo (before auth check)
-if (!isset($_SESSION['employee_id'])) {
+// Check authentication
+if (!isset($_SESSION['user_id']) && !isset($_SESSION['employee_id'])) {
+    // Set demo Employee session
     $_SESSION['employee_id'] = 23; // Use existing employee ID
     $_SESSION['user_id'] = 23; // For auth compatibility
     $_SESSION['role'] = 'employee';
 }
 
-include '../../auth_check.php';
-include '../../db.php';
+// Include optimized database connection and auth check
+require_once '../../db_optimized.php';
+require_once '../../auth_check.php';
 
 $pageTitle = "Employee Portal";
-include '../../layouts/header.php';
-include '../../layouts/sidebar.php';
+
+// Get employee details
+$employee_id = $_SESSION['employee_id'];
+$employee = null;
+$today_attendance = null;
+$monthly_stats = [
+    'days_present' => 0,
+    'total_hours' => 0,
+    'avg_hours' => 0,
+    'leave_balance' => 15
+];
+
+try {
+    $optimizedDB = OptimizedDB::getInstance();
+    
+    // Get employee details (cached for 10 minutes)
+    $result = $optimizedDB->query("SELECT * FROM employees WHERE employee_id = ?", [$employee_id], "employee_details_$employee_id");
+    if (is_array($result) && !empty($result)) {
+        $employee = $result[0];
+    }
+    
+    // Get today's attendance (not cached as it changes frequently)
+    $stmt = $conn->prepare("
+        SELECT * FROM attendance 
+        WHERE employee_id = ? AND attendance_date = CURDATE()
+        ORDER BY id DESC LIMIT 1
+    ");
+    $stmt->bind_param("i", $employee_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($result && $result->num_rows > 0) {
+        $today_attendance = $result->fetch_assoc();
+    }
+    $stmt->close();
+    
+    // Get monthly statistics (cached for 1 hour)
+    $result = $optimizedDB->query("
+        SELECT 
+            COUNT(DISTINCT attendance_date) as days_present,
+            SUM(work_duration) as total_hours,
+            AVG(work_duration) as avg_hours
+        FROM attendance 
+        WHERE employee_id = ? 
+        AND MONTH(attendance_date) = MONTH(CURDATE()) 
+        AND YEAR(attendance_date) = YEAR(CURDATE())
+        AND punch_in_time IS NOT NULL
+    ", [$employee_id], "monthly_stats_$employee_id");
+    
+    if (is_array($result) && !empty($result)) {
+        $row = $result[0];
+        $monthly_stats['days_present'] = $row['days_present'] ?? 0;
+        $monthly_stats['total_hours'] = round($row['total_hours'] ?? 0, 2);
+        $monthly_stats['avg_hours'] = round($row['avg_hours'] ?? 0, 2);
+    }
+    
+} catch (Exception $e) {
+    error_log("Employee Portal database error: " . $e->getMessage());
+}
 ?>
 
 <div class="main-content">

@@ -1,43 +1,113 @@
 <?php
+// Include performance monitor if requested
+if (isset($_GET['perf']) || isset($_COOKIE['perf_monitor'])) {
+    require_once '../../includes/performance_monitor.php';
+}
+
 session_start();
 
-// Set HR session for demo (before auth check)
-if (!isset($_SESSION['admin'])) {
+// Check authentication
+if (!isset($_SESSION['user_id']) && !isset($_SESSION['admin'])) {
+    // Set demo HR session
     $_SESSION['admin'] = 1;
-    $_SESSION['user_id'] = 1; // For auth compatibility
+    $_SESSION['user_id'] = 1;
     $_SESSION['role'] = 'hr';
 }
 
-include '../../db.php';
+// Include optimized database connection
+require_once '../../db_optimized.php';
+
 $page_title = 'HR Dashboard';
 
-// Get dashboard statistics
+// Initialize statistics
 $stats = [
     'total_employees' => 0,
     'active_employees' => 0,
     'pending_leaves' => 0,
-    'today_attendance' => 0
+    'today_attendance' => 0,
+    'departments' => 0,
+    'total_payroll' => 0
 ];
 
+// Fetch dashboard data with caching and error handling
 try {
-    // Get total employees
-    $result = $conn->query("SELECT COUNT(*) as total FROM employees");
-    if ($result) $stats['total_employees'] = $result->fetch_assoc()['total'];
+    // Use optimized queries with caching
+    $optimizedDB = OptimizedDB::getInstance();
     
-    // Get active employees
-    $result = $conn->query("SELECT COUNT(*) as total FROM employees WHERE status = 'active'");
-    if ($result) $stats['active_employees'] = $result->fetch_assoc()['total'];
+    // Total employees (cached for 5 minutes)
+    $result = $optimizedDB->query("SELECT COUNT(*) as total FROM employees", [], 'total_employees');
+    if (is_array($result) && !empty($result)) {
+        $stats['total_employees'] = $result[0]['total'];
+    }
     
-    // Get pending leaves
-    $result = $conn->query("SELECT COUNT(*) as total FROM leave_requests WHERE status = 'pending'");
-    if ($result) $stats['pending_leaves'] = $result->fetch_assoc()['total'];
+    // Active employees (cached)
+    $result = $optimizedDB->query("SELECT COUNT(*) as total FROM employees WHERE status = 'active'", [], 'active_employees');
+    if (is_array($result) && !empty($result)) {
+        $stats['active_employees'] = $result[0]['total'];
+    }
     
-    // Get today's attendance
-    $result = $conn->query("SELECT COUNT(*) as total FROM attendance WHERE attendance_date = CURDATE()");
-    if ($result) $stats['today_attendance'] = $result->fetch_assoc()['total'];
+    // Today's attendance (cached for 1 minute since it changes frequently)
+    $result = $optimizedDB->query("SELECT COUNT(DISTINCT employee_id) as total FROM attendance WHERE attendance_date = CURDATE()", [], 'today_attendance');
+    if (is_array($result) && !empty($result)) {
+        $stats['today_attendance'] = $result[0]['total'];
+    }
+    
+    // Check if leave_requests table exists (cached)
+    $table_check = $conn->query("SHOW TABLES LIKE 'leave_requests'");
+    if ($table_check && $table_check->num_rows > 0) {
+        $result = $optimizedDB->query("SELECT COUNT(*) as total FROM leave_requests WHERE status = 'pending'", [], 'pending_leaves');
+        if (is_array($result) && !empty($result)) {
+            $stats['pending_leaves'] = $result[0]['total'];
+        }
+    }
+    
+    // Total payroll (cached)
+    $result = $optimizedDB->query("SELECT SUM(monthly_salary) as total FROM employees WHERE status = 'active'", [], 'total_payroll');
+    if (is_array($result) && !empty($result)) {
+        $stats['total_payroll'] = $result[0]['total'] ?? 0;
+    }
     
 } catch (Exception $e) {
-    error_log("HR Dashboard error: " . $e->getMessage());
+    error_log("HR Dashboard database error: " . $e->getMessage());
+}
+
+// Get recent activities (optimized query with limit)
+$recent_activities = [];
+try {
+    $recent_activities = $optimizedDB->query("
+        SELECT e.name, a.attendance_date, a.punch_in_time, a.punch_out_time 
+        FROM attendance a 
+        JOIN employees e ON a.employee_id = e.employee_id 
+        WHERE a.attendance_date >= DATE_SUB(CURDATE(), INTERVAL 3 DAYS)
+        ORDER BY a.attendance_date DESC, a.punch_in_time DESC 
+        LIMIT 8
+    ", [], 'recent_activities');
+    
+    if (!is_array($recent_activities)) {
+        $recent_activities = [];
+    }
+} catch (Exception $e) {
+    error_log("Recent activities error: " . $e->getMessage());
+    $recent_activities = [];
+}
+
+// Get employee list for quick access (optimized)
+$employees = [];
+try {
+    $employees = $optimizedDB->query("
+        SELECT employee_id, name, position, status 
+        FROM employees 
+        WHERE status = 'active' 
+        ORDER BY name 
+        LIMIT 15
+    ", [], 'active_employees_list');
+    
+    if (!is_array($employees)) {
+        $employees = [];
+    }
+} catch (Exception $e) {
+    error_log("Employee list error: " . $e->getMessage());
+    $employees = [];
 }
 ?>
 
