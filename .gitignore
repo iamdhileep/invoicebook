@@ -1,0 +1,111 @@
+# Development and Test Files
+test_*.php
+test_*.html
+debug_*.php
+*_test.php
+*_debug.php
+*_backup.php
+*_clean.php
+*_fixed.php
+*_old.php
+final_*.php
+comprehensive_*.php
+
+# Development Database Files
+database_*_test.sql
+*_backup.sql
+fix_*.sql
+setup_*.sql
+enhanced_*.sql
+hrms_*.sql
+
+# Setup and Development Scripts
+setup_*.php
+check_*.php
+fix_*.php
+create_sample_*.php
+migrate_*.php
+standardize_*.php
+drop_*.php
+clear_*.php
+alter_*.php
+
+# Documentation Development Files
+*.md
+FEATURE_*.md
+IMPLEMENTATION_*.md
+REPAIR_*.md
+ATTENDANCE_*.md
+PORTAL_*.md
+SMART_*.md
+TIME_TRACKING_*.md
+COMPLETE_*.md
+FINAL_*.md
+GEOLOCATION_*.md
+MOBILE_*.md
+
+# Temporary Development Files
+demo_*.php
+simulate_*.php
+portal_test.php
+html_output_test.php
+save_display_test.php
+attendance_page_test.php
+login_test.php
+full_diagnostic.php
+quick_setup.php
+system_health_check.php
+
+# External Integration Test Files
+external_*.php
+notification_*.php
+realtime_*.php
+mobile_attendance_api.php
+smart_*.php
+face_*.php
+email_setup_*.php
+
+# Report and Analysis Files
+*_report.php
+*_final_report.php
+employee_login_*.php
+mail_config_*.php
+
+# OS and Editor Files
+.DS_Store
+.vscode/settings.json
+.cursor/
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+
+# Screenshots and Images used for development
+Screenshot*.png
+test_*.png
+
+# API Test Files
+api_test.*
+*_api_test.*
+test_api.*
+
+# Performance and Load Test Files
+performance_test.*
+load_test.*
+
+# Development HTML Files
+test_*.html
+debug_*.html
+*_test.html
+*_debug.html
+api_test.html
+performance_test.html
+biometric_test_suite.html
+click_test.html
+css_path_test.html
+direct_test.html
+
+# Citation and Reference Files
+"# Code Citations.md"
