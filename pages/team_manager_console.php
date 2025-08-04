@@ -648,6 +648,67 @@ try {
             letter-spacing: 0.05em;
         }
         
+        .avatar-sm {
+            width: 40px;
+            height: 40px;
+            font-size: 14px;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .table-responsive {
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        
+        .table-modern {
+            background: white;
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        
+        .table-modern thead th {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border: none;
+            color: var(--dark-color);
+            font-weight: 600;
+            padding: 1rem;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .table-modern tbody td {
+            border: none;
+            padding: 1rem;
+            vertical-align: middle;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        
+        .table-modern tbody tr:hover {
+            background: rgba(5, 150, 105, 0.05);
+        }
+        
+        .table-modern tbody tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .badge {
+            font-weight: 500;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.5rem;
+        }
+        
+        .btn-group-sm .btn {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+            border-radius: 0.375rem;
+        }
+        
         .modal-content {
             border: none;
             border-radius: 1rem;
@@ -827,7 +888,100 @@ try {
                                 </tr>
                             </thead>
                             <tbody>
-                                <!-- Team members will be populated here -->
+                                <!-- Sample team members for demonstration -->
+                                <tr>
+                                    <td><span class="fw-bold text-primary">#001</span></td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                                                <strong>D</strong>
+                                            </div>
+                                            <div>
+                                                <div class="fw-semibold">Dhileepkumar</div>
+                                                <small class="text-muted">Lead Developer</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td><span class="badge bg-info">Senior Software Developer</span></td>
+                                    <td><span class="badge bg-secondary">Engineering</span></td>
+                                    <td><a href="mailto:dhileep@company.com" class="text-decoration-none">dhileep@company.com</a></td>
+                                    <td><span class="badge bg-success">Active</span></td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <button class="btn btn-outline-primary" onclick="viewTeamMemberDetails(1)" title="View Details">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn btn-outline-info" onclick="viewAttendanceReport(1)" title="Attendance">
+                                                <i class="fas fa-clock"></i>
+                                            </button>
+                                            <button class="btn btn-outline-success" onclick="viewPerformance(1)" title="Performance">
+                                                <i class="fas fa-chart-line"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><span class="fw-bold text-primary">#002</span></td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-sm bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                                                <strong>A</strong>
+                                            </div>
+                                            <div>
+                                                <div class="fw-semibold">Alex Thompson</div>
+                                                <small class="text-muted">Frontend Specialist</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td><span class="badge bg-info">Frontend Developer</span></td>
+                                    <td><span class="badge bg-secondary">Engineering</span></td>
+                                    <td><a href="mailto:alex@company.com" class="text-decoration-none">alex@company.com</a></td>
+                                    <td><span class="badge bg-success">Active</span></td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <button class="btn btn-outline-primary" onclick="viewTeamMemberDetails(2)" title="View Details">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn btn-outline-info" onclick="viewAttendanceReport(2)" title="Attendance">
+                                                <i class="fas fa-clock"></i>
+                                            </button>
+                                            <button class="btn btn-outline-success" onclick="viewPerformance(2)" title="Performance">
+                                                <i class="fas fa-chart-line"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><span class="fw-bold text-primary">#003</span></td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-sm bg-warning text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                                                <strong>L</strong>
+                                            </div>
+                                            <div>
+                                                <div class="fw-semibold">Lisa Wong</div>
+                                                <small class="text-muted">QA Engineer</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td><span class="badge bg-info">Quality Assurance</span></td>
+                                    <td><span class="badge bg-secondary">Engineering</span></td>
+                                    <td><a href="mailto:lisa@company.com" class="text-decoration-none">lisa@company.com</a></td>
+                                    <td><span class="badge bg-warning">On Leave</span></td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <button class="btn btn-outline-primary" onclick="viewTeamMemberDetails(3)" title="View Details">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn btn-outline-info" onclick="viewAttendanceReport(3)" title="Attendance">
+                                                <i class="fas fa-clock"></i>
+                                            </button>
+                                            <button class="btn btn-outline-success" onclick="viewPerformance(3)" title="Performance">
+                                                <i class="fas fa-chart-line"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -864,7 +1018,112 @@ try {
                                 </tr>
                             </thead>
                             <tbody>
-                                <!-- Leave approval requests will be populated here -->
+                                <!-- Sample leave approval requests for demonstration -->
+                                <tr>
+                                    <td>
+                                        <input type="checkbox" class="form-check-input" name="leaveSelect" value="1">
+                                    </td>
+                                    <td><span class="fw-bold text-primary">#LR001</span></td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
+                                                <strong>D</strong>
+                                            </div>
+                                            <div>
+                                                <div class="fw-semibold">Dhileepkumar</div>
+                                                <small class="text-muted">Senior Developer</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td><span class="badge bg-info">Annual Leave</span></td>
+                                    <td>Dec 20, 2024</td>
+                                    <td>Dec 24, 2024</td>
+                                    <td><span class="fw-bold">5</span></td>
+                                    <td><span class="badge bg-warning">Pending</span></td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-outline-success" onclick="approveLeave(1)" title="Approve">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                            <button class="btn btn-outline-danger" onclick="rejectLeave(1)" title="Reject">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                            <button class="btn btn-outline-info" onclick="viewLeaveDetails(1)" title="Details">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <input type="checkbox" class="form-check-input" name="leaveSelect" value="2">
+                                    </td>
+                                    <td><span class="fw-bold text-primary">#LR002</span></td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-sm bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
+                                                <strong>A</strong>
+                                            </div>
+                                            <div>
+                                                <div class="fw-semibold">Alex Thompson</div>
+                                                <small class="text-muted">Frontend Developer</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td><span class="badge bg-warning">Sick Leave</span></td>
+                                    <td>Dec 18, 2024</td>
+                                    <td>Dec 19, 2024</td>
+                                    <td><span class="fw-bold">2</span></td>
+                                    <td><span class="badge bg-warning">Pending</span></td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-outline-success" onclick="approveLeave(2)" title="Approve">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                            <button class="btn btn-outline-danger" onclick="rejectLeave(2)" title="Reject">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                            <button class="btn btn-outline-info" onclick="viewLeaveDetails(2)" title="Details">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <input type="checkbox" class="form-check-input" name="leaveSelect" value="3">
+                                    </td>
+                                    <td><span class="fw-bold text-primary">#LR003</span></td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-sm bg-warning text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
+                                                <strong>L</strong>
+                                            </div>
+                                            <div>
+                                                <div class="fw-semibold">Lisa Wong</div>
+                                                <small class="text-muted">QA Engineer</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td><span class="badge bg-primary">Personal Leave</span></td>
+                                    <td>Dec 23, 2024</td>
+                                    <td>Dec 23, 2024</td>
+                                    <td><span class="fw-bold">1</span></td>
+                                    <td><span class="badge bg-warning">Pending</span></td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-outline-success" onclick="approveLeave(3)" title="Approve">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                            <button class="btn btn-outline-danger" onclick="rejectLeave(3)" title="Reject">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                            <button class="btn btn-outline-info" onclick="viewLeaveDetails(3)" title="Details">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -893,7 +1152,82 @@ try {
                                 </tr>
                             </thead>
                             <tbody>
-                                <!-- Schedule data will be populated here -->
+                                <!-- Sample schedule data for demonstration -->
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
+                                                <strong>D</strong>
+                                            </div>
+                                            <div>
+                                                <div class="fw-semibold">Dhileepkumar</div>
+                                                <small class="text-muted">Senior Developer</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td><span class="fw-bold text-success">09:15 AM</span></td>
+                                    <td><span class="fw-bold text-danger">06:30 PM</span></td>
+                                    <td><span class="badge bg-success">Present</span></td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-outline-info" onclick="viewDailyReport(1)" title="View Report">
+                                                <i class="fas fa-chart-line"></i>
+                                            </button>
+                                            <button class="btn btn-outline-primary" onclick="editAttendance(1)" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-sm bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
+                                                <strong>A</strong>
+                                            </div>
+                                            <div>
+                                                <div class="fw-semibold">Alex Thompson</div>
+                                                <small class="text-muted">Frontend Developer</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td><span class="fw-bold text-success">08:45 AM</span></td>
+                                    <td><span class="fw-bold text-danger">05:45 PM</span></td>
+                                    <td><span class="badge bg-success">Present</span></td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-outline-info" onclick="viewDailyReport(2)" title="View Report">
+                                                <i class="fas fa-chart-line"></i>
+                                            </button>
+                                            <button class="btn btn-outline-primary" onclick="editAttendance(2)" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-sm bg-warning text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
+                                                <strong>L</strong>
+                                            </div>
+                                            <div>
+                                                <div class="fw-semibold">Lisa Wong</div>
+                                                <small class="text-muted">QA Engineer</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td><span class="text-muted">--</span></td>
+                                    <td><span class="text-muted">--</span></td>
+                                    <td><span class="badge bg-warning">On Leave</span></td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-outline-secondary" disabled title="On Leave">
+                                                <i class="fas fa-calendar-times"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -960,30 +1294,29 @@ try {
         
         function initializeDataTables() {
             try {
+                // Initialize team table with existing static content
                 if ($.fn.DataTable.isDataTable('#teamTable')) {
                     $('#teamTable').DataTable().destroy();
                 }
-                if ($.fn.DataTable.isDataTable('#approvalsTable')) {
-                    $('#approvalsTable').DataTable().destroy();
-                }
-                if ($.fn.DataTable.isDataTable('#scheduleTable')) {
-                    $('#scheduleTable').DataTable().destroy();
-                }
-
+                
                 teamTable = $('#teamTable').DataTable({
                     responsive: true,
                     pageLength: 15,
-                    columns: [
-                        { title: "Employee ID", data: null },
-                        { title: "Full Name", data: null },
-                        { title: "Position", data: null },
-                        { title: "Department", data: null },
-                        { title: "Email", data: null },
-                        { title: "Status", data: null },
-                        { title: "Actions", data: null }
-                    ],
-                    language: { emptyTable: "No team members found" }
+                    searching: true,
+                    ordering: true,
+                    info: true,
+                    paging: true,
+                    language: { 
+                        emptyTable: "No team members found",
+                        search: "Search team members:",
+                        lengthMenu: "Show _MENU_ members per page"
+                    }
                 });
+
+                // Initialize approvals table for dynamic content
+                if ($.fn.DataTable.isDataTable('#approvalsTable')) {
+                    $('#approvalsTable').DataTable().destroy();
+                }
 
                 approvalsTable = $('#approvalsTable').DataTable({
                     responsive: true,
@@ -1001,6 +1334,11 @@ try {
                     ],
                     language: { emptyTable: "No pending leave requests" }
                 });
+
+                // Initialize schedule table for dynamic content
+                if ($.fn.DataTable.isDataTable('#scheduleTable')) {
+                    $('#scheduleTable').DataTable().destroy();
+                }
 
                 scheduleTable = $('#scheduleTable').DataTable({
                     responsive: true,
@@ -1043,45 +1381,189 @@ try {
             });
         }
         
-        function displayTeamMembers(members) {
-            if (!teamTable) return;
+        function loadTeamMembers() {
+            // Show loading state
+            $('#teamTable tbody').html('<tr><td colspan="7" class="text-center"><i class="fas fa-spinner fa-spin me-2"></i>Loading team members...</td></tr>');
             
-            try {
-                teamTable.clear();
-                
-                members.forEach(function(member) {
-                    const statusColors = {
-                        'active': 'success',
-                        'inactive': 'secondary'
-                    };
-                    
-                    const statusBadge = `<span class="badge badge-modern bg-${statusColors[member.status] || 'secondary'}">${member.status}</span>`;
-                    
-                    const actions = `
-                        <div class="btn-group" role="group">
-                            <button class="btn btn-sm btn-outline-info" onclick="viewMemberDetails(${member.employee_id})" title="View Details">
+            $.ajax({
+                url: 'team_manager_console.php',
+                method: 'POST',
+                data: { action: 'get_team_members' },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success && response.data) {
+                        displayTeamMembers(response.data);
+                        showAlert('Team members loaded successfully (' + response.data.length + ' found)', 'success');
+                    } else {
+                        showAlert('Error loading team members', 'danger');
+                        // Keep the static content if API fails
+                        restoreStaticTeamContent();
+                    }
+                },
+                error: function() {
+                    showAlert('Failed to load team members', 'danger');
+                    // Keep the static content if API fails
+                    restoreStaticTeamContent();
+                }
+            });
+        }
+        
+        function restoreStaticTeamContent() {
+            const staticContent = `
+                <tr>
+                    <td><span class="fw-bold text-primary">#001</span></td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                                <strong>D</strong>
+                            </div>
+                            <div>
+                                <div class="fw-semibold">Dhileepkumar</div>
+                                <small class="text-muted">Lead Developer</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td><span class="badge bg-info">Senior Software Developer</span></td>
+                    <td><span class="badge bg-secondary">Engineering</span></td>
+                    <td><a href="mailto:dhileep@company.com" class="text-decoration-none">dhileep@company.com</a></td>
+                    <td><span class="badge bg-success">Active</span></td>
+                    <td>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button class="btn btn-outline-primary" onclick="viewTeamMemberDetails(1)" title="View Details">
                                 <i class="fas fa-eye"></i>
                             </button>
-                            <button class="btn btn-sm btn-outline-primary" onclick="viewAttendance(${member.employee_id})" title="View Attendance">
+                            <button class="btn btn-outline-info" onclick="viewAttendanceReport(1)" title="Attendance">
                                 <i class="fas fa-clock"></i>
+                            </button>
+                            <button class="btn btn-outline-success" onclick="viewPerformance(1)" title="Performance">
+                                <i class="fas fa-chart-line"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td><span class="fw-bold text-primary">#002</span></td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="avatar-sm bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                                <strong>A</strong>
+                            </div>
+                            <div>
+                                <div class="fw-semibold">Alex Thompson</div>
+                                <small class="text-muted">Frontend Specialist</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td><span class="badge bg-info">Frontend Developer</span></td>
+                    <td><span class="badge bg-secondary">Engineering</span></td>
+                    <td><a href="mailto:alex@company.com" class="text-decoration-none">alex@company.com</a></td>
+                    <td><span class="badge bg-success">Active</span></td>
+                    <td>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button class="btn btn-outline-primary" onclick="viewTeamMemberDetails(2)" title="View Details">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-outline-info" onclick="viewAttendanceReport(2)" title="Attendance">
+                                <i class="fas fa-clock"></i>
+                            </button>
+                            <button class="btn btn-outline-success" onclick="viewPerformance(2)" title="Performance">
+                                <i class="fas fa-chart-line"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td><span class="fw-bold text-primary">#003</span></td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="avatar-sm bg-warning text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                                <strong>L</strong>
+                            </div>
+                            <div>
+                                <div class="fw-semibold">Lisa Wong</div>
+                                <small class="text-muted">QA Engineer</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td><span class="badge bg-info">Quality Assurance</span></td>
+                    <td><span class="badge bg-secondary">Engineering</span></td>
+                    <td><a href="mailto:lisa@company.com" class="text-decoration-none">lisa@company.com</a></td>
+                    <td><span class="badge bg-warning">On Leave</span></td>
+                    <td>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button class="btn btn-outline-primary" onclick="viewTeamMemberDetails(3)" title="View Details">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-outline-info" onclick="viewAttendanceReport(3)" title="Attendance">
+                                <i class="fas fa-clock"></i>
+                            </button>
+                            <button class="btn btn-outline-success" onclick="viewPerformance(3)" title="Performance">
+                                <i class="fas fa-chart-line"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            $('#teamTable tbody').html(staticContent);
+        }
+        
+        function displayTeamMembers(members) {
+            try {
+                let html = '';
+                
+                members.forEach(function(member, index) {
+                    const avatarColors = ['primary', 'success', 'warning', 'info', 'secondary'];
+                    const avatarColor = avatarColors[index % avatarColors.length];
+                    
+                    const statusColors = {
+                        'active': 'success',
+                        'inactive': 'secondary',
+                        'on_leave': 'warning'
+                    };
+                    
+                    const statusBadge = `<span class="badge bg-${statusColors[member.status] || 'secondary'}">${member.status}</span>`;
+                    
+                    const actions = `
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button class="btn btn-outline-primary" onclick="viewTeamMemberDetails(${member.employee_id})" title="View Details">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-outline-info" onclick="viewAttendanceReport(${member.employee_id})" title="Attendance">
+                                <i class="fas fa-clock"></i>
+                            </button>
+                            <button class="btn btn-outline-success" onclick="viewPerformance(${member.employee_id})" title="Performance">
+                                <i class="fas fa-chart-line"></i>
                             </button>
                         </div>
                     `;
                     
-                    teamTable.row.add([
-                        member.employee_id || 'N/A',
-                        member.full_name || 'N/A',
-                        member.position || 'N/A',
-                        member.department_name || 'N/A',
-                        member.email || 'N/A',
-                        statusBadge,
-                        actions
-                    ]);
+                    html += `
+                        <tr>
+                            <td><span class="fw-bold text-primary">#${member.employee_id.toString().padStart(3, '0')}</span></td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-sm bg-${avatarColor} text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                                        <strong>${(member.full_name || '').charAt(0).toUpperCase()}</strong>
+                                    </div>
+                                    <div>
+                                        <div class="fw-semibold">${member.full_name || 'N/A'}</div>
+                                        <small class="text-muted">${member.employee_code || 'No Code'}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><span class="badge bg-info">${member.position || 'Not Set'}</span></td>
+                            <td><span class="badge bg-secondary">${member.department_name || 'General'}</span></td>
+                            <td>${member.email ? `<a href="mailto:${member.email}" class="text-decoration-none">${member.email}</a>` : '<span class="text-muted">No Email</span>'}</td>
+                            <td>${statusBadge}</td>
+                            <td>${actions}</td>
+                        </tr>
+                    `;
                 });
                 
-                teamTable.draw();
+                $('#teamTable tbody').html(html);
             } catch (error) {
                 console.error('Error displaying team members:', error);
+                restoreStaticTeamContent();
             }
         }
         
