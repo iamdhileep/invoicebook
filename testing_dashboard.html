@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BillBook HRMS - Testing Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+        .testing-card { background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin-bottom: 2rem; }
+        .test-link { display: block; padding: 15px; border-radius: 10px; margin: 10px 0; text-decoration: none; transition: all 0.3s; }
+        .test-link:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .status-pending { background: #fff3cd; color: #856404; border-left: 4px solid #ffc107; }
+        .status-testing { background: #cce5ff; color: #004085; border-left: 4px solid #007bff; }
+        .status-pass { background: #d4edda; color: #155724; border-left: 4px solid #28a745; }
+        .status-fail { background: #f8d7da; color: #721c24; border-left: 4px solid #dc3545; }
+        .module-header { background: linear-gradient(45deg, #667eea, #764ba2); color: white; padding: 20px; border-radius: 15px 15px 0 0; }
+    </style>
+</head>
+<body>
+    <div class="container-fluid py-4">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="testing-card">
+                    <div class="module-header text-center">
+                        <h1><i class="fas fa-clipboard-check me-3"></i>BillBook HRMS Testing Dashboard</h1>
+                        <p class="mb-0">Comprehensive System Testing Portal - Version v1.0.0-hrms-cleanup</p>
+                        <small>Testing Date: <?php echo date('F j, Y - g:i A'); ?></small>
+                    </div>
+                    
+                    <div class="p-4">
+                        <!-- Quick System Status -->
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <h3><i class="fas fa-heartbeat text-danger me-2"></i>System Health Check</h3>
+                                <a href="system_health_check.php" class="test-link status-pending" target="_blank">
+                                    <i class="fas fa-stethoscope me-2"></i><strong>Run System Health Check</strong>
+                                    <small class="d-block">Verify database connections, files, and basic functionality</small>
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Core HRMS Modules Testing -->
+                        <div class="row">
+                            <div class="col-md-4">
+                                <h4><i class="fas fa-user-shield text-primary me-2"></i>Admin Panel Testing</h4>
+                                
+                                <a href="pages/hrms_admin_panel.php" class="test-link status-pending" target="_blank">
+                                    <i class="fas fa-tachometer-alt me-2"></i><strong>HRMS Admin Panel</strong>
+                                    <small class="d-block">Test dashboard, employee management, leave system</small>
+                                </a>
+                                
+                                <div class="mt-3">
+                                    <h6>Test Items:</h6>
+                                    <ul class="small">
+                                        <li>Dashboard statistics display</li>
+                                        <li>Employee management (add/edit/view)</li>
+                                        <li>Leave management system</li>
+                                        <li>Permissions & access control</li>
+                                        <li>Analytics & insights</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <h4><i class="fas fa-user text-success me-2"></i>Staff Self-Service</h4>
+                                
+                                <a href="pages/staff_self_service.php" class="test-link status-pending" target="_blank">
+                                    <i class="fas fa-user-circle me-2"></i><strong>Staff Portal</strong>
+                                    <small class="d-block">Test employee login, leave application, attendance</small>
+                                </a>
+                                
+                                <div class="mt-3">
+                                    <h6>Test Items:</h6>
+                                    <ul class="small">
+                                        <li>Employee authentication</li>
+                                        <li>Leave application submission</li>
+                                        <li>Attendance tracking</li>
+                                        <li>Mobile responsiveness</li>
+                                        <li>Profile management</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <h4><i class="fas fa-users text-warning me-2"></i>Manager Console</h4>
+                                
+                                <a href="pages/team_manager_console.php" class="test-link status-pending" target="_blank">
+                                    <i class="fas fa-users-cog me-2"></i><strong>Team Manager Console</strong>
+                                    <small class="d-block">Test team management, approvals, analytics</small>
+                                </a>
+                                
+                                <div class="mt-3">
+                                    <h6>Test Items:</h6>
+                                    <ul class="small">
+                                        <li>Team member overview</li>
+                                        <li>Leave approval workflow</li>
+                                        <li>Attendance monitoring</li>
+                                        <li>Team analytics</li>
+                                        <li>Bulk operations</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Additional Testing Tools -->
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <h4><i class="fas fa-database text-info me-2"></i>Database & API Testing</h4>
+                                
+                                <a href="api/advanced_hrms_api.php?action=test" class="test-link status-pending" target="_blank">
+                                    <i class="fas fa-plug me-2"></i><strong>Advanced HRMS API</strong>
+                                    <small class="d-block">Test API endpoints and data validation</small>
+                                </a>
+                                
+                                <a href="api/mobile_hrms_api.php?action=test" class="test-link status-pending" target="_blank">
+                                    <i class="fas fa-mobile-alt me-2"></i><strong>Mobile HRMS API</strong>
+                                    <small class="d-block">Test mobile API and location services</small>
+                                </a>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <h4><i class="fas fa-chart-bar text-danger me-2"></i>Reports & Analytics</h4>
+                                
+                                <a href="pages/attendance/attendance.php" class="test-link status-pending" target="_blank">
+                                    <i class="fas fa-clock me-2"></i><strong>Attendance System</strong>
+                                    <small class="d-block">Test attendance tracking and reporting</small>
+                                </a>
+                                
+                                <a href="dashboard.php" class="test-link status-pending" target="_blank">
+                                    <i class="fas fa-home me-2"></i><strong>Main Dashboard</strong>
+                                    <small class="d-block">Test main portal and navigation</small>
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Testing Instructions -->
+                        <div class="row mt-4">
+                            <div class="col-md-12">
+                                <div class="alert alert-info">
+                                    <h5><i class="fas fa-info-circle me-2"></i>Testing Instructions</h5>
+                                    <ol>
+                                        <li><strong>Start with System Health Check</strong> - Verify all components are working</li>
+                                        <li><strong>Test Each Module</strong> - Click links above to open each HRMS component</li>
+                                        <li><strong>Document Issues</strong> - Note any errors, bugs, or performance issues</li>
+                                        <li><strong>Check Mobile</strong> - Test on mobile devices and different browsers</li>
+                                        <li><strong>Security Testing</strong> - Try edge cases and security scenarios</li>
+                                    </ol>
+                                    
+                                    <div class="mt-3">
+                                        <strong>Testing Checklist:</strong> 
+                                        <a href="TESTING_CHECKLIST.md" target="_blank" class="btn btn-sm btn-outline-primary ms-2">
+                                            <i class="fas fa-file-alt me-1"></i>Open Checklist
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quick Actions -->
+                        <div class="row mt-3">
+                            <div class="col-md-12 text-center">
+                                <h5>Quick Actions</h5>
+                                <a href="login.php" class="btn btn-primary me-2" target="_blank">
+                                    <i class="fas fa-sign-in-alt me-1"></i>Test Login
+                                </a>
+                                <a href="index.php" class="btn btn-secondary me-2" target="_blank">
+                                    <i class="fas fa-home me-1"></i>Main Portal
+                                </a>
+                                <a href="https://github.com/iamdhileep/invoicebook" class="btn btn-dark" target="_blank">
+                                    <i class="fab fa-github me-1"></i>GitHub Repo
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Track testing status
+        function updateTestStatus(link, status) {
+            link.className = link.className.replace(/status-\w+/, 'status-' + status);
+        }
+        
+        // Add click tracking
+        document.querySelectorAll('.test-link').forEach(link => {
+            link.addEventListener('click', function() {
+                updateTestStatus(this, 'testing');
+                // You can expand this to save testing progress
+            });
+        });
+
+        console.log('🚀 BillBook HRMS Testing Dashboard Loaded');
+        console.log('📋 Follow the testing checklist systematically');
+        console.log('🔍 Document any issues found during testing');
+    </script>
+</body>
+</html>
