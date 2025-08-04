@@ -124,29 +124,6 @@ if (strpos($_SERVER['SCRIPT_NAME'], '/pages/') === false) {
             </a>
         </div>
 
-        <!-- Portal Management -->
-        <div class="nav-section">
-            <div class="nav-section-title">Portal Management</div>
-        </div>
-        <div class="nav-item">
-            <a href="<?= $basePath ?>pages/hr/hrms_admin_panel.php" class="nav-link <?= in_array($current_page, ['hrms_admin_panel']) ? 'active' : '' ?>">
-                <i class="bi bi-person-workspace"></i>
-                <span>HR Portal</span>
-            </a>
-        </div>
-        <div class="nav-item">
-            <a href="<?= $basePath ?>pages/hr/team_manager_console.php" class="nav-link <?= in_array($current_page, ['team_manager_console']) ? 'active' : '' ?>">
-                <i class="bi bi-person-gear"></i>
-                <span>Manager Portal</span>
-            </a>
-        </div>
-        <div class="nav-item">
-            <a href="<?= $basePath ?>pages/employee/staff_self_service.php" class="nav-link <?= in_array($current_page, ['staff_self_service']) ? 'active' : '' ?>">
-                <i class="bi bi-person-badge"></i>
-                <span>Employee Portal</span>
-            </a>
-        </div>
-
         <!-- Human Resources -->
         <div class="nav-section">
             <div class="nav-section-title">Human Resources</div>
@@ -154,21 +131,21 @@ if (strpos($_SERVER['SCRIPT_NAME'], '/pages/') === false) {
         
         <!-- HR & Manager Portals -->
         <div class="nav-item">
-            <a href="<?= $basePath ?>pages/hr/hrms_admin_panel.php" class="nav-link <?= $current_page === 'hrms_admin_panel' ? 'active' : '' ?>">
+            <a href="<?= $basePath ?>pages/hrms_admin_panel.php" class="nav-link <?= $current_page === 'hrms_admin_panel' ? 'active' : '' ?>">
                 <i class="bi bi-shield-check text-primary"></i>
                 <span>HR Portal</span>
                 <span class="badge bg-primary ms-auto">NEW</span>
             </a>
         </div>
         <div class="nav-item">
-            <a href="<?= $basePath ?>pages/hr/team_manager_console.php" class="nav-link <?= $current_page === 'team_manager_console' ? 'active' : '' ?>">
+            <a href="<?= $basePath ?>pages/team_manager_console.php" class="nav-link <?= $current_page === 'team_manager_console' ? 'active' : '' ?>">
                 <i class="bi bi-person-badge text-success"></i>
                 <span>Manager Portal</span>
                 <span class="badge bg-success ms-auto">NEW</span>
             </a>
         </div>
         <div class="nav-item">
-            <a href="<?= $basePath ?>pages/employee/staff_self_service.php" class="nav-link <?= $current_page === 'staff_self_service' ? 'active' : '' ?>">
+            <a href="<?= $basePath ?>pages/staff_self_service.php" class="nav-link <?= $current_page === 'staff_self_service' ? 'active' : '' ?>">
                 <i class="bi bi-person-circle text-info"></i>
                 <span>Employee Portal</span>
                 <span class="badge bg-info ms-auto">NEW</span>
