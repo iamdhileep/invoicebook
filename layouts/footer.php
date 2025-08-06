@@ -355,6 +355,73 @@
             const loadTime = performance.timing.loadEventEnd - performance.timing.navigationStart;
             // Page loaded in ${loadTime}ms
         });
+        
+        // PWA Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/billbook/HRMS/sw.js')
+                    .then(registration => {
+                        console.log('SW registered: ', registration);
+                        
+                        // Check for updates
+                        registration.addEventListener('updatefound', () => {
+                            const newWorker = registration.installing;
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    // New content available, show update prompt
+                                    showUpdateAvailableNotification();
+                                }
+                            });
+                        });
+                    })
+                    .catch(registrationError => {
+                        console.log('SW registration failed: ', registrationError);
+                    });
+            });
+        }
+        
+        // Update notification
+        function showUpdateAvailableNotification() {
+            if (confirm('A new version of the app is available. Would you like to refresh to get the latest features?')) {
+                window.location.reload();
+            }
+        }
+        
+        // Install PWA prompt
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            // Show install button if available
+            const installBtn = document.createElement('div');
+            installBtn.className = 'position-fixed bottom-0 end-0 m-3 p-3 bg-primary text-white rounded shadow';
+            installBtn.style.cursor = 'pointer';
+            installBtn.style.zIndex = '9999';
+            installBtn.innerHTML = `
+                <i class="fas fa-download me-2"></i>
+                Install HRMS App
+                <button class="btn btn-sm btn-light ms-2" onclick="this.parentElement.remove()">×</button>
+            `;
+            
+            installBtn.addEventListener('click', async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    deferredPrompt = null;
+                    installBtn.remove();
+                }
+            });
+            
+            // Auto-remove after 10 seconds
+            setTimeout(() => {
+                if (document.body.contains(installBtn)) {
+                    installBtn.remove();
+                }
+            }, 10000);
+            
+            document.body.appendChild(installBtn);
+        });
     </script>
     
     <!-- Page-specific scripts can be added here -->

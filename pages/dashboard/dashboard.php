@@ -119,94 +119,102 @@ include '../../layouts/sidebar.php';
         </div>
 
         <!-- Key Statistics -->
-        <div class="row g-2 mb-3">
+        <div class="row g-4 mb-4">
         <div class="col-xl-3 col-lg-6 col-md-6">
-            <div class="stat-card animate-fade-in-up" style="animation-delay: 0.1s;">
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <div>
-                        <div class="stat-label">Total Revenue</div>
-                        <div class="stat-value">₹<?= number_format($totalInvoices, 0) ?></div>
-                        <div class="stat-change positive">
-                            <i class="bi bi-arrow-up"></i>
-                            <?= $revenueGrowth ?> from last month
+            <div class="stat-card stat-revenue animate-fade-in-up" style="animation-delay: 0.1s;">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <div class="stat-label">Total Revenue</div>
+                            <div class="stat-number">₹<?= number_format($totalInvoices, 0) ?></div>
+                            <div class="stat-change positive">
+                                <i class="bi bi-arrow-up"></i>
+                                <?= $revenueGrowth ?> from last month
+                            </div>
+                        </div>
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #10b981, #34d399);">
+                            <i class="bi bi-currency-rupee" style="font-size: 1.5rem; color: white;"></i>
                         </div>
                     </div>
-                    <div class="p-3 rounded-circle" style="background: linear-gradient(135deg, #10b981, #34d399);">
-                        <i class="bi bi-currency-rupee" style="font-size: 1.5rem; color: white;"></i>
+                    <div class="progress-modern">
+                        <div class="progress-bar bg-success" style="width: 75%"></div>
                     </div>
-                </div>
-                <div class="progress" style="height: 4px;">
-                    <div class="progress-bar bg-success" style="width: 75%"></div>
                 </div>
             </div>
         </div>
 
         <div class="col-xl-3 col-lg-6 col-md-6">
-            <div class="stat-card animate-fade-in-up" style="animation-delay: 0.2s;">
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <div>
-                        <div class="stat-label">Monthly Revenue</div>
-                        <div class="stat-value">₹<?= number_format($monthlyRevenue, 0) ?></div>
-                        <div class="stat-change positive">
-                            <i class="bi bi-arrow-up"></i>
-                            Target: ₹100K
+            <div class="stat-card stat-target animate-fade-in-up" style="animation-delay: 0.2s;">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <div class="stat-label">Monthly Revenue</div>
+                            <div class="stat-number">₹<?= number_format($monthlyRevenue, 0) ?></div>
+                            <div class="stat-change positive">
+                                <i class="bi bi-arrow-up"></i>
+                                Target: ₹100K
+                            </div>
+                        </div>
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #3b82f6, #60a5fa);">
+                            <i class="bi bi-graph-up-arrow" style="font-size: 1.5rem; color: white;"></i>
                         </div>
                     </div>
-                    <div class="p-3 rounded-circle" style="background: linear-gradient(135deg, #3b82f6, #60a5fa);">
-                        <i class="bi bi-graph-up-arrow" style="font-size: 1.5rem; color: white;"></i>
+                    <div class="progress-modern">
+                        <div class="progress-bar bg-primary" style="width: <?= min(($monthlyRevenue / 100000) * 100, 100) ?>%"></div>
                     </div>
-                </div>
-                <div class="progress" style="height: 4px;">
-                    <div class="progress-bar bg-primary" style="width: <?= min(($monthlyRevenue / 100000) * 100, 100) ?>%"></div>
                 </div>
             </div>
         </div>
 
         <div class="col-xl-3 col-lg-6 col-md-6">
-            <div class="stat-card animate-fade-in-up" style="animation-delay: 0.3s;">
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <div>
-                        <div class="stat-label">Today's Expenses</div>
-                        <div class="stat-value">₹<?= number_format($todayExpenses, 0) ?></div>
-                        <div class="stat-change <?= $todayExpenses > 5000 ? 'negative' : 'positive' ?>">
-                            <i class="bi bi-<?= $todayExpenses > 5000 ? 'arrow-up' : 'arrow-down' ?>"></i>
-                            <?= $expenseGrowth ?> vs average
+            <div class="stat-card stat-expense animate-fade-in-up" style="animation-delay: 0.3s;">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <div class="stat-label">Today's Expenses</div>
+                            <div class="stat-number">₹<?= number_format($todayExpenses, 0) ?></div>
+                            <div class="stat-change <?= $todayExpenses > 5000 ? 'negative' : 'positive' ?>">
+                                <i class="bi bi-<?= $todayExpenses > 5000 ? 'arrow-up' : 'arrow-down' ?>"></i>
+                                <?= $expenseGrowth ?> vs average
+                            </div>
+                        </div>
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #fbbf24);">
+                            <i class="bi bi-cash-stack" style="font-size: 1.5rem; color: white;"></i>
                         </div>
                     </div>
-                    <div class="p-3 rounded-circle" style="background: linear-gradient(135deg, #f59e0b, #fbbf24);">
-                        <i class="bi bi-cash-stack" style="font-size: 1.5rem; color: white;"></i>
+                    <div class="progress-modern">
+                        <div class="progress-bar bg-warning" style="width: 60%"></div>
                     </div>
-                </div>
-                <div class="progress" style="height: 4px;">
-                    <div class="progress-bar bg-warning" style="width: 60%"></div>
                 </div>
             </div>
         </div>
 
         <div class="col-xl-3 col-lg-6 col-md-6">
-            <div class="stat-card animate-fade-in-up" style="animation-delay: 0.4s;">
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <div>
-                        <div class="stat-label">Active Employees</div>
-                        <div class="stat-value"><?= $activeEmployees ?><span style="font-size: 1rem; color: var(--gray-500);">/ <?= $totalEmployees ?></span></div>
-                        <div class="stat-change positive">
-                            <i class="bi bi-people"></i>
-                            <?= round(($activeEmployees / max($totalEmployees, 1)) * 100) ?>% attendance
+            <div class="stat-card stat-employee animate-fade-in-up" style="animation-delay: 0.4s;">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <div class="stat-label">Active Employees</div>
+                            <div class="stat-number"><?= $activeEmployees ?><span style="font-size: 1rem; color: var(--gray-500);">/ <?= $totalEmployees ?></span></div>
+                            <div class="stat-change positive">
+                                <i class="bi bi-people"></i>
+                                <?= round(($activeEmployees / max($totalEmployees, 1)) * 100) ?>% attendance
+                            </div>
+                        </div>
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #8b5cf6, #a78bfa);">
+                            <i class="bi bi-people-fill" style="font-size: 1.5rem; color: white;"></i>
                         </div>
                     </div>
-                    <div class="p-3 rounded-circle" style="background: linear-gradient(135deg, #8b5cf6, #a78bfa);">
-                        <i class="bi bi-people-fill" style="font-size: 1.5rem; color: white;"></i>
+                    <div class="progress-modern">
+                        <div class="progress-bar bg-info" style="width: <?= round(($activeEmployees / max($totalEmployees, 1)) * 100) ?>%"></div>
                     </div>
-                </div>
-                <div class="progress" style="height: 4px;">
-                    <div class="progress-bar bg-info" style="width: <?= round(($activeEmployees / max($totalEmployees, 1)) * 100) ?>%"></div>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Today's Summary & Alerts -->
-    <div class="row g-2 mb-3">
+    <div class="row g-4 mb-4">
         <div class="col-lg-8">
             <div class="card h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
@@ -216,88 +224,96 @@ include '../../layouts/sidebar.php';
                     </h5>
                     <span class="badge badge-info"><?= date('M j, Y') ?></span>
                 </div>
-                <div class="card-body p-3">
-                    <div class="row g-2">
+                <div class="card-body">
+                    <div class="row g-3 mb-4">
                         <div class="col-md-6">
-                            <div class="d-flex align-items-center p-3 rounded-lg" style="background: linear-gradient(135deg, rgb(16 185 129 / 0.1), rgb(34 197 94 / 0.05));">
-                                <div class="p-2 rounded-circle me-3" style="background: var(--success);">
-                                    <i class="bi bi-cash-coin text-white"></i>
-                                </div>
-                                <div>
-                                    <div class="text-muted small">Today's Revenue</div>
-                                    <div class="h5 mb-0">₹<?= number_format($todayRevenue, 2) ?></div>
+                            <div class="activity-item">
+                                <div class="d-flex align-items-center">
+                                    <div class="quick-action-icon me-3" style="background: linear-gradient(135deg, #10b981, #34d399);">
+                                        <i class="bi bi-cash-coin text-white"></i>
+                                    </div>
+                                    <div>
+                                        <div class="stat-label">Today's Revenue</div>
+                                        <div class="h5 mb-0 text-dark">₹<?= number_format($todayRevenue, 2) ?></div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <div class="d-flex align-items-center p-3 rounded-lg" style="background: linear-gradient(135deg, rgb(59 130 246 / 0.1), rgb(37 99 235 / 0.05));">
-                                <div class="p-2 rounded-circle me-3" style="background: var(--info);">
-                                    <i class="bi bi-receipt text-white"></i>
-                                </div>
-                                <div>
-                                    <div class="text-muted small">Invoices Today</div>
-                                    <div class="h5 mb-0">
-                                        <?php
-                                        $todayInvoices = mysqli_query($conn, "SELECT COUNT(*) AS count FROM invoices WHERE DATE(created_at) = '$today'");
-                                        echo $todayInvoices ? mysqli_fetch_assoc($todayInvoices)['count'] : 0;
-                                        ?>
+                            <div class="activity-item">
+                                <div class="d-flex align-items-center">
+                                    <div class="quick-action-icon me-3" style="background: linear-gradient(135deg, #3b82f6, #60a5fa);">
+                                        <i class="bi bi-receipt text-white"></i>
+                                    </div>
+                                    <div>
+                                        <div class="stat-label">Invoices Today</div>
+                                        <div class="h5 mb-0 text-dark">
+                                            <?php
+                                            $todayInvoices = mysqli_query($conn, "SELECT COUNT(*) AS count FROM invoices WHERE DATE(created_at) = '$today'");
+                                            echo $todayInvoices ? mysqli_fetch_assoc($todayInvoices)['count'] : 0;
+                                            ?>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                     
-                    <hr class="my-3">
-                    
                     <div class="row">
                         <div class="col-md-6">
                             <h6 class="text-muted mb-3">Recent Activities</h6>
                             <div class="activity-list">
-                                <div class="activity-item d-flex align-items-center mb-3">
-                                    <div class="activity-icon me-3">
-                                        <i class="bi bi-plus-circle text-success"></i>
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <div class="small">New invoice created</div>
-                                        <div class="text-muted" style="font-size: 0.8rem;"><?= date('g:i A') ?></div>
-                                    </div>
-                                </div>
-                                <div class="activity-item d-flex align-items-center mb-3">
-                                    <div class="activity-icon me-3">
-                                        <i class="bi bi-person-plus text-info"></i>
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <div class="small">Employee checked in</div>
-                                        <div class="text-muted" style="font-size: 0.8rem;"><?= date('g:i A', strtotime('-30 minutes')) ?></div>
+                                <div class="activity-item">
+                                    <div class="d-flex align-items-center">
+                                        <div class="me-3">
+                                            <i class="bi bi-plus-circle text-success"></i>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <div class="small fw-medium">New invoice created</div>
+                                            <div class="activity-time"><?= date('g:i A') ?></div>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="activity-item d-flex align-items-center">
-                                    <div class="activity-icon me-3">
-                                        <i class="bi bi-box text-warning"></i>
+                                <div class="activity-item">
+                                    <div class="d-flex align-items-center">
+                                        <div class="me-3">
+                                            <i class="bi bi-person-plus text-info"></i>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <div class="small fw-medium">Employee checked in</div>
+                                            <div class="activity-time"><?= date('g:i A', strtotime('-30 minutes')) ?></div>
+                                        </div>
                                     </div>
-                                    <div class="flex-grow-1">
-                                        <div class="small">Product inventory updated</div>
-                                        <div class="text-muted" style="font-size: 0.8rem;"><?= date('g:i A', strtotime('-1 hour')) ?></div>
+                                </div>
+                                <div class="activity-item">
+                                    <div class="d-flex align-items-center">
+                                        <div class="me-3">
+                                            <i class="bi bi-box text-warning"></i>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <div class="small fw-medium">Product inventory updated</div>
+                                            <div class="activity-time"><?= date('g:i A', strtotime('-1 hour')) ?></div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <h6 class="text-muted mb-3">Quick Stats</h6>
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="small">Total Products</span>
-                                <span class="fw-bold"><?= $totalItems ?></span>
+                            <div class="d-flex justify-content-between align-items-center mb-3 p-2 rounded" style="background: var(--gray-50);">
+                                <span class="small fw-medium">Total Products</span>
+                                <span class="fw-bold text-dark"><?= $totalItems ?></span>
                             </div>
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="small">Low Stock Items</span>
+                            <div class="d-flex justify-content-between align-items-center mb-3 p-2 rounded" style="background: var(--gray-50);">
+                                <span class="small fw-medium">Low Stock Items</span>
                                 <span class="fw-bold text-danger"><?= $lowStockItems ?></span>
                             </div>
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="small">Active Sessions</span>
+                            <div class="d-flex justify-content-between align-items-center mb-3 p-2 rounded" style="background: var(--gray-50);">
+                                <span class="small fw-medium">Active Sessions</span>
                                 <span class="fw-bold text-success">1</span>
                             </div>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span class="small">System Status</span>
+                            <div class="d-flex justify-content-between align-items-center p-2 rounded" style="background: var(--gray-50);">
+                                <span class="small fw-medium">System Status</span>
                                 <span class="badge badge-success">Healthy</span>
                             </div>
                         </div>
@@ -314,27 +330,36 @@ include '../../layouts/sidebar.php';
                         Alerts & Notifications
                     </h5>
                 </div>
-                <div class="card-body p-3">
+                <div class="card-body">
                     <?php if ($lowStockItems > 0): ?>
-                    <div class="alert alert-warning d-flex align-items-center mb-3">
-                        <i class="bi bi-exclamation-triangle me-2"></i>
-                        <div>
-                            <strong><?= $lowStockItems ?></strong> items are running low on stock
+                    <div class="activity-item mb-3" style="border-left: 4px solid #f59e0b;">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-exclamation-triangle text-warning me-3"></i>
+                            <div>
+                                <div class="fw-medium small">Low Stock Alert</div>
+                                <div class="text-muted activity-time"><strong><?= $lowStockItems ?></strong> items running low</div>
+                            </div>
                         </div>
                     </div>
                     <?php endif; ?>
                     
-                    <div class="alert alert-info d-flex align-items-center mb-3">
-                        <i class="bi bi-info-circle me-2"></i>
-                        <div>
-                            Monthly target: <strong><?= round(($monthlyRevenue / 100000) * 100) ?>%</strong> completed
+                    <div class="activity-item mb-3" style="border-left: 4px solid #3b82f6;">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-target text-info me-3"></i>
+                            <div>
+                                <div class="fw-medium small">Monthly Progress</div>
+                                <div class="text-muted activity-time"><?= round(($monthlyRevenue / 100000) * 100) ?>% target completed</div>
+                            </div>
                         </div>
                     </div>
                     
-                    <div class="alert alert-success d-flex align-items-center mb-0">
-                        <i class="bi bi-check-circle me-2"></i>
-                        <div>
-                            All systems are <strong>operational</strong>
+                    <div class="activity-item" style="border-left: 4px solid #10b981;">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-check-circle text-success me-3"></i>
+                            <div>
+                                <div class="fw-medium small">System Status</div>
+                                <div class="text-muted activity-time">All systems operational</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -350,62 +375,62 @@ include '../../layouts/sidebar.php';
                 Quick Actions
             </h5>
         </div>
-        <div class="card-body p-3">
-            <div class="row g-2">
+        <div class="card-body">
+            <div class="row g-4">
                 <div class="col-lg-3 col-md-6">
-                    <div class="text-center p-4 border rounded-lg hover-lift" style="border-color: var(--primary) !important;">
-                        <div class="mb-3">
-                            <i class="bi bi-receipt-cutoff" style="font-size: 3rem; color: var(--primary);"></i>
+                    <a href="../invoice/invoice.php" class="quick-action-card text-decoration-none">
+                        <div class="quick-action-icon" style="background: linear-gradient(135deg, #3b82f6, #60a5fa);">
+                            <i class="bi bi-receipt-cutoff text-white" style="font-size: 1.5rem;"></i>
                         </div>
-                        <h6 class="mb-2">Create Invoice</h6>
+                        <h6 class="mb-2 text-dark">Create Invoice</h6>
                         <p class="text-muted small mb-3">Generate new customer invoices quickly</p>
-                        <a href="../invoice/invoice.php" class="btn btn-primary btn-sm">
+                        <div class="d-flex align-items-center text-primary">
                             <i class="bi bi-plus-circle me-1"></i>
-                            Create Now
-                        </a>
-                    </div>
+                            <span class="small fw-medium">Create Now</span>
+                        </div>
+                    </a>
                 </div>
 
                 <div class="col-lg-3 col-md-6">
-                    <div class="text-center p-4 border rounded-lg hover-lift" style="border-color: var(--warning) !important;">
-                        <div class="mb-3">
-                            <i class="bi bi-cash-coin" style="font-size: 3rem; color: var(--warning);"></i>
+                    <a href="../expenses/expenses.php" class="quick-action-card text-decoration-none">
+                        <div class="quick-action-icon" style="background: linear-gradient(135deg, #f59e0b, #fbbf24);">
+                            <i class="bi bi-cash-coin text-white" style="font-size: 1.5rem;"></i>
                         </div>
-                        <h6 class="mb-2">Record Expense</h6>
+                        <h6 class="mb-2 text-dark">Record Expense</h6>
                         <p class="text-muted small mb-3">Track daily business expenses</p>
-                        <a href="../expenses/expenses.php" class="btn btn-warning btn-sm">
+                        <div class="d-flex align-items-center text-warning">
                             <i class="bi bi-plus-circle me-1"></i>
-                            Add Expense
-                        </a>
-                    </div>
+                            <span class="small fw-medium">Add Expense</span>
+                        </div>
+                    </a>
                 </div>
 
                 <div class="col-lg-3 col-md-6">
-                    <div class="text-center p-4 border rounded-lg hover-lift" style="border-color: var(--success) !important;">
-                        <div class="mb-3">
-                            <i class="bi bi-people-fill" style="font-size: 3rem; color: var(--success);"></i>
+                    <a href="../employees/employees.php" class="quick-action-card text-decoration-none">
+                        <div class="quick-action-icon" style="background: linear-gradient(135deg, #10b981, #34d399);">
+                            <i class="bi bi-people-fill text-white" style="font-size: 1.5rem;"></i>
                         </div>
-                        <h6 class="mb-2">Manage Staff</h6>
+                        <h6 class="mb-2 text-dark">Manage Staff</h6>
                         <p class="text-muted small mb-3">Add employees and track attendance</p>
-                        <a href="../employees/employees.php" class="btn btn-success btn-sm">
+                        <div class="d-flex align-items-center text-success">
                             <i class="bi bi-people me-1"></i>
-                            Manage
-                        </a>
-                    </div>
+                            <span class="small fw-medium">Manage</span>
+                        </div>
+                    </a>
                 </div>
 
                 <div class="col-lg-3 col-md-6">
-                    <div class="text-center p-4 border rounded-lg hover-lift" style="border-color: var(--info) !important;">
-                        <div class="mb-3">
-                            <i class="bi bi-box-seam-fill" style="font-size: 3rem; color: var(--info);"></i>
+                    <a href="../products/products.php" class="quick-action-card text-decoration-none">
+                        <div class="quick-action-icon" style="background: linear-gradient(135deg, #8b5cf6, #a78bfa);">
+                            <i class="bi bi-box-seam-fill text-white" style="font-size: 1.5rem;"></i>
                         </div>
-                        <h6 class="mb-2">Inventory</h6>
+                        <h6 class="mb-2 text-dark">Inventory</h6>
                         <p class="text-muted small mb-3">Manage products and stock levels</p>
-                        <a href="../products/products.php" class="btn btn-info btn-sm">
+                        <div class="d-flex align-items-center text-info">
                             <i class="bi bi-boxes me-1"></i>
-                            View Stock
-                        </a>
-                    </div>
+                            <span class="small fw-medium">View Stock</span>
+                        </div>
+                    </a>
                 </div>
             </div>
         </div>

@@ -190,7 +190,7 @@ $success = isset($_GET['success']) && $_GET['success'] == '1';
         </div>
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-striped">
+                <table class="table table-striped" id="expensesTable">
                     <thead>
                         <tr>
                             <th>Time</th>
@@ -198,16 +198,33 @@ $success = isset($_GET['success']) && $_GET['success'] == '1';
                             <th>Description</th>
                             <th>Amount</th>
                             <th>Payment Method</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
+                        <?php $recentExpenses->data_seek(0); // Reset result pointer ?>
                         <?php while ($expense = $recentExpenses->fetch_assoc()): ?>
                             <tr>
                                 <td><?= date('H:i', strtotime($expense['created_at'])) ?></td>
-                                <td><?= htmlspecialchars($expense['category']) ?></td>
+                                <td>
+                                    <span class="status-badge completed"><?= htmlspecialchars($expense['category']) ?></span>
+                                </td>
                                 <td><?= htmlspecialchars($expense['description'] ?? $expense['note'] ?? '') ?></td>
                                 <td class="text-danger fw-bold">₹<?= number_format($expense['amount'], 2) ?></td>
                                 <td><?= htmlspecialchars($expense['payment_method'] ?? 'Cash') ?></td>
+                                <td>
+                                    <div class="dt-action-buttons">
+                                        <a href="../../edit_expense.php?id=<?= $expense['expense_id'] ?? $expense['id'] ?>" 
+                                           class="dt-btn dt-btn-edit" title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <button class="dt-btn dt-btn-delete" 
+                                                onclick="confirmDelete('../../delete_expense.php', <?= $expense['expense_id'] ?? $expense['id'] ?>)"
+                                                title="Delete">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
                             </tr>
                         <?php endwhile; ?>
                     </tbody>
@@ -218,5 +235,30 @@ $success = isset($_GET['success']) && $_GET['success'] == '1';
     <?php endif; ?>
     </div>
 </div>
+
+<!-- DataTables JavaScript -->
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    // Initialize Enhanced DataTable for expenses
+    if ($('#expensesTable').length) {
+        const expensesTable = initDataTable('#expensesTable', {
+            pageLength: 10,
+            order: [[0, "desc"]], // Sort by time descending
+            columnDefs: [
+                { orderable: false, targets: [-1] }, // Actions column
+                { searchable: false, targets: [-1] }
+            ]
+        });
+        
+        // Add export buttons
+        addExportButtons(expensesTable, 'today_expenses');
+    }
+});
+</script>
 
 <?php include '../../layouts/footer.php'; ?>

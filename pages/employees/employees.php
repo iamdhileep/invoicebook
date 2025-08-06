@@ -230,24 +230,24 @@ include '../../layouts/sidebar.php';
                                             <br><small class="text-muted">per month</small>
                                         </td>
                                         <td>
-                                            <span class="badge bg-success">Active</span>
+                                            <span class="status-badge active">Active</span>
                                         </td>
                                         <td>
-                                            <div class="btn-group btn-group-sm">
-                                                <button class="btn btn-outline-info" 
+                                            <div class="dt-action-buttons">
+                                                <button class="dt-btn dt-btn-view" 
                                                         onclick="viewEmployee(<?= $emp['employee_id'] ?>)"
-                                                        data-bs-toggle="tooltip" title="View Details">
+                                                        title="View Details">
                                                     <i class="bi bi-eye"></i>
                                                 </button>
                                                 <a href="../../edit_employee.php?id=<?= $emp['employee_id'] ?>" 
-                                                   class="btn btn-outline-primary"
-                                                   data-bs-toggle="tooltip" title="Edit">
+                                                   class="dt-btn dt-btn-edit"
+                                                   title="Edit">
                                                     <i class="bi bi-pencil"></i>
                                                 </a>
-                                                <button class="btn btn-outline-danger delete-employee" 
+                                                <button class="dt-btn dt-btn-delete delete-employee" 
                                                         data-id="<?= $emp['employee_id'] ?>"
                                                         data-name="<?= htmlspecialchars($emp['name']) ?>"
-                                                        data-bs-toggle="tooltip" title="Delete">
+                                                        title="Delete">
                                                     <i class="bi bi-trash"></i>
                                                 </button>
                                             </div>
@@ -290,16 +290,18 @@ include '../../layouts/sidebar.php';
 <script>
 $(document).ready(function() {
     
-    // Initialize DataTable
-    $('#employeesTable').DataTable({
+    // Initialize Enhanced DataTable
+    const employeesTable = initDataTable('#employeesTable', {
         pageLength: 25,
-        lengthMenu: [10, 25, 50, 100],
-        responsive: true,
         order: [[2, "asc"]], // Sort by name
         columnDefs: [
-            { orderable: false, targets: [0, 1, 8] }
+            { orderable: false, targets: [0, 1, 8] },
+            { searchable: false, targets: [0, 1, 8] }
         ]
     });
+    
+    // Add export buttons
+    addExportButtons(employeesTable, 'employees');
 
     // Select all functionality
     $('#selectAll').change(function() {
@@ -568,5 +570,11 @@ function showAlert(message, type) {
     border-bottom: 1px solid var(--gray-200);
 }
 </style>
+
+<!-- DataTables JavaScript -->
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
 
 <?php include '../../layouts/footer.php'; ?>

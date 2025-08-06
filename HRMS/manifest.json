@@ -1,0 +1,144 @@
+{
+  "name": "HRMS Enterprise Suite",
+  "short_name": "HRMS",
+  "description": "Complete Human Resource Management System with advanced features",
+  "start_url": "/HRMS/",
+  "display": "standalone",
+  "background_color": "#667eea",
+  "theme_color": "#667eea",
+  "orientation": "portrait-primary",
+  "scope": "/HRMS/",
+  "lang": "en-US",
+  "categories": ["business", "productivity"],
+  "icons": [
+    {
+      "src": "assets/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Clock In/Out",
+      "short_name": "Clock",
+      "description": "Quick attendance tracking",
+      "url": "/HRMS/advanced_attendance_management.php",
+      "icons": [
+        {
+          "src": "assets/shortcut-clock.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Employee Directory",
+      "short_name": "Directory",
+      "description": "Browse employee directory",
+      "url": "/HRMS/employee_directory.php",
+      "icons": [
+        {
+          "src": "assets/shortcut-directory.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Leave Management",
+      "short_name": "Leaves",
+      "description": "Manage leave requests",
+      "url": "/HRMS/advanced_leave_management.php",
+      "icons": [
+        {
+          "src": "assets/shortcut-leave.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Executive dashboard overview",
+      "url": "/HRMS/executive_dashboard.php",
+      "icons": [
+        {
+          "src": "assets/shortcut-dashboard.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "assets/screenshot-narrow.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "assets/screenshot-wide.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ],
+  "features": [
+    "Cross Platform",
+    "Fast and Reliable",
+    "Installable",
+    "Offline Support",
+    "Push Notifications",
+    "Location Services",
+    "Background Sync"
+  ],
+  "prefer_related_applications": false,
+  "edge_side_panel": {
+    "preferred_width": 480
+  }
+}

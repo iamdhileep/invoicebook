@@ -18,7 +18,11 @@ if (!isset($_SESSION['user_id']) && !isset($_SESSION['employee_id'])) {
 require_once '../../db_simple_optimized.php';
 require_once '../../auth_check.php';
 
-$pageTitle = "Manager Dashboard";
+$page_title = "Manager Dashboard";
+
+// Include the header layout
+include '../../layouts/header.php';
+include '../../layouts/sidebar.php';
 
 // Initialize statistics
 $stats = [
@@ -32,10 +36,10 @@ $stats = [
 
 // Get manager's team data with caching
 try {
-    $optimizedDB = SimpleOptimizedDB::getInstance();
+    $optimizedDB = new SimpleOptimizedDB($conn);
     
     // Team members count (cached)
-    $result = $optimizedDB->queryCached("SELECT COUNT(*) as total FROM employees WHERE status = 'active'", 'manager_team_count', 5);
+    $result = $optimizedDB->queryCached("SELECT COUNT(*) as total FROM employees WHERE status = 'active'", [], 'manager_team_count', 5);
     if (!empty($result)) {
         $stats['team_members'] = $result[0]['total'];
     }
@@ -43,7 +47,7 @@ try {
     // Pending approvals (leave requests) - cached for 2 minutes
     $table_check = $conn->query("SHOW TABLES LIKE 'leave_requests'");
     if ($table_check && $table_check->num_rows > 0) {
-        $result = $optimizedDB->queryCached("SELECT COUNT(*) as total FROM leave_requests WHERE status = 'pending'", 'manager_pending_approvals', 2);
+        $result = $optimizedDB->queryCached("SELECT COUNT(*) as total FROM leave_requests WHERE status = 'pending'", [], 'manager_pending_approvals', 2);
         if (!empty($result)) {
             $stats['pending_approvals'] = $result[0]['total'];
         }
@@ -55,7 +59,7 @@ try {
         FROM attendance a 
         INNER JOIN employees e ON a.employee_id = e.employee_id 
         WHERE a.attendance_date = CURDATE() AND e.status = 'active'
-    ", 'manager_team_present', 30);
+    ", [], 'manager_team_present', 30);
     if (!empty($result)) {
         $stats['team_present'] = $result[0]['total'];
     }

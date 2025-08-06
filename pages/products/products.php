@@ -139,27 +139,29 @@ $items = $conn->query("SELECT * FROM items ORDER BY item_name ASC");
                                         </span>
                                     </td>
                                     <td>
-                                        <?php if (($item['item_stock'] ?? 0) == 0): ?>
-                                            <span class="badge bg-danger">Out of Stock</span>
-                                        <?php elseif (($item['item_stock'] ?? 0) < 10): ?>
-                                            <span class="badge bg-warning">Low Stock</span>
-                                        <?php else: ?>
-                                            <span class="badge bg-success">In Stock</span>
-                                        <?php endif; ?>
+                                        <?php 
+                                        $stock = $item['item_stock'] ?? 0;
+                                        if ($stock == 0) {
+                                            echo '<span class="status-badge inactive">Out of Stock</span>';
+                                        } elseif ($stock < 10) {
+                                            echo '<span class="status-badge pending">Low Stock</span>';
+                                        } else {
+                                            echo '<span class="status-badge active">In Stock</span>';
+                                        }
+                                        ?>
                                     </td>
                                     <td>
-                                        <div class="btn-group btn-group-sm">
+                                        <div class="dt-action-buttons">
                                             <a href="../../edit_item.php?id=<?= $item['id'] ?>" 
-                                               class="btn btn-outline-primary" 
-                                               data-bs-toggle="tooltip" title="Edit">
+                                               class="dt-btn dt-btn-edit" 
+                                               title="Edit">
                                                 <i class="bi bi-pencil"></i>
                                             </a>
-                                            <a href="../../delete_item.php?id=<?= $item['id'] ?>" 
-                                               class="btn btn-outline-danger" 
-                                               onclick="return confirm('Are you sure you want to delete this product?')"
-                                               data-bs-toggle="tooltip" title="Delete">
+                                            <button class="dt-btn dt-btn-delete" 
+                                                    onclick="confirmDelete('../../delete_item.php', <?= $item['id'] ?>)"
+                                                    title="Delete">
                                                 <i class="bi bi-trash"></i>
-                                            </a>
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -181,28 +183,28 @@ $items = $conn->query("SELECT * FROM items ORDER BY item_name ASC");
     </div>
 </div>
 
+<!-- DataTables JavaScript -->
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+
 <script>
 $(document).ready(function() {
-    // Initialize DataTable
-    $('#productsTable').DataTable({
+    // Initialize Enhanced DataTable
+    const productsTable = initDataTable('#productsTable', {
         pageLength: 25,
-        responsive: true,
         order: [[0, "asc"]],
         columnDefs: [
-            { orderable: false, targets: [4] }
+            { orderable: false, targets: [4] },
+            { searchable: false, targets: [4] }
         ]
     });
     
-    // Initialize tooltips
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
-    });
+    // Add export buttons
+    addExportButtons(productsTable, 'products');
 });
 </script>
-
-    </div>
-</div>
 
 <?php include '../../layouts/footer.php'; ?>
 

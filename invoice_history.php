@@ -205,27 +205,27 @@ include 'layouts/sidebar.php';
                                             <strong class="text-success">₹<?= number_format($row['total_amount'], 2) ?></strong>
                                         </td>
                                         <td>
-                                            <div class="btn-group btn-group-sm">
+                                            <div class="dt-action-buttons">
                                                 <a href="view_invoice.php?id=<?= $row['id'] ?>" 
-                                                   class="btn btn-outline-primary" 
-                                                   data-bs-toggle="tooltip" title="View">
+                                                   class="dt-btn dt-btn-view" 
+                                                   title="View">
                                                     <i class="bi bi-eye"></i>
                                                 </a>
                                                 <a href="print_invoice.php?id=<?= $row['id'] ?>" 
-                                                   class="btn btn-outline-success" 
+                                                   class="dt-btn dt-btn-edit" 
                                                    target="_blank"
-                                                   data-bs-toggle="tooltip" title="Print">
+                                                   title="Print">
                                                     <i class="bi bi-printer"></i>
                                                 </a>
                                                 <a href="edit_invoice.php?id=<?= $row['id'] ?>" 
-                                                   class="btn btn-outline-warning" 
-                                                   data-bs-toggle="tooltip" title="Edit">
+                                                   class="dt-btn dt-btn-edit" 
+                                                   title="Edit">
                                                     <i class="bi bi-pencil"></i>
                                                 </a>
                                                 <button type="button" 
-                                                        class="btn btn-outline-danger delete-invoice" 
+                                                        class="dt-btn dt-btn-delete delete-invoice" 
                                                         data-id="<?= $row['id'] ?>"
-                                                        data-bs-toggle="tooltip" title="Delete">
+                                                        title="Delete">
                                                     <i class="bi bi-trash"></i>
                                                 </button>
                                             </div>
@@ -253,20 +253,22 @@ include 'layouts/sidebar.php';
 
 <script>
 $(document).ready(function() {
-    // Initialize DataTable
-    $('#invoicesTable').DataTable({
+    // Initialize Enhanced DataTable
+    const invoicesTable = initDataTable('#invoicesTable', {
         pageLength: 25,
-        lengthMenu: [10, 25, 50, 100],
-        responsive: true,
         order: [[2, "desc"]], // Sort by date
         columnDefs: [
-            { orderable: false, targets: [0, 6] }
+            { orderable: false, targets: [0, 6] },
+            { searchable: false, targets: [0, 6] }
         ],
         drawCallback: function() {
             // Reinitialize tooltips after table redraw
-            $('[data-bs-toggle="tooltip"]').tooltip();
+            $('[title]').tooltip();
         }
     });
+    
+    // Add export buttons
+    addExportButtons(invoicesTable, 'invoices');
 
     // Select all functionality
     $('#selectAll').change(function() {
@@ -275,7 +277,7 @@ $(document).ready(function() {
     });
 
     // Individual checkbox change
-    $('.invoice-checkbox').change(function() {
+    $(document).on('change', '.invoice-checkbox', function() {
         const totalCheckboxes = $('.invoice-checkbox').length;
         const checkedCheckboxes = $('.invoice-checkbox:checked').length;
         
@@ -477,5 +479,11 @@ function showAlert(message, type) {
     color: #495057;
 }
 </style>
+
+<!-- DataTables JavaScript -->
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
 
 <?php include 'layouts/footer.php'; ?>

@@ -141,20 +141,20 @@ include 'layouts/sidebar.php';
 
 <div class="main-content animate-fade-in-up">
     <div class="container-fluid">
-        <!-- Modern Header with Gradient -->
+        <!-- Compact Header -->
         <div class="d-flex justify-content-between align-items-center mb-3">
             <div>
-                <h1 class="gradient-text mb-2" style="font-size: 2.25rem; font-weight: 700;">
-                    <i class="bi bi-plus-circle me-3"></i>Add New Product
+                <h1 class="h3 mb-1" style="font-weight: 600;">
+                    <i class="bi bi-plus-circle me-2"></i>Add New Product
                 </h1>
-                <p class="text-muted" style="font-size: 1.1rem;">Create a new product entry for your inventory system</p>
+                <p class="text-muted mb-0" style="font-size: 0.875rem;">Create a new product entry for your inventory system</p>
             </div>
             <div class="d-flex gap-2">
-                <a href="pages/products/products.php" class="btn btn-outline-primary">
+                <a href="pages/products/products.php" class="btn btn-outline-primary btn-sm">
                     <i class="bi bi-list"></i>
                     View All Products
                 </a>
-                <a href="item-stock.php" class="btn btn-outline-secondary">
+                <a href="item-stock.php" class="btn btn-outline-secondary btn-sm">
                     <i class="bi bi-boxes"></i>
                     Manage Stock
                 </a>
@@ -178,29 +178,29 @@ include 'layouts/sidebar.php';
         </div>
     <?php endif; ?>
 
-    <div class="row g-2">
+    <div class="row g-3">
         <!-- Main Form -->
         <div class="col-lg-8">
             <div class="card h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">
-                        <i class="bi bi-info-circle me-2 text-primary"></i>
+                    <h6 class="mb-0">
+                        <i class="bi bi-info-circle me-1 text-primary"></i>
                         Product Information
-                    </h5>
+                    </h6>
                     <span class="badge badge-info">Required Fields *</span>
                 </div>
                 <div class="card-body">
                     <form method="POST" data-autosave="add_product" class="needs-validation" novalidate>
-                        <div class="row g-2">
+                        <div class="row g-3">
                             <!-- Product Name -->
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">
-                                    <i class="bi bi-tag me-2 text-primary"></i>
+                                    <i class="bi bi-tag me-1 text-primary"></i>
                                     Product Name *
                                 </label>
                                 <input type="text" 
                                        name="item_name" 
-                                       class="form-control form-control-lg" 
+                                       class="form-control" 
                                        placeholder="Enter product name" 
                                        value="<?= htmlspecialchars($_POST['item_name'] ?? '') ?>" 
                                        required>
@@ -216,10 +216,10 @@ include 'layouts/sidebar.php';
                             <!-- Price -->
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">
-                                    <i class="bi bi-currency-rupee me-2 text-success"></i>
+                                    <i class="bi bi-currency-rupee me-1 text-success"></i>
                                     Price (₹) *
                                 </label>
-                                <div class="input-group input-group-lg">
+                                <div class="input-group">
                                     <span class="input-group-text bg-success text-white">
                                         <i class="bi bi-currency-rupee"></i>
                                     </span>
@@ -240,30 +240,30 @@ include 'layouts/sidebar.php';
                             <!-- Category -->
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">
-                                    <i class="bi bi-collection me-2 text-info"></i>
+                                    <i class="bi bi-collection me-1 text-info"></i>
                                     Category
                                 </label>
                                 <div class="input-group">
-                                    <select name="category" class="form-select form-select-lg" id="categorySelect">
+                                    <select name="category" class="form-select" id="categorySelect">
                                         <option value="">-- Loading Categories... --</option>
                                     </select>
                                     <div class="btn-group">
-                                        <button type="button" class="btn btn-outline-success" id="quickAddBtn" title="Quick Add Category">
+                                        <button type="button" class="btn btn-outline-success btn-sm" id="quickAddBtn" title="Quick Add Category">
                                             <i class="bi bi-plus-circle"></i>
                                         </button>
-                                        <button type="button" class="btn btn-outline-warning" id="quickEditBtn" title="Edit Selected Category">
+                                        <button type="button" class="btn btn-outline-warning btn-sm" id="quickEditBtn" title="Edit Selected Category">
                                             <i class="bi bi-pencil-square"></i>
                                         </button>
-                                        <button type="button" class="btn btn-outline-danger" id="quickDeleteBtn" title="Delete Selected Category">
+                                        <button type="button" class="btn btn-outline-danger btn-sm" id="quickDeleteBtn" title="Delete Selected Category">
                                             <i class="bi bi-trash"></i>
                                         </button>
-                                        <button type="button" class="btn btn-outline-info" id="manageCategoriesBtn" title="Manage All Categories">
+                                        <button type="button" class="btn btn-outline-info btn-sm" id="manageCategoriesBtn" title="Manage All Categories">
                                             <i class="bi bi-gear-fill"></i>
                                         </button>
                                     </div>
                                     <input type="text" 
                                            name="new_category" 
-                                           class="form-control form-control-lg" 
+                                           class="form-control" 
                                            placeholder="Enter new category name and press Enter" 
                                            style="display: none;" 
                                            id="newCategoryInput"
@@ -289,10 +289,10 @@ include 'layouts/sidebar.php';
                             <!-- Initial Stock -->
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">
-                                    <i class="bi bi-boxes me-2 text-warning"></i>
+                                    <i class="bi bi-boxes me-1 text-warning"></i>
                                     Initial Stock
                                 </label>
-                                <div class="input-group input-group-lg">
+                                <div class="input-group">
                                     <span class="input-group-text bg-warning text-dark">
                                         <i class="bi bi-boxes"></i>
                                     </span>
@@ -312,12 +312,12 @@ include 'layouts/sidebar.php';
                             <!-- Description -->
                             <div class="col-12">
                                 <label class="form-label fw-semibold">
-                                    <i class="bi bi-card-text me-2 text-secondary"></i>
+                                    <i class="bi bi-card-text me-1 text-secondary"></i>
                                     Product Description
                                 </label>
                                 <textarea name="description" 
                                           class="form-control" 
-                                          rows="4" 
+                                          rows="3" 
                                           placeholder="Enter detailed product description, specifications, or notes..."
                                           style="resize: vertical;"><?= htmlspecialchars($_POST['description'] ?? '') ?></textarea>
                                 <div class="form-text">
@@ -331,19 +331,19 @@ include 'layouts/sidebar.php';
                         <div class="mt-3 pt-3 border-top">
                             <div class="d-flex gap-2 flex-wrap">
                                 <button type="submit" class="btn btn-primary btn-sm">
-                                    <i class="bi bi-save me-2"></i>
+                                    <i class="bi bi-save me-1"></i>
                                     Add Product
                                 </button>
                                 <button type="reset" class="btn btn-secondary btn-sm">
-                                    <i class="bi bi-arrow-counterclockwise me-2"></i>
+                                    <i class="bi bi-arrow-counterclockwise me-1"></i>
                                     Reset Form
                                 </button>
                                 <a href="pages/products/products.php" class="btn btn-outline-primary btn-sm">
-                                    <i class="bi bi-arrow-left me-2"></i>
+                                    <i class="bi bi-arrow-left me-1"></i>
                                     Back to Products
                                 </a>
                                 <button type="button" class="btn btn-outline-info btn-sm" onclick="previewProduct()">
-                                    <i class="bi bi-eye me-2"></i>
+                                    <i class="bi bi-eye me-1"></i>
                                     Preview
                                 </button>
                             </div>
@@ -359,26 +359,26 @@ include 'layouts/sidebar.php';
             <div class="card mb-3">
                 <div class="card-header">
                     <h6 class="mb-0">
-                        <i class="bi bi-lightning-fill me-2 text-warning"></i>
+                        <i class="bi bi-lightning-fill me-1 text-warning"></i>
                         Quick Actions
                     </h6>
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
                         <a href="pages/products/products.php" class="btn btn-outline-primary btn-sm">
-                            <i class="bi bi-list-ul me-2"></i>
+                            <i class="bi bi-list-ul me-1"></i>
                             View All Products
                         </a>
                         <a href="item-stock.php" class="btn btn-outline-warning btn-sm">
-                            <i class="bi bi-boxes me-2"></i>
+                            <i class="bi bi-boxes me-1"></i>
                             Manage Stock
                         </a>
                         <a href="manage_categories.php" class="btn btn-outline-info btn-sm">
-                            <i class="bi bi-tags-fill me-2"></i>
+                            <i class="bi bi-tags-fill me-1"></i>
                             Manage Categories
                         </a>
                         <a href="item-full-list.php" class="btn btn-outline-secondary btn-sm">
-                            <i class="bi bi-table me-2"></i>
+                            <i class="bi bi-table me-1"></i>
                             Full Product List
                         </a>
                     </div>
@@ -389,7 +389,7 @@ include 'layouts/sidebar.php';
             <div class="card mb-3">
                 <div class="card-header">
                     <h6 class="mb-0">
-                        <i class="bi bi-lightbulb-fill me-2 text-info"></i>
+                        <i class="bi bi-lightbulb-fill me-1 text-info"></i>
                         Product Guidelines
                     </h6>
                 </div>
@@ -400,7 +400,7 @@ include 'layouts/sidebar.php';
                                 <i class="bi bi-check-circle-fill text-success"></i>
                             </div>
                             <div class="flex-grow-1">
-                                <div class="fw-semibold">Clear Naming</div>
+                                <div class="fw-semibold small">Clear Naming</div>
                                 <div class="small text-muted">Use descriptive, easy-to-understand product names</div>
                             </div>
                         </div>
@@ -409,7 +409,7 @@ include 'layouts/sidebar.php';
                                 <i class="bi bi-check-circle-fill text-success"></i>
                             </div>
                             <div class="flex-grow-1">
-                                <div class="fw-semibold">Competitive Pricing</div>
+                                <div class="fw-semibold small">Competitive Pricing</div>
                                 <div class="small text-muted">Research market rates before setting prices</div>
                             </div>
                         </div>
@@ -418,7 +418,7 @@ include 'layouts/sidebar.php';
                                 <i class="bi bi-check-circle-fill text-success"></i>
                             </div>
                             <div class="flex-grow-1">
-                                <div class="fw-semibold">Proper Categorization</div>
+                                <div class="fw-semibold small">Proper Categorization</div>
                                 <div class="small text-muted">Group similar products for better organization</div>
                             </div>
                         </div>
@@ -427,7 +427,7 @@ include 'layouts/sidebar.php';
                                 <i class="bi bi-check-circle-fill text-success"></i>
                             </div>
                             <div class="flex-grow-1">
-                                <div class="fw-semibold">Detailed Descriptions</div>
+                                <div class="fw-semibold small">Detailed Descriptions</div>
                                 <div class="small text-muted">Help customers with comprehensive details</div>
                             </div>
                         </div>
@@ -439,7 +439,7 @@ include 'layouts/sidebar.php';
             <div class="card">
                 <div class="card-header">
                     <h6 class="mb-0">
-                        <i class="bi bi-clock-history me-2 text-secondary"></i>
+                        <i class="bi bi-clock-history me-1 text-secondary"></i>
                         Recent Products
                     </h6>
                 </div>
@@ -455,7 +455,7 @@ include 'layouts/sidebar.php';
                             <?php while ($recent = $recentResult->fetch_assoc()): ?>
                                 <div class="recent-item d-flex justify-content-between align-items-center mb-2">
                                     <div class="flex-grow-1">
-                                        <div class="fw-semibold"><?= htmlspecialchars($recent['item_name']) ?></div>
+                                        <div class="fw-semibold small"><?= htmlspecialchars($recent['item_name']) ?></div>
                                         <div class="small text-muted">₹<?= number_format($recent['item_price'], 2) ?></div>
                                     </div>
                                     <div class="text-muted small">
@@ -466,8 +466,8 @@ include 'layouts/sidebar.php';
                         </div>
                     <?php else: ?>
                         <div class="text-center text-muted py-2">
-                            <i class="bi bi-inbox display-6 mb-2"></i>
-                            <div>No recent products found</div>
+                            <i class="bi bi-inbox h4 mb-2"></i>
+                            <div class="small">No recent products found</div>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -499,133 +499,66 @@ include 'layouts/sidebar.php';
     color: #d97706;
 }
 
-/* Fix row and column alignment issues */
-.row.g-2 {
-    margin: 0;
-    row-gap: var(--spacing-md);
-}
-
-.row.g-2 > * {
-    padding-left: var(--spacing-xs);
-    padding-right: var(--spacing-xs);
-}
-
-/* Ensure form columns are properly aligned */
-.col-md-6, .col-lg-8, .col-lg-4, .col-12 {
-    min-height: auto;
-    display: flex;
-    flex-direction: column;
-}
-
-/* Input group alignment fixes */
-.input-group {
-    display: flex;
-    align-items: stretch;
-}
-
-.input-group .btn-group {
-    display: flex;
-    align-items: stretch;
-}
-
-.input-group .btn-group .btn {
-    border-radius: 0;
-    border-left: none;
-}
-
-.input-group .btn-group .btn:first-child {
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-}
-
-.input-group .btn-group .btn:last-child {
-    border-top-right-radius: var(--radius-md);
-    border-bottom-right-radius: var(--radius-md);
-}
-
-/* Card alignment */
-.card.h-100 {
-    height: 100% !important;
-    display: flex;
-    flex-direction: column;
-}
-
-.card.h-100 .card-body {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-}
-
-/* Form actions alignment */
-.mt-3.pt-3.border-top {
-    margin-top: var(--spacing-md) !important;
-    padding-top: var(--spacing-sm) !important;
-}
-
-.d-flex.gap-2.flex-wrap {
-    gap: var(--spacing-xs) !important;
-}
-
-/* Guidelines list alignment */
-.guidelines-list .guideline-item {
-    margin-bottom: var(--spacing-sm) !important;
-}
-
-.guidelines-list .guideline-item:last-child {
-    margin-bottom: 0 !important;
-}
-
-/* Recent products alignment */
-.recent-products .recent-item {
-    margin-bottom: var(--spacing-sm) !important;
-}
-
-.recent-products .recent-item:last-child {
-    margin-bottom: 0 !important;
-}
-
-#newCategoryHelp kbd {
-    background-color: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-radius: 3px;
-    padding: 2px 6px;
-    font-size: 0.875em;
-}
-
-/* Toast positioning for better visibility */
-.toast {
-    min-width: 250px;
-}
-
-/* Improved category dropdown */
-#categorySelect option[value="__new__"] {
-    background-color: #e3f2fd;
-    font-weight: 500;
-}
-
-/* Category action buttons styling */
-.btn-group .btn {
-    padding: 0.375rem 0.5rem;
-}
-
-.btn-group .btn i {
+/* Compact form spacing for add_item page */
+.main-content .form-label {
+    margin-bottom: 0.375rem;
     font-size: 0.875rem;
 }
 
-/* Quick action buttons hover effects */
-#quickAddBtn:hover {
-    background-color: #198754;
-    color: white;
+.main-content .form-text {
+    margin-top: 0.25rem;
+    font-size: 0.75rem;
 }
 
-#quickEditBtn:hover {
-    background-color: #ffc107;
-    color: #212529;
+.main-content .input-group-text {
+    font-size: 0.875rem;
+    padding: 0.375rem 0.75rem;
 }
 
-#quickDeleteBtn:hover {
-    background-color: #dc3545;
-    color: white;
+.main-content .btn-group .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+}
+
+.main-content .card-header h6 {
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.main-content .guidelines-list .guideline-item {
+    margin-bottom: 0.5rem;
+}
+
+.main-content .guidelines-list .guideline-item:last-child {
+    margin-bottom: 0;
+}
+
+.main-content .recent-item {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--gray-100);
+}
+
+.main-content .recent-item:last-child {
+    border-bottom: none;
+}
+
+/* Compact alert styling */
+.main-content .alert {
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 1rem;
+    font-size: 0.875rem;
+}
+
+/* Compact badge styling */
+.main-content .badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+}
+
+/* Form validation feedback compact */
+.main-content .invalid-feedback,
+.main-content .valid-feedback {
+    font-size: 0.75rem;
 }
 </style>
 

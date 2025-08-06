@@ -35,12 +35,16 @@ if (isset($_POST['username'], $_POST['password'])) {
                 if ($result->num_rows === 1) {
                     $user = $result->fetch_assoc();
                     if (password_verify($password, $user['password'])) {
-                        // Set both session variables for compatibility
+                        // Set session variables for compatibility with both systems
                         $_SESSION['user_id'] = $user['id'];
                         $_SESSION['admin'] = $user['username'];
                         $_SESSION['username'] = $user['username'];
                         $_SESSION['role'] = $user['role'];
-                        header("Location: dashboard.php");
+                        $_SESSION['user_role'] = $user['role']; // For HRMS compatibility
+                        
+                        // Handle redirect parameter
+                        $redirect = $_GET['redirect'] ?? 'dashboard.php';
+                        header("Location: " . $redirect);
                         exit;
                     } else {
                         $error = "Invalid username or password.";
@@ -58,12 +62,16 @@ if (isset($_POST['username'], $_POST['password'])) {
 
             if (mysqli_num_rows($result) === 1) {
                 $admin = $result->fetch_assoc();
-                // Set both session variables for compatibility
+                // Set session variables for compatibility with both systems
                 $_SESSION['admin'] = $username;
                 $_SESSION['user_id'] = 'admin_' . $admin['id'];
                 $_SESSION['username'] = $username;
                 $_SESSION['role'] = 'admin';
-                header("Location: dashboard.php");
+                $_SESSION['user_role'] = 'admin'; // For HRMS compatibility
+                
+                // Handle redirect parameter
+                $redirect = $_GET['redirect'] ?? 'dashboard.php';
+                header("Location: " . $redirect);
                 exit;
             } else {
                 if (empty($error)) {
