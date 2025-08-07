@@ -226,9 +226,9 @@ echo str_repeat("-", 50) . "\n";
 
 // Check for sample data in key tables
 $data_checks = [
-    'employees' => "SELECT COUNT(*) as count FROM employees",
-    'departments' => "SELECT COUNT(*) as count FROM departments", 
-    'attendance' => "SELECT COUNT(*) as count FROM attendance",
+    'employees' => "SELECT COUNT(*) as count FROM hr_employees",
+    'departments' => "SELECT COUNT(*) as count FROM hr_departments", 
+    'attendance' => "SELECT COUNT(*) as count FROM hr_attendance",
     'employee_performance' => "SELECT COUNT(*) as count FROM employee_performance"
 ];
 
@@ -305,4 +305,6 @@ echo "\n" . str_repeat("=", 50) . "\n";
 echo "🎯 HRMS DATABASE BALANCE CHECK COMPLETE!\n";
 echo "📈 System ready for optimal data flow operations.\n";
 echo str_repeat("=", 50) . "\n";
+
+require_once '../layouts/footer.php';
 ?>

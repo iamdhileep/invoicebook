@@ -352,12 +352,12 @@
             border-right: 1px solid var(--gray-200);
             overflow-y: auto;
             z-index: 1020;
-            transition: var(--transition-slow);
+            transition: left var(--transition-slow);
             box-shadow: var(--shadow-sm);
         }
         
         .sidebar.collapsed {
-            transform: translateX(-100%);
+            left: calc(-1 * var(--sidebar-width));
         }
         
         .sidebar-nav {

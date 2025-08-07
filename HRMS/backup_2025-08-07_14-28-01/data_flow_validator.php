@@ -15,10 +15,10 @@ echo "📅 Starting data flow validation at: $timestamp\n\n";
 
 // Define critical HRMS modules that must have both pull and push operations
 $critical_modules = [
-    'employee_directory.php' => ['pull' => 'SELECT employees', 'push' => 'INSERT/UPDATE employees'],
+    'employee_directory.php' => ['pull' => 'SELECT employees', 'push' => 'INSERT/UPDATE hr_employees'],
     'attendance_management.php' => ['pull' => 'SELECT attendance', 'push' => 'INSERT attendance'],
     'leave_management.php' => ['pull' => 'SELECT leave_requests', 'push' => 'INSERT/UPDATE leave_requests'],
-    'payroll_processing.php' => ['pull' => 'SELECT employees/payroll', 'push' => 'INSERT/UPDATE payroll'],
+    'payroll_processing.php' => ['pull' => 'SELECT employees/payroll', 'push' => 'INSERT/UPDATE hr_payroll'],
     'performance_management.php' => ['pull' => 'SELECT employee_performance', 'push' => 'INSERT/UPDATE performance'],
     'training_management.php' => ['pull' => 'SELECT training_programs', 'push' => 'INSERT/UPDATE training'],
     'employee_helpdesk.php' => ['pull' => 'SELECT helpdesk_tickets', 'push' => 'INSERT tickets'],
@@ -133,8 +133,8 @@ echo "🗄️ TESTING LIVE DATABASE OPERATIONS...\n";
 echo str_repeat("-", 60) . "\n";
 
 $db_tests = [
-    'Employee Read' => "SELECT COUNT(*) as count FROM employees LIMIT 1",
-    'Attendance Read' => "SELECT COUNT(*) as count FROM attendance LIMIT 1", 
+    'Employee Read' => "SELECT COUNT(*) as count FROM hr_employees LIMIT 1",
+    'Attendance Read' => "SELECT COUNT(*) as count FROM hr_attendance LIMIT 1", 
     'Leave Requests Read' => "SELECT COUNT(*) as count FROM leave_requests LIMIT 1",
     'Performance Read' => "SELECT COUNT(*) as count FROM employee_performance LIMIT 1",
     'Training Read' => "SELECT COUNT(*) as count FROM training_programs LIMIT 1",
@@ -160,9 +160,9 @@ echo "\n💾 TESTING DATABASE WRITE CAPABILITIES...\n";
 echo str_repeat("-", 60) . "\n";
 
 $write_tests = [
-    'Employee Write Test' => "INSERT INTO employees (name, employee_code, email, status) VALUES ('Test Employee', 'TEST001', 'test@example.com', 'inactive')",
-    'Attendance Write Test' => "INSERT INTO attendance (employee_id, attendance_date, status) VALUES (1, CURDATE(), 'Present')",
-    'Test Cleanup' => "DELETE FROM employees WHERE employee_code = 'TEST001'"
+    'Employee Write Test' => "INSERT INTO hr_employees (name, employee_code, email, status) VALUES ('Test Employee', 'TEST001', 'test@example.com', 'inactive')",
+    'Attendance Write Test' => "INSERT INTO hr_attendance (employee_id, attendance_date, status) VALUES (1, CURDATE(), 'Present')",
+    'Test Cleanup' => "DELETE FROM hr_employees WHERE employee_code = 'TEST001'"
 ];
 
 $write_success = 0;
@@ -246,4 +246,6 @@ echo "\n" . str_repeat("=", 60) . "\n";
 echo "🎯 HRMS DATA FLOW BALANCE VALIDATION COMPLETE!\n";
 echo "📈 System is " . round($overall_score, 1) . "% balanced for optimal data operations.\n";
 echo str_repeat("=", 60) . "\n";
+
+require_once '../layouts/footer.php';
 ?>

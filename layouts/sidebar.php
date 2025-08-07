@@ -50,6 +50,202 @@ if (strpos($_SERVER['SCRIPT_NAME'] ?? '', '/pages/') === false && strpos($_SERVE
 }
 ?>
 
+<!-- Enhanced Sidebar Styling -->
+<style>
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 280px;
+    background: #ffffff;
+    border-right: 1px solid #e2e8f0;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+    transition: left 0.3s ease;
+}
+
+.sidebar-nav {
+    padding: 1rem 0;
+}
+
+.nav-section {
+    margin: 1.5rem 0 0.5rem 0;
+}
+
+.nav-section-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.nav-item {
+    margin: 0.125rem 0.75rem;
+}
+
+.nav-link {
+    display: flex;
+    align-items: center;
+    padding: 0.625rem 1rem;
+    color: #374151;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.875rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+    position: relative;
+    overflow: hidden;
+}
+
+.nav-link:hover {
+    background: linear-gradient(90deg, #f8fafc 0%, transparent 100%);
+    color: #2563eb;
+    border-left-color: #3b82f6;
+    transform: translateX(2px);
+    text-decoration: none;
+}
+
+.nav-link.active {
+    background: linear-gradient(90deg, rgba(59, 130, 246, 0.1) 0%, transparent 100%);
+    color: #2563eb;
+    border-left-color: #2563eb;
+    font-weight: 600;
+}
+
+.nav-link i {
+    width: 20px;
+    margin-right: 0.75rem;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    position: relative;
+    z-index: 1;
+}
+
+.nav-link span {
+    position: relative;
+    z-index: 1;
+}
+
+.nav-link .badge {
+    font-size: 0.625rem;
+    font-weight: 600;
+    margin-left: auto;
+    position: relative;
+    z-index: 1;
+}
+
+/* Submenu Styling */
+.nav-submenu {
+    margin-left: 1rem;
+    border-left: 2px solid #e5e7eb;
+    padding-left: 0.5rem;
+}
+
+.nav-submenu-inner {
+    margin-left: 1.5rem;
+    border-left: 2px solid #f3f4f6;
+    padding-left: 0.5rem;
+}
+
+.nav-submenu .nav-link,
+.nav-submenu-inner .nav-link {
+    font-size: 0.8rem;
+    padding: 0.5rem 0.75rem;
+    margin: 0.05rem 0;
+}
+
+/* Dropdown Styling */
+.dropdown-toggle::after {
+    transition: transform 0.2s ease;
+    margin-left: auto;
+}
+
+.dropdown-toggle[aria-expanded="true"]::after {
+    transform: rotate(180deg);
+}
+
+.collapse {
+    transition: height 0.3s ease;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .sidebar {
+        left: -280px;
+    }
+    
+    .sidebar:not(.collapsed) {
+        left: 0;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+    }
+    
+    .main-content-wrapper,
+    .main-content {
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
+}
+
+/* Desktop Sidebar Toggle */
+.sidebar.collapsed {
+    left: -280px;
+}
+
+.main-content-wrapper.expanded,
+.main-content.expanded {
+    margin-left: 0;
+    transition: margin-left 0.3s ease;
+}
+
+/* Ripple Effect */
+@keyframes ripple {
+    to {
+        transform: scale(4);
+        opacity: 0;
+    }
+}
+
+/* Professional Focus States */
+.nav-link:focus {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+    background-color: rgba(59, 130, 246, 0.1);
+}
+
+/* Enhanced Badge Colors */
+.badge.bg-primary { background-color: #3b82f6 !important; }
+.badge.bg-success { background-color: #10b981 !important; }
+.badge.bg-warning { background-color: #f59e0b !important; }
+.badge.bg-danger { background-color: #ef4444 !important; }
+.badge.bg-info { background-color: #06b6d4 !important; }
+
+/* Animation Classes */
+.animate-fade-in-up {
+    animation: fadeInUp 0.5s ease;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Text Color Utilities */
+.text-purple { color: #8b5cf6 !important; }
+</style>
+?>
+
 <!-- Sidebar -->
 <nav class="sidebar animate-fade-in-up" id="sidebar">
     <div class="sidebar-nav">
@@ -84,6 +280,11 @@ if (strpos($_SERVER['SCRIPT_NAME'] ?? '', '/pages/') === false && strpos($_SERVE
                 <i class="bi bi-cash-coin"></i>
                 <span>Record Expense</span></a>
         </div>
+        <div class="nav-item">
+            <a href="<?= $basePath ?>pages/time_tracking/time_tracking.php" class="nav-link <?= $current_page === 'time_tracking' ? 'active' : '' ?>">
+                <i class="bi bi-stopwatch-fill"></i>
+                <span>Time Tracking</span></a>
+        </div>
 
         <!-- Sales & Revenue -->
         <div class="nav-section">
@@ -98,6 +299,11 @@ if (strpos($_SERVER['SCRIPT_NAME'] ?? '', '/pages/') === false && strpos($_SERVE
             <a href="<?= $basePath ?>summary_dashboard.php" class="nav-link <?= $current_page === 'summary_dashboard' ? 'active' : '' ?>">
                 <i class="bi bi-graph-up-arrow"></i>
                 <span>Sales Summary</span></a>
+        </div>
+        <div class="nav-item">
+            <a href="<?= $basePath ?>pages/customers/customers.php" class="nav-link <?= $current_page === 'customers' ? 'active' : '' ?>">
+                <i class="bi bi-people-fill"></i>
+                <span>Customer Management</span></a>
         </div>
 
         <!-- Inventory Management -->
@@ -119,6 +325,11 @@ if (strpos($_SERVER['SCRIPT_NAME'] ?? '', '/pages/') === false && strpos($_SERVE
                 <i class="bi bi-tags-fill"></i>
                 <span>Categories</span></a>
         </div>
+        <div class="nav-item">
+            <a href="<?= $basePath ?>pages/suppliers/suppliers.php" class="nav-link <?= $current_page === 'suppliers' ? 'active' : '' ?>">
+                <i class="bi bi-truck"></i>
+                <span>Suppliers</span></a>
+        </div>
 
         <!-- Financial Management -->
         <div class="nav-section">
@@ -134,7 +345,37 @@ if (strpos($_SERVER['SCRIPT_NAME'] ?? '', '/pages/') === false && strpos($_SERVE
                 <i class="bi bi-pie-chart-fill"></i>
                 <span>Financial Reports</span></a>
         </div>
+        <div class="nav-item">
+            <a href="<?= $basePath ?>pages/accounts/accounts.php" class="nav-link <?= $current_page === 'accounts' ? 'active' : '' ?>">
+                <i class="bi bi-bank"></i>
+                <span>Account Management</span></a>
+        </div>
+        <div class="nav-item">
+            <a href="<?= $basePath ?>pages/transactions/transactions.php" class="nav-link <?= $current_page === 'transactions' ? 'active' : '' ?>">
+                <i class="bi bi-arrow-left-right"></i>
+                <span>Transactions</span></a>
+        </div>
 
+        <!-- Attendance & Time Management -->
+        <div class="nav-section">
+            <div class="nav-section-title">Attendance & Time</div>
+        </div>
+        <div class="nav-item">
+            <a href="<?= $basePath ?>pages/attendance/attendance.php" class="nav-link <?= $current_page === 'attendance' ? 'active' : '' ?>">
+                <i class="bi bi-calendar-check-fill"></i>
+                <span>Attendance Management</span></a>
+        </div>
+        <div class="nav-item">
+            <a href="<?= $basePath ?>attendance_preview.php" class="nav-link <?= $current_page === 'attendance_preview' ? 'active' : '' ?>">
+                <i class="bi bi-calendar2-week-fill"></i>
+                <span>Attendance Reports</span></a>
+        </div>
+        <div class="nav-item">
+            <a href="<?= $basePath ?>pages/time_tracking/schedules.php" class="nav-link <?= $current_page === 'schedules' ? 'active' : '' ?>">
+                <i class="bi bi-clock-fill"></i>
+                <span>Work Schedules</span></a>
+        </div>
+        
         <!-- HRM Main Menu -->
         <div class="nav-section">
             <div class="nav-section-title">HRM System</div>
@@ -210,6 +451,13 @@ if (strpos($_SERVER['SCRIPT_NAME'] ?? '', '/pages/') === false && strpos($_SERVE
                                 <a href="<?= $basePath ?>HRMS/attendance_management.php" class="nav-link <?= isActivePage('HRMS/attendance_management.php', $current_page, $current_path) ? 'active' : '' ?>">
                                     <i class="bi bi-calendar-check"></i>
                                     <span>Attendance Management</span></a>
+                                <a href="<?= $basePath ?>pages/attendance/basic_attendance.php" class="nav-link <?= isActivePage('pages/attendance/basic_attendance.php', $current_page, $current_path) ? 'active' : '' ?>">
+                                    <i class="bi bi-clock"></i>
+                                    <span>Basic Attendance</span></a>
+                                <a href="<?= $basePath ?>advanced_attendance.php" class="nav-link <?= isActivePage('advanced_attendance.php', $current_page, $current_path) ? 'active' : '' ?>">
+                                    <i class="bi bi-clock-fill text-info"></i>
+                                    <span>Advanced Attendance</span>
+                                    <span class="badge bg-info ms-auto">NEW</span></a>
                                 <a href="<?= $basePath ?>HRMS/leave_management.php" class="nav-link <?= isActivePage('HRMS/leave_management.php', $current_page, $current_path) ? 'active' : '' ?>">
                                     <i class="bi bi-calendar-x"></i>
                                     <span>Leave Management</span></a>
@@ -233,6 +481,10 @@ if (strpos($_SERVER['SCRIPT_NAME'] ?? '', '/pages/') === false && strpos($_SERVE
                                 <a href="<?= $basePath ?>HRMS/payroll_processing.php" class="nav-link">
                                     <i class="bi bi-calculator"></i>
                                     <span>Process Payroll</span></a>
+                                <a href="<?= $basePath ?>pages/payroll/advanced_payroll.php" class="nav-link">
+                                    <i class="bi bi-cash-stack text-warning"></i>
+                                    <span>Advanced Payroll</span>
+                                    <span class="badge bg-warning ms-auto">NEW</span></a>
                                 <a href="<?= $basePath ?>HRMS/salary_structure.php" class="nav-link">
                                     <i class="bi bi-graph-up"></i>
                                     <span>Salary Structure</span></a>
@@ -362,9 +614,29 @@ if (strpos($_SERVER['SCRIPT_NAME'] ?? '', '/pages/') === false && strpos($_SERVE
                             <span>Advanced Analytics</span></a>
                         <div class="collapse" id="analyticsSubmenu">
                             <div class="nav-submenu-inner">
+                                <a href="<?= $basePath ?>executive_summary_dashboard.php" class="nav-link">
+                                    <i class="bi bi-briefcase-fill text-primary"></i>
+                                    <span>Executive Summary</span>
+                                    <span class="badge bg-primary ms-auto">C-SUITE</span></a>
+                                <a href="<?= $basePath ?>smart_bi_center.php" class="nav-link">
+                                    <i class="bi bi-robot text-success"></i>
+                                    <span>Smart BI Center</span>
+                                    <span class="badge bg-success ms-auto">AI</span></a>
+                                <a href="<?= $basePath ?>collaboration_hub.php" class="nav-link">
+                                    <i class="bi bi-share-fill text-info"></i>
+                                    <span>Collaboration Hub</span>
+                                    <span class="badge bg-info ms-auto">LIVE</span></a>
+                                <a href="<?= $basePath ?>digital_transformation.php" class="nav-link">
+                                    <i class="bi bi-lightning-charge-fill text-warning"></i>
+                                    <span>Digital Transformation</span>
+                                    <span class="badge bg-warning ms-auto">AI</span></a>
+                                <a href="<?= $basePath ?>smart_resource_management.php" class="nav-link">
+                                    <i class="bi bi-gear-wide-connected text-primary"></i>
+                                    <span>Resource Management</span>
+                                    <span class="badge bg-primary ms-auto">SMART</span></a>
                                 <a href="<?= $basePath ?>analytics_dashboard.php" class="nav-link">
                                     <i class="bi bi-bar-chart-line"></i>
-                                    <span>Executive Dashboard</span></a>
+                                    <span>Analytics Dashboard</span></a>
                                 <a href="<?= $basePath ?>HRMS/ai_hr_analytics.php" class="nav-link">
                                     <i class="bi bi-brain text-primary"></i>
                                     <span>AI Analytics & Insights</span>
@@ -465,11 +737,45 @@ if (strpos($_SERVER['SCRIPT_NAME'] ?? '', '/pages/') === false && strpos($_SERVE
                 <span>Payroll Reports</span></a>
         </div>
         <div class="nav-item">
-            <a href="<?= $basePath ?>attendance_preview.php" class="nav-link <?= $current_page === 'attendance_preview' ? 'active' : '' ?>">
-                <i class="bi bi-calendar2-week-fill"></i>
-                <span>Attendance Reports</span></a>
+            <a href="<?= $basePath ?>pages/payroll/generate_payslip.php" class="nav-link <?= $current_page === 'generate_payslip' ? 'active' : '' ?>">
+                <i class="bi bi-receipt-cutoff"></i>
+                <span>Generate Payslips</span></a>
+        </div>
+        <div class="nav-item">
+            <a href="<?= $basePath ?>advanced_payroll.php" class="nav-link <?= $current_page === 'advanced_payroll' ? 'active' : '' ?>">
+                <i class="bi bi-calculator-fill"></i>
+                <span>Advanced Payroll</span></a>
         </div>
 
+        <!-- Analytics & Advanced Features -->
+        <div class="nav-section">
+            <div class="nav-section-title">Analytics & Advanced</div>
+        </div>
+        <div class="nav-item">
+            <a href="<?= $basePath ?>analytics_dashboard.php" class="nav-link <?= $current_page === 'analytics_dashboard' ? 'active' : '' ?>">
+                <i class="bi bi-bar-chart-line-fill"></i>
+                <span>Analytics Dashboard</span></a>
+        </div>
+        <div class="nav-item">
+            <a href="<?= $basePath ?>advanced_analytics_dashboard.php" class="nav-link <?= $current_page === 'advanced_analytics_dashboard' ? 'active' : '' ?>">
+                <i class="bi bi-graph-up text-danger"></i>
+                <span>Advanced Analytics</span></a>
+        </div>
+        <div class="nav-item">
+            <a href="<?= $basePath ?>advanced_features.php" class="nav-link <?= $current_page === 'advanced_features' ? 'active' : '' ?>">
+                <i class="bi bi-lightning-fill text-warning"></i>
+                <span>Advanced Features</span></a>
+        </div>
+        <div class="nav-item">
+            <a href="<?= $basePath ?>collaboration_hub.php" class="nav-link <?= $current_page === 'collaboration_hub' ? 'active' : '' ?>">
+                <i class="bi bi-share-fill text-info"></i>
+                <span>Collaboration Hub</span></a>
+        </div>
+
+        <!-- System & Settings -->
+        <div class="nav-section">
+            <div class="nav-section-title">System</div>
+        </div>
         <!-- System & Settings -->
         <div class="nav-section">
             <div class="nav-section-title">System</div>
@@ -480,9 +786,19 @@ if (strpos($_SERVER['SCRIPT_NAME'] ?? '', '/pages/') === false && strpos($_SERVE
                 <span>Core Modules</span></a>
         </div>
         <div class="nav-item">
-            <a href="#" class="nav-link" onclick="showSettings()">
+            <a href="<?= $basePath ?>pages/settings/system_settings.php" class="nav-link <?= $current_page === 'system_settings' ? 'active' : '' ?>">
                 <i class="bi bi-gear-fill"></i>
-                <span>Settings</span></a>
+                <span>System Settings</span></a>
+        </div>
+        <div class="nav-item">
+            <a href="<?= $basePath ?>pages/users/user_management.php" class="nav-link <?= $current_page === 'user_management' ? 'active' : '' ?>">
+                <i class="bi bi-people-fill"></i>
+                <span>User Management</span></a>
+        </div>
+        <div class="nav-item">
+            <a href="<?= $basePath ?>pages/backups/database_backup.php" class="nav-link <?= $current_page === 'database_backup' ? 'active' : '' ?>">
+                <i class="bi bi-cloud-arrow-up-fill"></i>
+                <span>Database Backup</span></a>
         </div>
         <div class="nav-item">
             <a href="#" class="nav-link" onclick="showHelp()">
@@ -509,9 +825,20 @@ if (strpos($_SERVER['SCRIPT_NAME'] ?? '', '/pages/') === false && strpos($_SERVE
     </div>
 </nav>
 
-<!-- Sidebar Enhancement Scripts -->
+<!-- Enhanced Sidebar Scripts -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Bootstrap components
+    initializeSidebar();
+    
+    // Initialize dropdown management
+    initializeDropdownManagement();
+    
+    // Add professional styling and effects
+    addProfessionalStyling();
+});
+
+function initializeSidebar() {
     // Add hover effects for navigation items
     const navLinks = document.querySelectorAll('.nav-link');
     navLinks.forEach(link => {
@@ -522,9 +849,99 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // Enhanced HRMS Active State Management
+    const activeSubmenuItems = document.querySelectorAll('.nav-submenu .nav-link.active, .nav-submenu-inner .nav-link.active');
+    
+    activeSubmenuItems.forEach(activeItem => {
+        // Find all parent dropdowns and expand them
+        let currentElement = activeItem;
+        while (currentElement) {
+            const parentCollapse = currentElement.closest('.collapse');
+            if (parentCollapse) {
+                // Show the collapse element
+                parentCollapse.classList.add('show');
+                
+                // Find and update the toggle button
+                const toggleButton = document.querySelector(`[data-bs-target="#${parentCollapse.id}"]`);
+                if (toggleButton) {
+                    toggleButton.setAttribute('aria-expanded', 'true');
+                }
+            }
+            currentElement = parentCollapse ? parentCollapse.parentElement : null;
+        }
+    });
+}
+
+function initializeDropdownManagement() {
+    // Get all dropdown toggles
+    const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
+    
+    dropdownToggles.forEach(toggle => {
+        toggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const targetId = this.getAttribute('data-bs-target');
+            const targetCollapse = document.querySelector(targetId);
+            
+            if (targetCollapse) {
+                const isExpanded = targetCollapse.classList.contains('show');
+                
+                // Close all other dropdowns at the same level
+                const parentDropdown = this.closest('.nav-item.dropdown');
+                const siblingDropdowns = parentDropdown?.parentElement.querySelectorAll('.nav-item.dropdown');
+                
+                if (siblingDropdowns) {
+                    siblingDropdowns.forEach(dropdown => {
+                        if (dropdown !== parentDropdown) {
+                            const collapseElement = dropdown.querySelector('.collapse');
+                            const toggleElement = dropdown.querySelector('.dropdown-toggle');
+                            
+                            if (collapseElement && collapseElement.classList.contains('show')) {
+                                collapseElement.classList.remove('show');
+                                if (toggleElement) {
+                                    toggleElement.setAttribute('aria-expanded', 'false');
+                                }
+                            }
+                        }
+                    });
+                }
+                
+                // Toggle the current dropdown
+                if (isExpanded) {
+                    targetCollapse.classList.remove('show');
+                    this.setAttribute('aria-expanded', 'false');
+                } else {
+                    targetCollapse.classList.add('show');
+                    this.setAttribute('aria-expanded', 'true');
+                }
+            }
+        });
+    });
+    
+    // Handle clicks outside dropdowns to close them
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.dropdown')) {
+            const openDropdowns = document.querySelectorAll('.collapse.show');
+            openDropdowns.forEach(dropdown => {
+                const toggle = document.querySelector(`[data-bs-target="#${dropdown.id}"]`);
+                if (toggle && !toggle.closest('.nav-item').contains(e.target)) {
+                    dropdown.classList.remove('show');
+                    toggle.setAttribute('aria-expanded', 'false');
+                }
+            });
+        }
+    });
+}
+
+function addProfessionalStyling() {
     // Add ripple effect to nav items
+    const navLinks = document.querySelectorAll('.nav-link');
     navLinks.forEach(link => {
         link.addEventListener('click', function(e) {
+            // Skip ripple for dropdown toggles
+            if (this.classList.contains('dropdown-toggle')) return;
+            
             const ripple = document.createElement('span');
             const rect = this.getBoundingClientRect();
             const size = Math.max(rect.width, rect.height);
@@ -542,6 +959,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 transform: scale(0);
                 animation: ripple 0.6s linear;
                 pointer-events: none;
+                z-index: 0;
             `;
             
             this.style.position = 'relative';
@@ -554,40 +972,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Enhanced HRMS Active State Management
-    const activeSubmenuItems = document.querySelectorAll('.nav-submenu .nav-link.active');
-    
-    activeSubmenuItems.forEach(activeItem => {
-        // Find parent dropdown and expand it
-        const parentSubmenu = activeItem.closest('.collapse');
-        const parentDropdown = parentSubmenu ? parentSubmenu.closest('.dropdown') : null;
-        
-        if (parentSubmenu && parentDropdown) {
-            // Show the parent submenu
-            parentSubmenu.classList.add('show');
-            
-            // Update the toggle button state
-            const toggleButton = parentDropdown.querySelector('.dropdown-toggle');
-            if (toggleButton) {
-                toggleButton.setAttribute('aria-expanded', 'true');
-            }
-            
-            // Also expand the main HRM menu if this is inside it
-            const mainHrmMenu = document.getElementById('hrmMainMenu');
-            if (mainHrmMenu && mainHrmMenu.contains(activeItem)) {
-                mainHrmMenu.classList.add('show');
-                const mainToggle = document.querySelector('[data-bs-target="#hrmMainMenu"]');
-                if (mainToggle) {
-                    mainToggle.setAttribute('aria-expanded', 'true');
-                }
-            }
-        }
-    });
-
-    // Add CSS for professional sidebar styling
-    if (!document.getElementById('sidebar-styles')) {
+    // Add enhanced CSS styles
+    if (!document.getElementById('sidebar-enhanced-styles')) {
         const style = document.createElement('style');
-        style.id = 'sidebar-styles';
+        style.id = 'sidebar-enhanced-styles';
         style.textContent = `
             @keyframes ripple {
                 to {
@@ -611,15 +999,200 @@ document.addEventListener('DOMContentLoaded', function() {
                 color: #6f42c1 !important;
             }
             
+            /* Enhanced dropdown styling */
+            .dropdown-toggle::after {
+                transition: transform 0.2s ease;
+            }
+            
+            .dropdown-toggle[aria-expanded="true"]::after {
+                transform: rotate(180deg);
+            }
+            
+            /* Smooth collapse animations */
+            .collapse {
+                transition: height 0.3s ease;
+            }
+            
             /* Professional focus states */
-            .nav-submenu .nav-link:focus {
+            .nav-submenu .nav-link:focus,
+            .nav-submenu-inner .nav-link:focus {
                 outline: 2px solid #3b82f6;
                 outline-offset: 2px;
+                background-color: rgba(59, 130, 246, 0.1);
+            }
+            
+            /* Sidebar toggle enhancements */
+            .sidebar.collapsed {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            
+            .sidebar:not(.collapsed) {
+                transform: translateX(0);
+                transition: transform 0.3s ease;
+            }
+            
+            .main-content-wrapper.expanded {
+                margin-left: 0;
+                transition: margin-left 0.3s ease;
+            }
+            
+            .main-content.expanded {
+                margin-left: 0;
+                transition: margin-left 0.3s ease;
+            }
+            
+            @media (max-width: 768px) {
+                .sidebar {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    height: 100vh;
+                    z-index: 1050;
+                    transform: translateX(-100%);
+                }
+                
+                .sidebar:not(.collapsed) {
+                    transform: translateX(0);
+                    box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+                }
+                
+                .main-content-wrapper,
+                .main-content {
+                    margin-left: 0 !important;
+                    width: 100% !important;
+                }
             }
         `;
         document.head.appendChild(style);
     }
-});
+}
+
+// Event-based sidebar toggle functionality
+
+function initializeSidebarToggle() {
+    console.log('Sidebar: Initializing sidebar toggle');
+    
+    const sidebar = document.getElementById('sidebar');
+    const mainContent = document.querySelector('.main-content-wrapper, .main-content');
+    
+    console.log('Sidebar: Elements found:', {
+        sidebar: !!sidebar,
+        mainContent: !!mainContent
+    });
+    
+    // Listen for header toggle events
+    document.addEventListener('sidebarToggle', function() {
+        console.log('Sidebar: sidebarToggle event received');
+        
+        if (sidebar) {
+            const isCurrentlyCollapsed = sidebar.classList.contains('collapsed');
+            console.log('Sidebar: Current state - collapsed:', isCurrentlyCollapsed);
+            
+            if (isCurrentlyCollapsed) {
+                sidebar.classList.remove('collapsed');
+                localStorage.setItem('sidebarCollapsed', 'false');
+                console.log('Sidebar: Expanded sidebar');
+            } else {
+                sidebar.classList.add('collapsed');
+                localStorage.setItem('sidebarCollapsed', 'true');
+                console.log('Sidebar: Collapsed sidebar');
+            }
+            
+            // Update main content
+            if (mainContent) {
+                if (isCurrentlyCollapsed) {
+                    // Sidebar is being expanded, so main content should not be expanded
+                    mainContent.classList.remove('expanded');
+                } else {
+                    // Sidebar is being collapsed, so main content should be expanded
+                    mainContent.classList.add('expanded');
+                }
+                console.log('Sidebar: Updated main content classes:', mainContent.className);
+            }
+            
+            // Emit state change event back to header with the NEW state
+            const newCollapsedState = sidebar.classList.contains('collapsed');
+            const stateEvent = new CustomEvent('sidebarStateChanged', {
+                detail: { collapsed: newCollapsedState }
+            });
+            document.dispatchEvent(stateEvent);
+            console.log('Sidebar: sidebarStateChanged event dispatched', { collapsed: newCollapsedState });
+        } else {
+            console.error('Sidebar: Sidebar element not found!');
+        }
+    });
+    
+    // Handle window resize
+    function handleResize() {
+        if (window.innerWidth <= 768) {
+            if (sidebar) sidebar.classList.add('collapsed');
+            if (mainContent) mainContent.classList.add('expanded');
+        } else {
+            const savedState = localStorage.getItem('sidebarCollapsed');
+            if (savedState === 'true') {
+                // Sidebar should be collapsed, main content expanded
+                if (sidebar) sidebar.classList.add('collapsed');
+                if (mainContent) mainContent.classList.add('expanded');
+            } else {
+                // Sidebar should be visible, main content normal
+                if (sidebar) sidebar.classList.remove('collapsed');
+                if (mainContent) mainContent.classList.remove('expanded');
+            }
+        }
+    }
+    
+    window.addEventListener('resize', handleResize);
+    handleResize(); // Initial call
+}
+
+function initializeDropdownManagement() {
+    // Get all dropdown toggles
+    const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
+    
+    dropdownToggles.forEach(toggle => {
+        toggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const targetId = this.getAttribute('data-bs-target');
+            const targetCollapse = document.querySelector(targetId);
+            
+            if (targetCollapse) {
+                const isExpanded = targetCollapse.classList.contains('show');
+                
+                // Close all other dropdowns at the same level
+                const parentDropdown = this.closest('.nav-item.dropdown');
+                const siblingDropdowns = parentDropdown?.parentElement.querySelectorAll('.nav-item.dropdown');
+                
+                if (siblingDropdowns) {
+                    siblingDropdowns.forEach(dropdown => {
+                        if (dropdown !== parentDropdown) {
+                            const collapseElement = dropdown.querySelector('.collapse');
+                            const toggleElement = dropdown.querySelector('.dropdown-toggle');
+                            
+                            if (collapseElement && collapseElement.classList.contains('show')) {
+                                collapseElement.classList.remove('show');
+                                if (toggleElement) {
+                                    toggleElement.setAttribute('aria-expanded', 'false');
+                                }
+                            }
+                        }
+                    });
+                }
+                
+                // Toggle current dropdown
+                if (isExpanded) {
+                    targetCollapse.classList.remove('show');
+                    this.setAttribute('aria-expanded', 'false');
+                } else {
+                    targetCollapse.classList.add('show');
+                    this.setAttribute('aria-expanded', 'true');
+                }
+            }
+        });
+    });
+}
 
 // Helper functions for future implementation
 function showSettings() {
@@ -638,5 +1211,4 @@ function showProfile() {
 }
 </script>
 
-<!-- Main Content Wrapper starts here -->
-<div class="main-content-wrapper flex-grow-1">
+<!-- End of Sidebar -->

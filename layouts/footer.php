@@ -1,7 +1,9 @@
     </div> <!-- End Main Content -->
+    </div> <!-- End Main Content Wrapper -->
+    </div> <!-- End App Layout -->
 
     <!-- Modern Footer -->
-    <footer class="main-footer" style="margin-left: var(--sidebar-width); transition: var(--transition-slow); background: var(--white); border-top: 1px solid var(--gray-200); padding: 1.5rem 2rem; margin-top: auto;">
+    <footer class="main-footer" style="transition: var(--transition-slow); background: var(--white); border-top: 1px solid var(--gray-200); padding: 1.5rem 2rem; margin-top: auto;">
         <div class="d-flex justify-content-between align-items-center text-sm">
             <div class="text-muted">
                 © <?= date('Y') ?> Business Management System. All rights reserved.
@@ -18,6 +20,11 @@
     <!-- Core JavaScript Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    
+    <!-- HRMS Common JavaScript -->
+    <script src="../HRMS/js/hrms-common.js"></script>
+    <script src="./js/hrms-common.js"></script>
+    <script src="js/hrms-common.js"></script>
     
     <!-- DataTables with Extensions -->
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>

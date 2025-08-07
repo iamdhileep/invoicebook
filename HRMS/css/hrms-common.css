@@ -1,0 +1,571 @@
+/* HRMS Universal CSS Fixes and Enhancements */
+/* Common styles for all HRMS modules to ensure consistent functionality */
+
+/* Ensure proper z-index layering for modals */
+.modal {
+    z-index: 1050 !important;
+}
+
+.modal-backdrop {
+    z-index: 1040 !important;
+}
+
+.dropdown-menu {
+    z-index: 1051 !important;
+}
+
+/* Fix modal responsiveness */
+.modal-dialog {
+    margin: 1.75rem auto;
+    max-width: none;
+}
+
+@media (min-width: 576px) {
+    .modal-dialog {
+        max-width: 500px;
+        margin: 1.75rem auto;
+    }
+}
+
+@media (min-width: 992px) {
+    .modal-lg {
+        max-width: 800px;
+    }
+    
+    .modal-xl {
+        max-width: 1140px;
+    }
+}
+
+/* Ensure buttons are clickable and properly styled */
+.btn {
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.2s ease-in-out;
+}
+
+.btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.65;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+    box-shadow: 0 4px 8px rgba(102, 126, 234, 0.4);
+    transform: translateY(-1px);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+    border: none;
+    box-shadow: 0 2px 4px rgba(86, 171, 47, 0.3);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+    border: none;
+    box-shadow: 0 2px 4px rgba(255, 65, 108, 0.3);
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, #f7931e 0%, #ffd700 100%);
+    border: none;
+    box-shadow: 0 2px 4px rgba(247, 147, 30, 0.3);
+}
+
+.btn-info {
+    background: linear-gradient(135deg, #36d1dc 0%, #5b86e5 100%);
+    border: none;
+    box-shadow: 0 2px 4px rgba(54, 209, 220, 0.3);
+}
+
+/* Fix form inputs and controls */
+.form-control {
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    background-color: #fff;
+}
+
+.form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.form-select {
+    background-position: right 0.75rem center;
+    background-size: 16px 12px;
+}
+
+/* Data table improvements */
+.table {
+    background-color: #fff;
+    border-collapse: collapse;
+}
+
+.table th {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-bottom: 2px solid #dee2e6;
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: #495057;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+.table td {
+    vertical-align: middle;
+    padding: 0.75rem;
+    border-top: 1px solid #dee2e6;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(0,0,0,.02);
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(102, 126, 234, 0.05);
+    transition: background-color 0.15s ease-in-out;
+}
+
+/* Action buttons in tables */
+.table .btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    margin: 0 0.1rem;
+}
+
+.btn-group-sm > .btn, .btn-sm {
+    --bs-btn-padding-y: 0.25rem;
+    --bs-btn-padding-x: 0.5rem;
+    --bs-btn-font-size: 0.75rem;
+    --bs-btn-border-radius: 0.25rem;
+}
+
+/* Status badges */
+.badge {
+    font-size: 0.7em;
+    font-weight: 600;
+    padding: 0.35em 0.65em;
+    border-radius: 0.375rem;
+}
+
+.badge.bg-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+}
+
+.badge.bg-danger {
+    background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%) !important;
+}
+
+.badge.bg-warning {
+    background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%) !important;
+    color: #000 !important;
+}
+
+.badge.bg-info {
+    background: linear-gradient(135deg, #17a2b8 0%, #6f42c1 100%) !important;
+}
+
+.badge.bg-secondary {
+    background: linear-gradient(135deg, #6c757d 0%, #adb5bd 100%) !important;
+}
+
+/* Card enhancements */
+.card {
+    border: none;
+    border-radius: 0.75rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    transition: box-shadow 0.15s ease-in-out;
+}
+
+.card:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.card-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-bottom: none;
+    border-radius: 0.75rem 0.75rem 0 0 !important;
+    padding: 1rem 1.25rem;
+    font-weight: 600;
+}
+
+.card-body {
+    padding: 1.25rem;
+}
+
+/* Dashboard stats cards */
+.stat-card {
+    background: white;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    transition: transform 0.2s ease-in-out;
+    border-left: 4px solid;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.stat-card.employees {
+    border-left-color: #667eea;
+}
+
+.stat-card.attendance {
+    border-left-color: #56ab2f;
+}
+
+.stat-card.leaves {
+    border-left-color: #ff416c;
+}
+
+.stat-card.departments {
+    border-left-color: #36d1dc;
+}
+
+.stat-icon {
+    font-size: 2rem;
+    opacity: 0.8;
+    margin-bottom: 1rem;
+    display: block;
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0;
+    line-height: 1;
+}
+
+.stat-label {
+    color: #6c757d;
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-top: 0.5rem;
+}
+
+/* Sidebar improvements */
+.sidebar {
+    background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    min-height: 100vh;
+    transition: all 0.3s;
+}
+
+.sidebar .nav-link {
+    color: rgba(255,255,255,0.9);
+    padding: 0.75rem 1.25rem;
+    border-radius: 0.5rem;
+    margin: 0.2rem 0.5rem;
+    transition: all 0.2s;
+}
+
+.sidebar .nav-link:hover {
+    background-color: rgba(255,255,255,0.1);
+    color: white;
+    transform: translateX(5px);
+}
+
+.sidebar .nav-link.active {
+    background-color: rgba(255,255,255,0.2);
+    color: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Navigation breadcrumb */
+.breadcrumb {
+    background: transparent;
+    padding: 0;
+    margin-bottom: 1rem;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+    content: "›";
+    color: #6c757d;
+}
+
+.breadcrumb-item a {
+    color: #667eea;
+    text-decoration: none;
+}
+
+.breadcrumb-item.active {
+    color: #6c757d;
+}
+
+/* Loading states */
+.loading {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.spinner {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    border: 0.125em solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spinner-border 0.75s linear infinite;
+}
+
+@keyframes spinner-border {
+    to { transform: rotate(360deg); }
+}
+
+/* Quick action buttons */
+.quick-action-btn {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 0.75rem;
+    text-decoration: none;
+    color: #495057;
+    transition: all 0.2s;
+    margin-bottom: 0.5rem;
+}
+
+.quick-action-btn:hover {
+    background: #f8f9fa;
+    border-color: #667eea;
+    color: #667eea;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.quick-action-icon {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-size: 1.25rem;
+}
+
+/* Search and filter controls */
+.search-filters {
+    background: white;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.search-input {
+    position: relative;
+}
+
+.search-input .form-control {
+    padding-left: 2.5rem;
+}
+
+.search-input::before {
+    content: "\f002";
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c757d;
+    z-index: 5;
+}
+
+/* Progress bars */
+.progress {
+    height: 0.5rem;
+    border-radius: 0.25rem;
+    background-color: #e9ecef;
+}
+
+.progress-bar {
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    border-radius: 0.25rem;
+}
+
+/* Notification styles */
+.hrms-notification {
+    animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Responsive design improvements */
+@media (max-width: 768px) {
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: -250px;
+        width: 250px;
+        z-index: 1000;
+        transition: left 0.3s;
+    }
+    
+    .sidebar.show {
+        left: 0;
+    }
+    
+    .main-content {
+        margin-left: 0;
+    }
+    
+    .stat-card {
+        margin-bottom: 1rem;
+    }
+    
+    .quick-action-btn {
+        text-align: center;
+        flex-direction: column;
+        padding: 1.5rem 1rem;
+    }
+    
+    .quick-action-icon {
+        margin-right: 0;
+        margin-bottom: 1rem;
+    }
+    
+    .modal-dialog {
+        margin: 1rem;
+    }
+    
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+}
+
+/* Print styles */
+@media print {
+    .sidebar,
+    .btn,
+    .modal,
+    .dropdown,
+    .pagination {
+        display: none !important;
+    }
+    
+    .main-content {
+        margin-left: 0 !important;
+    }
+    
+    .card {
+        border: 1px solid #dee2e6 !important;
+        page-break-inside: avoid;
+    }
+    
+    .table {
+        border-collapse: collapse !important;
+    }
+    
+    .table th,
+    .table td {
+        border: 1px solid #dee2e6 !important;
+    }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+}
+
+/* Ensure proper focus states for accessibility */
+.btn:focus,
+.form-control:focus,
+.form-select:focus {
+    outline: 2px solid #667eea;
+    outline-offset: 2px;
+}
+
+/* Fix any z-index issues */
+.fixed-top {
+    z-index: 1030;
+}
+
+.sticky-top {
+    z-index: 1020;
+}
+
+/* Utility classes */
+.text-gradient {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.shadow-sm {
+    box-shadow: 0 2px 4px rgba(0,0,0,.05) !important;
+}
+
+.shadow {
+    box-shadow: 0 4px 8px rgba(0,0,0,.1) !important;
+}
+
+.shadow-lg {
+    box-shadow: 0 8px 16px rgba(0,0,0,.15) !important;
+}
+
+/* Animation classes */
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.slide-up {
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}

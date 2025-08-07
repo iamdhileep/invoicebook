@@ -4,7 +4,8 @@
  * Ensures all required database tables and columns exist
  */
 
-require_once 'includes/hrms_config.php';
+require_once '../auth_check.php';
+require_once '../db.php';
 
 class DatabaseSchemaValidator {
     private $connection;
@@ -401,4 +402,6 @@ if (basename(__FILE__) === basename($_SERVER['SCRIPT_NAME'])) {
         echo "❌ Error during validation: " . $e->getMessage() . "\n";
     }
 }
+
+require_once '../layouts/footer.php';
 ?>

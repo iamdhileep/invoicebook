@@ -21,21 +21,21 @@ $validation_tests = [
     'Employees Table' => [
         'description' => 'Test employees table access and data retrieval',
         'test' => function() use ($conn) {
-            $result = $conn->query("SELECT COUNT(*) as count FROM employees LIMIT 1");
+            $result = $conn->query("SELECT COUNT(*) as count FROM hr_employees LIMIT 1");
             return $result && $result->fetch_assoc();
         }
     ],
     'Departments Table' => [
         'description' => 'Test departments table access',
         'test' => function() use ($conn) {
-            $result = $conn->query("SELECT COUNT(*) as count FROM departments LIMIT 1");
+            $result = $conn->query("SELECT COUNT(*) as count FROM hr_departments LIMIT 1");
             return $result && $result->fetch_assoc();
         }
     ],
     'Attendance Table' => [
         'description' => 'Test attendance table access',
         'test' => function() use ($conn) {
-            $result = $conn->query("SELECT COUNT(*) as count FROM attendance LIMIT 1");
+            $result = $conn->query("SELECT COUNT(*) as count FROM hr_attendance LIMIT 1");
             return $result !== false;
         }
     ],
@@ -159,11 +159,11 @@ echo "<h2>📈 Database Statistics</h2>";
 
 try {
     $stats = [];
-    $stats['Total Employees'] = $conn->query("SELECT COUNT(*) as count FROM employees")->fetch_assoc()['count'];
-    $stats['Active Employees'] = $conn->query("SELECT COUNT(*) as count FROM employees WHERE status = 'active'")->fetch_assoc()['count'];
-    $stats['Total Departments'] = $conn->query("SELECT COUNT(*) as count FROM departments")->fetch_assoc()['count'];
+    $stats['Total Employees'] = $conn->query("SELECT COUNT(*) as count FROM hr_employees")->fetch_assoc()['count'];
+    $stats['Active Employees'] = $conn->query("SELECT COUNT(*) as count FROM hr_employees WHERE status = 'active'")->fetch_assoc()['count'];
+    $stats['Total Departments'] = $conn->query("SELECT COUNT(*) as count FROM hr_departments")->fetch_assoc()['count'];
     $stats['Leave Requests'] = $conn->query("SELECT COUNT(*) as count FROM leave_requests")->fetch_assoc()['count'];
-    $stats['Attendance Records'] = $conn->query("SELECT COUNT(*) as count FROM attendance")->fetch_assoc()['count'];
+    $stats['Attendance Records'] = $conn->query("SELECT COUNT(*) as count FROM hr_attendance")->fetch_assoc()['count'];
     
     foreach ($stats as $label => $value) {
         echo "<div style='display: inline-block; margin: 10px; padding: 15px; background: white; border-radius: 5px; border: 1px solid #ddd;'>";
@@ -217,3 +217,5 @@ div {
     margin-bottom: 15px;
 }
 </style>
+
+<?php require_once '../layouts/footer.php'; ?>

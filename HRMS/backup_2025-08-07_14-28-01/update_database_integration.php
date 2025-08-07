@@ -24,8 +24,10 @@ session_start();
 \$page_title = \"[PAGE_TITLE]\";
 
 // Include header and navigation
-include '../layouts/header.php';
-include '../layouts/sidebar.php';
+require_once 'hrms_header_simple.php';
+require_once 'hrms_sidebar_simple.php';
+
+// Include HRMS UI fix
 include '../db.php';";
 
 // Check each file and add database integration if missing
@@ -61,7 +63,7 @@ foreach ($files_to_check as $file) {
         
         // Create basic template for missing files
         $template = str_replace('[PAGE_TITLE]', ucfirst(str_replace(['.php', '_'], ['', ' '], $file)), $db_include_block);
-        $template .= "\n?>\n\n<div class=\"main-content\">\n    <div class=\"container-fluid p-4\">\n        <h1>" . ucfirst(str_replace(['.php', '_'], ['', ' '], $file)) . "</h1>\n        <p>This page is under development.</p>\n    </div>\n</div>\n\n<?php include '../layouts/footer.php'; ?>";
+        $template .= "\n?>\n\n<div class=\"main-content\">\n    <div class=\"container-fluid p-4\">\n        <h1>" . ucfirst(str_replace(['.php', '_'], ['', ' '], $file)) . "</h1>\n        <p>This page is under development.</p>\n    </div>\n</div>\n\n<?php require_once 'hrms_footer_simple.php'; ?>";
         
         file_put_contents($file_path, $template);
         echo "✅ Created template for $file\n";
@@ -70,4 +72,6 @@ foreach ($files_to_check as $file) {
 
 echo "\n🎉 HRMS Database Integration Update Complete!\n";
 echo "All HRMS files now have proper database connectivity.\n";
+
+require_once 'hrms_footer_simple.php';
 ?>
