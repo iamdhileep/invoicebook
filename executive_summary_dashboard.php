@@ -26,7 +26,25 @@ function getExecutiveMetrics($conn) {
         FROM invoices 
         WHERE DATE(created_at) >= DATE_SUB(NOW(), INTERVAL 30 DAY)
     ");
-    $financial = mysqli_fetch_assoc($result);
+    
+    if ($result) {
+        $financial = mysqli_fetch_assoc($result);
+        // Handle null values from aggregation functions
+        if ($financial['total_revenue'] === null) {
+            $financial['total_revenue'] = 0;
+        }
+        if ($financial['avg_invoice_value'] === null) {
+            $financial['avg_invoice_value'] = 0;
+        }
+    } else {
+        // Fallback if invoices table doesn't exist or query fails
+        $financial = [
+            'total_revenue' => 0,
+            'total_invoices' => 0,
+            'avg_invoice_value' => 0
+        ];
+        error_log("Executive Dashboard: Invoices query failed - " . mysqli_error($conn));
+    }
     
     // Workforce Analytics
     $result = mysqli_query($conn, "
@@ -36,18 +54,54 @@ function getExecutiveMetrics($conn) {
             AVG(CASE WHEN status = 'active' THEN 1 ELSE 0 END) * 100 as retention_rate
         FROM employees
     ");
-    $workforce = mysqli_fetch_assoc($result);
     
-    // Operational Efficiency
+    if ($result) {
+        $workforce = mysqli_fetch_assoc($result);
+        // Handle null values from aggregation functions
+        if ($workforce['retention_rate'] === null) {
+            $workforce['retention_rate'] = 100;
+        }
+    } else {
+        // Fallback if employees table doesn't exist or query fails
+        $workforce = [
+            'total_employees' => 0,
+            'new_hires' => 0,
+            'retention_rate' => 100
+        ];
+        error_log("Executive Dashboard: Employees query failed - " . mysqli_error($conn));
+    }
+    
+    // Operational Efficiency  
     $result = mysqli_query($conn, "
         SELECT 
             COUNT(DISTINCT DATE(punch_in_time)) as active_days,
             AVG(CASE WHEN status = 'present' THEN 1 ELSE 0 END) * 100 as attendance_rate,
-            SUM(hours_worked) / COUNT(*) as avg_productivity
+            AVG(CASE WHEN work_duration IS NOT NULL THEN work_duration ELSE 0 END) as avg_productivity
         FROM attendance 
-        WHERE DATE(punch_in_time) >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+        WHERE DATE(created_at) >= DATE_SUB(NOW(), INTERVAL 30 DAY)
     ");
-    $operations = mysqli_fetch_assoc($result);
+    
+    if ($result) {
+        $operations = mysqli_fetch_assoc($result);
+        // Handle null values from aggregation functions
+        if ($operations['avg_productivity'] === null) {
+            $operations['avg_productivity'] = 0;
+        }
+        if ($operations['attendance_rate'] === null) {
+            $operations['attendance_rate'] = 0;
+        }
+        if ($operations['active_days'] === null) {
+            $operations['active_days'] = 0;
+        }
+    } else {
+        // Fallback if attendance table doesn't exist or query fails
+        $operations = [
+            'active_days' => 0,
+            'attendance_rate' => 0,
+            'avg_productivity' => 0
+        ];
+        error_log("Executive Dashboard: Attendance query failed - " . mysqli_error($conn));
+    }
     
     return [
         'financial' => $financial,

@@ -1,19 +1,396 @@
 <?php
-session_start();
+// Advanced Payslip Generation System
+// Enhanced version with multiple templates, export formats, and advanced features
+
+// Start output buffering to prevent header issues
+ob_start();
+
+// Start session only if not already started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 if (!isset($_SESSION['admin'])) {
     header("Location: ../../login.php");
     exit;
 }
 
+// Advanced error handling and logging
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+ini_set('log_errors', 1);
+ini_set('error_log', '../../logs/payslip_errors.log');
+
 include '../../db.php';
 
-// Get parameters
-$employee_id = $_GET['employee_id'] ?? null;
-$month = $_GET['month'] ?? date('Y-m');
-$print_mode = isset($_GET['print']) && $_GET['print'] == '1';
+// Create logs directory if not exists
+if (!is_dir('../../logs')) {
+    mkdir('../../logs', 0755, true);
+}
+
+// Check database connection
+if (!$conn) {
+    error_log("Database connection failed: " . mysqli_connect_error());
+    die("Database connection failed. Please contact administrator.");
+}
+
+// Advanced parameter handling with validation
+$employee_id = filter_input(INPUT_GET, 'employee_id', FILTER_VALIDATE_INT);
+$month = filter_input(INPUT_GET, 'month', FILTER_SANITIZE_STRING) ?? date('Y-m');
+$print_mode = filter_input(INPUT_GET, 'print', FILTER_VALIDATE_BOOLEAN);
+$export_format = filter_input(INPUT_GET, 'format', FILTER_SANITIZE_STRING) ?? 'html';
+$template = filter_input(INPUT_GET, 'template', FILTER_SANITIZE_STRING) ?? 'modern';
+$language = filter_input(INPUT_GET, 'lang', FILTER_SANITIZE_STRING) ?? 'en';
+
+// Validate month format
+if (!preg_match('/^\d{4}-\d{2}$/', $month)) {
+    $month = date('Y-m');
+}
+
+// Log payslip generation attempt
+error_log("Payslip generation attempt - Employee: $employee_id, Month: $month, Template: $template");
+
+// Function to get company settings
+function getCompanySettings($conn) {
+    $settings = [
+        'company_name' => 'Business Management System',
+        'company_address' => 'Business Address Line 1, City, State - 123456',
+        'company_phone' => '+91 12345 67890',
+        'company_email' => 'hr@company.com',
+        'company_logo' => '../../assets/img/logo.png',
+        'company_website' => 'www.company.com'
+    ];
+    
+    // Try to get from database
+    $result = $conn->query("SELECT * FROM company_settings LIMIT 1");
+    if ($result && $result->num_rows > 0) {
+        $dbSettings = $result->fetch_assoc();
+        $settings = array_merge($settings, $dbSettings);
+    }
+    
+    return $settings;
+}
+
+// Function to get payroll settings
+function getPayrollSettings($conn) {
+    $settings = [
+        'basic_salary_percentage' => 60,
+        'hra_percentage' => 20,
+        'da_percentage' => 10,
+        'allowances_percentage' => 10,
+        'pf_rate' => 12,
+        'esi_rate' => 1.75,
+        'professional_tax_limit' => 10000,
+        'professional_tax_amount' => 200,
+        'overtime_multiplier' => 1.5,
+        'working_hours_per_day' => 8
+    ];
+    
+    // Get from database
+    $result = $conn->query("SELECT setting_key, setting_value FROM payroll_settings");
+    if ($result) {
+        while ($row = $result->fetch_assoc()) {
+            $settings[$row['setting_key']] = floatval($row['setting_value']);
+        }
+    }
+    
+    return $settings;
+}
 
 if (!$employee_id) {
-    die("Employee ID is required");
+    // Enhanced employee selection page with global UI integration
+    $page_title = "Generate Payslip";
+    include '../../layouts/header.php';
+    include '../../layouts/sidebar.php';
+    ?>
+    
+<div class="main-content">
+    <div class="container-fluid">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="h3 mb-0">💰 Payslip Generator</h1>
+                <p class="text-muted">Generate and manage employee payslips</p>
+            </div>
+            <div>
+                <button class="btn btn-success me-2" onclick="generateBulkPayslips()">
+                    <i class="bi bi-files"></i> Bulk Generate
+                </button>
+                <a href="../../pages/payroll/" class="btn btn-primary">
+                    <i class="bi bi-arrow-left"></i> Back to Payroll
+                </a>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="row g-3 mb-4">
+            <div class="col-xl-3 col-lg-6 col-md-6">
+                <div class="card stats-card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <div class="card-body text-white text-center">
+                        <div class="mb-2">
+                            <i class="bi bi-people fs-2"></i>
+                        </div>
+                        <h3 class="mb-1 fw-bold"><?php 
+                            $totalEmp = $conn->query("SELECT COUNT(*) as count FROM employees WHERE status = 'active'")->fetch_assoc()['count'];
+                            echo $totalEmp;
+                        ?></h3>
+                        <small class="opacity-75">Active Employees</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-3 col-lg-6 col-md-6">
+                <div class="card stats-card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                    <div class="card-body text-white text-center">
+                        <div class="mb-2">
+                            <i class="bi bi-receipt fs-2"></i>
+                        </div>
+                        <h3 class="mb-1 fw-bold"><?php 
+                            $currentMonth = date('Y-m');
+                            $monthlyPayslips = $conn->query("SELECT COUNT(*) as count FROM payslips WHERE DATE_FORMAT(pay_date, '%Y-%m') = '$currentMonth'")->fetch_assoc()['count'] ?? 0;
+                            echo $monthlyPayslips;
+                        ?></h3>
+                        <small class="opacity-75">This Month's Payslips</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-3 col-lg-6 col-md-6">
+                <div class="card stats-card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                    <div class="card-body text-white text-center">
+                        <div class="mb-2">
+                            <i class="bi bi-currency-rupee fs-2"></i>
+                        </div>
+                        <h3 class="mb-1 fw-bold">₹<?php 
+                            $totalSalary = $conn->query("SELECT SUM(monthly_salary) as total FROM employees WHERE status = 'active'")->fetch_assoc()['total'] ?? 0;
+                            echo number_format($totalSalary, 0);
+                        ?></h3>
+                        <small class="opacity-75">Monthly Payroll</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-3 col-lg-6 col-md-6">
+                <div class="card stats-card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                    <div class="card-body text-white text-center">
+                        <div class="mb-2">
+                            <i class="bi bi-calendar-check fs-2"></i>
+                        </div>
+                        <h3 class="mb-1 fw-bold"><?= date('M Y') ?></h3>
+                        <small class="opacity-75">Current Period</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <button class="btn btn-outline-primary w-100" onclick="showPayrollSummary()">
+                    <i class="bi bi-bar-chart me-2"></i>Payroll Summary
+                </button>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-outline-success w-100" onclick="exportAllPayslips()">
+                    <i class="bi bi-download me-2"></i>Export All
+                </button>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-outline-info w-100" onclick="showTemplateOptions()">
+                    <i class="bi bi-file-earmark-text me-2"></i>Templates
+                </button>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-outline-warning w-100" onclick="showPayrollSettings()">
+                    <i class="bi bi-gear me-2"></i>Settings
+                </button>
+            </div>
+        </div>
+        <!-- Payslip Generation Form -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-light">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h5 class="mb-0">
+                            <i class="bi bi-receipt me-2"></i>Generate Payslip
+                        </h5>
+                        <small class="text-muted">Select employee and period to generate payslip</small>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <form method="GET" id="payslipForm">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <label for="employee_id" class="form-label fw-semibold">
+                                <i class="bi bi-person-circle text-primary me-1"></i> Select Employee
+                            </label>
+                            <select class="form-select" id="employee_id" name="employee_id" required>
+                                        <option value="">Choose an employee...</option>
+                                        <?php
+                                        $employees = $conn->query("SELECT employee_id, name, employee_code, department_name, monthly_salary FROM employees WHERE status = 'active' ORDER BY name");
+                                        while ($emp = $employees->fetch_assoc()):
+                                        ?>
+                                        <option value="<?= $emp['employee_id'] ?>" 
+                                                data-department="<?= htmlspecialchars($emp['department_name'] ?? 'N/A') ?>"
+                                                data-salary="<?= number_format($emp['monthly_salary'], 2) ?>">
+                                            <?= htmlspecialchars($emp['name']) ?> (<?= htmlspecialchars($emp['employee_code']) ?>) - ₹<?= number_format($emp['monthly_salary'], 2) ?>
+                                        </option>
+                                        <?php endwhile; ?>
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="month" class="form-label fw-semibold">
+                                        <i class="bi bi-calendar3 text-primary me-1"></i> Pay Period
+                                    </label>
+                                    <input type="month" class="form-control" id="month" name="month" value="<?= date('Y-m') ?>">
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="template" class="form-label fw-semibold">
+                                        <i class="bi bi-palette text-primary me-1"></i> Template Style
+                                    </label>
+                                    <select class="form-select" id="template" name="template">
+                                        <option value="modern">Modern Professional</option>
+                                        <option value="classic">Classic Corporate</option>
+                                        <option value="minimal">Minimal Clean</option>
+                                        <option value="colorful">Colorful Creative</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="format" class="form-label fw-semibold">
+                                        <i class="bi bi-file-earmark text-primary me-1"></i> Output Format
+                                    </label>
+                                    <select class="form-select" id="format" name="format">
+                                        <option value="html">HTML Preview</option>
+                                        <option value="pdf">PDF Download</option>
+                                        <option value="excel">Excel Export</option>
+                                        <option value="csv">CSV Export</option>
+                                    </select>
+                                    </div>
+                                </div>
+                                
+                                <!-- Employee Preview Card -->
+                                <div id="employeePreview" class="card mt-4 d-none">
+                                    <div class="card-body">
+                                        <h6 class="card-title text-primary">Employee Preview</h6>
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <small class="text-muted">Name:</small><br>
+                                                <span id="preview-name">-</span>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <small class="text-muted">Department:</small><br>
+                                                <span id="preview-department">-</span>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <small class="text-muted">Monthly Salary:</small><br>
+                                                <span id="preview-salary" class="fw-bold text-success">-</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Generate Button -->
+                                <div class="col-12">
+                                    <div class="row g-3 mt-4">
+                                        <div class="col-md-6">
+                                            <div class="d-grid">
+                                                <button type="submit" class="btn btn-primary btn-lg">
+                                                    <i class="bi bi-file-earmark-text me-2"></i>
+                                                    Generate Payslip
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="d-grid">
+                                                <button type="button" class="btn btn-outline-secondary btn-lg" onclick="generateSample()">
+                                                    <i class="bi bi-eye me-2"></i>
+                                                    Preview Sample
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/css/select2.min.css" rel="stylesheet">
+
+<script>
+$(document).ready(function() {
+    // Initialize Select2 for better employee selection
+    $('#employee_id').select2({
+        placeholder: 'Search for an employee...',
+        allowClear: true
+    });
+    
+    // Employee preview
+    $('#employee_id').on('change', function() {
+        const selectedOption = $(this).find(':selected');
+        if (selectedOption.val()) {
+            $('#preview-name').text(selectedOption.text().split(' (')[0]);
+            $('#preview-department').text(selectedOption.data('department'));
+            $('#preview-salary').text('₹' + selectedOption.data('salary'));
+            $('#employeePreview').removeClass('d-none');
+        } else {
+            $('#employeePreview').addClass('d-none');
+        }
+    });
+    
+    // Form submission with loading state
+    $('#payslipForm').on('submit', function() {
+        const submitBtn = $(this).find('button[type="submit"]');
+        submitBtn.html('<i class="bi bi-hourglass-split me-2"></i>Generating...');
+        submitBtn.prop('disabled', true);
+    });
+});
+
+function generateSample() {
+    const firstEmployee = $('#employee_id option:nth-child(2)').val();
+    if (firstEmployee) {
+        window.open(`generate_payslip.php?employee_id=${firstEmployee}&month=${$('#month').val()}&template=modern`, '_blank');
+    } else {
+        alert('No employees found in the system.');
+    }
+}
+
+function generateBulkPayslips() {
+    alert('Bulk payslip generation feature coming soon!');
+    // Here you can implement bulk generation logic
+}
+
+function showPayrollSummary() {
+    alert('Payroll summary report feature coming soon!');
+    // Here you can implement payroll summary modal/page
+}
+
+function exportAllPayslips() {
+    alert('Export all payslips feature coming soon!');
+    // Here you can implement export functionality
+}
+
+function showTemplateOptions() {
+    alert('Template selection feature coming soon!');
+    // Here you can implement template selection modal
+}
+
+function showPayrollSettings() {
+    window.open('payroll_settings.php', '_blank');
+}
+</script>
+
+<?php
+include '../../layouts/footer.php';
+exit;
 }
 
 // Parse month (format: YYYY-MM)
@@ -21,115 +398,264 @@ $monthParts = explode('-', $month);
 $year = $monthParts[0];
 $monthNum = $monthParts[1];
 
-// Get employee details with fallback for different column names
-$employeeQuery = $conn->prepare("SELECT * FROM employees WHERE employee_id = ?");
+// Get company and payroll settings
+$companySettings = getCompanySettings($conn);
+$payrollSettings = getPayrollSettings($conn);
+
+// Enhanced employee query with more details
+$employeeQuery = $conn->prepare("
+    SELECT e.*, d.department_name as dept_name 
+    FROM employees e 
+    LEFT JOIN departments d ON e.department_id = d.department_id 
+    WHERE e.employee_id = ?
+");
+
+if (!$employeeQuery) {
+    error_log("Query preparation failed: " . $conn->error);
+    die("System error occurred. Please contact administrator.");
+}
+
 $employeeQuery->bind_param("i", $employee_id);
-$employeeQuery->execute();
+if (!$employeeQuery->execute()) {
+    error_log("Query execution failed: " . $employeeQuery->error);
+    die("Failed to fetch employee data.");
+}
+
 $employee = $employeeQuery->get_result()->fetch_assoc();
 
 if (!$employee) {
-    die("Employee not found");
+    die("Employee not found with ID: $employee_id");
 }
 
-// Ensure we have the right column names
+// Enhanced employee data processing
 $employeeName = $employee['name'] ?? $employee['employee_name'] ?? 'N/A';
 $employeeCode = $employee['employee_code'] ?? $employee['code'] ?? 'N/A';
 $position = $employee['position'] ?? $employee['designation'] ?? 'N/A';
-$monthlySalary = $employee['monthly_salary'] ?? $employee['salary'] ?? 0;
+$department = $employee['department_name'] ?? $employee['dept_name'] ?? 'N/A';
+$monthlySalary = floatval($employee['monthly_salary'] ?? $employee['salary'] ?? 0);
 $joiningDate = $employee['joining_date'] ?? $employee['created_at'] ?? date('Y-m-d');
+$bankAccount = $employee['bank_account'] ?? $employee['account_number'] ?? 'N/A';
+$panNumber = $employee['pan_number'] ?? 'N/A';
+$employeePhoto = $employee['photo'] ?? '';
 
-// Calculate payroll details
+// Calculate payroll details with advanced logic
 $daysInMonth = cal_days_in_month(CAL_GREGORIAN, $monthNum, $year);
 
-// Get attendance data
+// Enhanced attendance calculation
 $presentDays = 0;
 $absentDays = 0;
 $lateDays = 0;
+$halfDays = 0;
 $overtimeHours = 0;
+$totalWorkingHours = 0;
 
-// Check attendance table structure and get data
-$attendanceQuery = $conn->prepare("SELECT * FROM attendance WHERE employee_id = ? AND MONTH(attendance_date) = ? AND YEAR(attendance_date) = ?");
+// Advanced attendance query
+$attendanceQuery = $conn->prepare("
+    SELECT 
+        attendance_date,
+        check_in, check_out,
+        punch_in_time, punch_out_time,
+        time_in, time_out,
+        status,
+        work_duration,
+        overtime_hours,
+        break_time
+    FROM attendance 
+    WHERE employee_id = ? 
+    AND MONTH(attendance_date) = ? 
+    AND YEAR(attendance_date) = ?
+    ORDER BY attendance_date
+");
+
 if ($attendanceQuery) {
     $attendanceQuery->bind_param("iii", $employee_id, $monthNum, $year);
     $attendanceQuery->execute();
     $attendanceResult = $attendanceQuery->get_result();
     
     while ($att = $attendanceResult->fetch_assoc()) {
-        if (($att['status'] ?? '') == 'Present' || ($att['punch_in'] ?? '') != '') {
-            $presentDays++;
+        $checkIn = $att['check_in'] ?? $att['punch_in_time'] ?? $att['time_in'] ?? '';
+        $checkOut = $att['check_out'] ?? $att['punch_out_time'] ?? $att['time_out'] ?? '';
+        $status = strtolower($att['status'] ?? '');
+        $workDuration = floatval($att['work_duration'] ?? 0);
+        $overtimeFromDb = floatval($att['overtime_hours'] ?? 0);
+        
+        if (!empty($checkIn) || in_array($status, ['present', 'half day', 'late'])) {
+            if ($status == 'half day' || $status == 'half-day') {
+                $halfDays++;
+                $presentDays += 0.5;
+            } else {
+                $presentDays++;
+            }
             
-            // Calculate overtime if punch_in and punch_out exist
-            if (!empty($att['punch_in']) && !empty($att['punch_out'])) {
-                $punchIn = strtotime($att['punch_in']);
-                $punchOut = strtotime($att['punch_out']);
-                $hoursWorked = ($punchOut - $punchIn) / 3600;
-                
-                if ($hoursWorked > 8) {
-                    $overtimeHours += ($hoursWorked - 8);
+            if ($status == 'late') {
+                $lateDays++;
+            }
+            
+            // Calculate working hours and overtime
+            if (!empty($checkIn) && !empty($checkOut)) {
+                try {
+                    $punchIn = new DateTime($checkIn);
+                    $punchOut = new DateTime($checkOut);
+                    $hoursWorked = $punchIn->diff($punchOut)->h + ($punchIn->diff($punchOut)->i / 60);
+                    
+                    $totalWorkingHours += $hoursWorked;
+                    
+                    if ($hoursWorked > $payrollSettings['working_hours_per_day']) {
+                        $overtimeHours += ($hoursWorked - $payrollSettings['working_hours_per_day']);
+                    }
+                } catch (Exception $e) {
+                    error_log("Date parsing error for employee $employee_id: " . $e->getMessage());
                 }
             }
-        } else {
-            $absentDays++;
+            
+            if ($workDuration > 0) {
+                $totalWorkingHours += $workDuration;
+            }
+            
+            if ($overtimeFromDb > 0) {
+                $overtimeHours += $overtimeFromDb;
+            }
         }
     }
 }
 
 $absentDays = $daysInMonth - $presentDays;
 
-// Calculate salary components
+// Advanced salary calculations
 $perDaySalary = $monthlySalary / $daysInMonth;
-$basicSalary = $monthlySalary * 0.6; // 60% basic
-$hra = $monthlySalary * 0.2; // 20% HRA
-$da = $monthlySalary * 0.1; // 10% DA
-$allowances = $monthlySalary * 0.1; // 10% other allowances
+$perHourSalary = $perDaySalary / $payrollSettings['working_hours_per_day'];
 
-// Calculate earnings
+// Salary components based on settings
+$basicSalary = $monthlySalary * ($payrollSettings['basic_salary_percentage'] / 100);
+$hra = $monthlySalary * ($payrollSettings['hra_percentage'] / 100);
+$da = $monthlySalary * ($payrollSettings['da_percentage'] / 100);
+$allowances = $monthlySalary * ($payrollSettings['allowances_percentage'] / 100);
+
+// Calculate earned amounts
 $earnedBasic = ($basicSalary / $daysInMonth) * $presentDays;
 $earnedHRA = ($hra / $daysInMonth) * $presentDays;
 $earnedDA = ($da / $daysInMonth) * $presentDays;
 $earnedAllowances = ($allowances / $daysInMonth) * $presentDays;
-$overtimePay = $overtimeHours * ($perDaySalary / 8) * 1.5; // 1.5x for overtime
 
-$grossEarnings = $earnedBasic + $earnedHRA + $earnedDA + $earnedAllowances + $overtimePay;
+// Advanced overtime calculation
+$overtimePay = $overtimeHours * $perHourSalary * $payrollSettings['overtime_multiplier'];
 
-// Calculate deductions
-$pf = $earnedBasic * 0.12; // 12% PF on basic
-$esi = $grossEarnings * 0.0175; // 1.75% ESI
-$professionalTax = $grossEarnings > 10000 ? 200 : 0;
-$incomeTax = 0; // Simplified - can be enhanced
-$absentDeduction = $perDaySalary * $absentDays;
+// Bonus calculations (can be enhanced)
+$performanceBonus = 0;
+$festivalBonus = 0;
+$attendanceBonus = ($presentDays >= ($daysInMonth * 0.95)) ? ($monthlySalary * 0.02) : 0;
 
-$totalDeductions = $pf + $esi + $professionalTax + $incomeTax + $absentDeduction;
-$netSalary = $grossEarnings - $totalDeductions;
+$totalEarnings = $earnedBasic + $earnedHRA + $earnedDA + $earnedAllowances + $overtimePay + $performanceBonus + $festivalBonus + $attendanceBonus;
 
-// Company details
-$companyName = "Business Management System";
-$companyAddress = "Business Address Line 1, City, State - 123456";
-$companyPhone = "+91 12345 67890";
-$companyEmail = "hr@company.com";
+// Advanced deductions
+$pf = $earnedBasic * ($payrollSettings['pf_rate'] / 100);
+$esi = ($totalEarnings <= 21000) ? ($totalEarnings * ($payrollSettings['esi_rate'] / 100)) : 0;
+$professionalTax = ($totalEarnings > $payrollSettings['professional_tax_limit']) ? $payrollSettings['professional_tax_amount'] : 0;
 
-$page_title = "Payslip - " . $employeeName;
-
-// If not in print mode, include header and sidebar
-if (!$print_mode) {
-    include '../../layouts/header.php';
+// Advanced income tax calculation (basic slab system)
+$incomeTax = 0;
+$annualSalary = $monthlySalary * 12;
+if ($annualSalary > 250000) {
+    $taxableIncome = $annualSalary - 150000; // Standard deduction
+    if ($taxableIncome > 250000 && $taxableIncome <= 500000) {
+        $incomeTax = ($taxableIncome - 250000) * 0.05 / 12;
+    } elseif ($taxableIncome > 500000 && $taxableIncome <= 1000000) {
+        $incomeTax = (250000 * 0.05 + ($taxableIncome - 500000) * 0.20) / 12;
+    } elseif ($taxableIncome > 1000000) {
+        $incomeTax = (250000 * 0.05 + 500000 * 0.20 + ($taxableIncome - 1000000) * 0.30) / 12;
+    }
 }
-?>
 
+$absentDeduction = $perDaySalary * $absentDays;
+$lateDeduction = $lateDays * ($perDaySalary * 0.1); // 10% deduction for late days
+
+// Loan deductions (can be enhanced with database)
+$loanDeduction = 0;
+$advanceDeduction = 0;
+
+$totalDeductions = $pf + $esi + $professionalTax + $incomeTax + $absentDeduction + $lateDeduction + $loanDeduction + $advanceDeduction;
+$netSalary = $totalEarnings - $totalDeductions;
+
+$page_title = "Advanced Payslip - " . $employeeName . " - " . date('M Y', strtotime($month . '-01'));
+
+// Template selection
+$templateClass = '';
+$templateStyle = '';
+
+switch ($template) {
+    case 'classic':
+        $templateClass = 'classic-template';
+        $templateStyle = '
+            .classic-template { font-family: "Times New Roman", serif; }
+            .classic-template .payslip-header { background: #f8f9fa; border-bottom: 3px solid #333; }
+            .classic-template .section-title { color: #333; border-bottom: 2px solid #333; }
+        ';
+        break;
+    case 'minimal':
+        $templateClass = 'minimal-template';
+        $templateStyle = '
+            .minimal-template { font-family: "Arial", sans-serif; }
+            .minimal-template .payslip-header { background: white; border-bottom: 1px solid #ddd; }
+            .minimal-template .section-title { color: #666; font-weight: 300; }
+        ';
+        break;
+    case 'colorful':
+        $templateClass = 'colorful-template';
+        $templateStyle = '
+            .colorful-template { font-family: "Segoe UI", sans-serif; }
+            .colorful-template .payslip-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+            .colorful-template .section-title { color: #667eea; }
+        ';
+        break;
+    default: // modern
+        $templateClass = 'modern-template';
+        $templateStyle = '
+            .modern-template { font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; }
+            .modern-template .payslip-header { background: #f8f9fa; border-bottom: 3px solid #007bff; }
+            .modern-template .section-title { color: #007bff; }
+        ';
+}
+
+// Handle different export formats
+if ($export_format === 'pdf') {
+    $print_mode = true;
+} elseif ($export_format === 'excel') {
+    // Excel export logic would go here
+    header('Content-Type: application/vnd.ms-excel');
+    header('Content-Disposition: attachment; filename="payslip_' . $employee_id . '_' . $month . '.xls"');
+} elseif ($export_format === 'csv') {
+    // CSV export logic would go here
+    header('Content-Type: text/csv');
+    header('Content-Disposition: attachment; filename="payslip_' . $employee_id . '_' . $month . '.csv"');
+}
+
+// For print mode or PDF export, use standalone HTML
+if ($print_mode || $export_format === 'pdf') {
+?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<?= $language ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $page_title ?></title>
     
-    <?php if ($print_mode): ?>
     <!-- Bootstrap 5 CSS for print mode -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-    <?php endif; ?>
     
     <style>
+<?php
+} else {
+    // Use global layout for web view
+    $page_title = "Payslip - " . $employeeName . " (" . date('M Y', strtotime($month)) . ")";
+    include '../../layouts/header.php';
+    include '../../layouts/sidebar.php';
+    echo '<div class="main-content"><div class="container-fluid">';
+    echo '<style>';
+}
+?>
+        <?= $templateStyle ?>
+        
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             font-size: 12px;
@@ -138,648 +664,494 @@ if (!$print_mode) {
         }
         
         .payslip-container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
             background: white;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
         }
         
         .payslip-header {
-            background: #f8f9fa;
-            padding: 20px;
-            border-bottom: 3px solid #007bff;
+            padding: 30px;
+            position: relative;
+        }
+        
+        .watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 100px;
+            color: rgba(0,0,0,0.05);
+            font-weight: bold;
+            z-index: 1;
+            pointer-events: none;
         }
         
         .company-logo {
-            max-width: 150px;
+            max-width: 180px;
             height: auto;
-            max-height: 60px;
+            max-height: 80px;
             object-fit: contain;
         }
         
         .payslip-title {
-            font-size: 24px;
+            font-size: 28px;
             font-weight: bold;
-            color: #007bff;
             margin-bottom: 10px;
         }
         
-        .payslip-details {
-            padding: 20px;
-        }
-        
-        .employee-details {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
-        
-        .attendance-cards {
-            margin-bottom: 20px;
-        }
-        
-        .attendance-cards .card {
-            border: none;
-            border-radius: 8px;
-            transition: transform 0.2s;
-        }
-        
-        .attendance-cards .card:hover {
-            transform: translateY(-2px);
-        }
-        
-        .salary-table {
-            margin-bottom: 20px;
-        }
-        
-        .salary-table th {
-            background: #007bff;
-            color: white;
+        .section-title {
+            font-size: 16px;
             font-weight: bold;
-            text-align: center;
-            padding: 10px 8px;
-            border: 1px solid #dee2e6;
-            white-space: nowrap;
-            font-size: 11px;
-            font-weight: 700;
-        }
-        
-        .salary-table td {
-            text-align: center;
-            vertical-align: middle;
-            padding: 8px 6px;
-            border: 1px solid #dee2e6;
-            white-space: nowrap;
-            font-size: 10px;
-        }
-        
-        .salary-table .item-name {
-            text-align: left;
-            padding-left: 12px;
-        }
-        
-        .salary-table table {
-            width: 100%;
-            border-collapse: collapse;
-            table-layout: fixed;
-        }
-        
-        .salary-table th:nth-child(1) {
-            width: 35%;
-        }
-        
-        .salary-table th:nth-child(2) {
-            width: 15%;
-        }
-        
-        .salary-table th:nth-child(3) {
-            width: 35%;
-        }
-        
-        .salary-table th:nth-child(4) {
-            width: 15%;
-        }
-        
-        /* Add better table formatting */
-        .table-responsive {
-            border-radius: 4px;
-            overflow: hidden;
-        }
-        
-        .salary-table .table-bordered th,
-        .salary-table .table-bordered td {
-            border: 1px solid #dee2e6;
-        }
-        
-        .salary-table tbody tr:last-child td {
+            margin-bottom: 15px;
+            padding-bottom: 5px;
             border-bottom: 2px solid #007bff;
         }
         
-        /* Improve table cell spacing */
-        .salary-table th {
-            white-space: nowrap;
-            font-size: 11px;
-            font-weight: 700;
-        }
-        
-        .salary-table td {
-            white-space: nowrap;
-            font-size: 10px;
-        }
-        
-        .total-section {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 5px;
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
             margin-bottom: 20px;
+        }
+        
+        .info-item {
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border-left: 4px solid #007bff;
+        }
+        
+        .info-label {
+            font-size: 10px;
+            color: #666;
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        
+        .info-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-top: 2px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .stat-card {
+            text-align: center;
+            padding: 20px;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-card.primary { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+        .stat-card.success { background: linear-gradient(135deg, #56ab2f, #a8e6cf); color: white; }
+        .stat-card.danger { background: linear-gradient(135deg, #ff6b6b, #ffa8a8); color: white; }
+        .stat-card.warning { background: linear-gradient(135deg, #ffd93d, #ff6b6b); color: white; }
+        .stat-card.info { background: linear-gradient(135deg, #74b9ff, #0984e3); color: white; }
+        
+        .stat-icon {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+        
+        .salary-breakdown {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .table-advanced {
+            margin: 0;
+            font-size: 11px;
+        }
+        
+        .table-advanced th {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            font-weight: 600;
+            padding: 15px 12px;
+            border: none;
+            text-align: center;
+            font-size: 12px;
+        }
+        
+        .table-advanced td {
+            padding: 12px;
+            border: 1px solid #e9ecef;
+            vertical-align: middle;
+        }
+        
+        .table-advanced .item-name {
+            text-align: left;
+            font-weight: 500;
+        }
+        
+        .table-advanced .amount {
+            text-align: right;
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+        }
+        
+        .total-row {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            font-weight: bold;
+        }
+        
+        .net-salary-section {
+            background: linear-gradient(135deg, #56ab2f, #a8e6cf);
+            color: white;
+            padding: 30px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .net-amount {
+            font-size: 36px;
+            font-weight: bold;
+            margin: 15px 0;
         }
         
         .amount-words {
             font-style: italic;
-            color: #666;
+            opacity: 0.9;
             margin-top: 10px;
+            font-size: 14px;
         }
         
         .footer-section {
-            border-top: 2px solid #007bff;
-            padding-top: 20px;
-            margin-top: 30px;
+            padding: 30px;
+            background: #f8f9fa;
         }
         
-        .signature-section {
-            margin-top: 40px;
+        .signature-area {
+            border-top: 2px solid #333;
+            padding-top: 10px;
+            margin-top: 60px;
+            text-align: center;
+            font-weight: bold;
         }
         
-        .print-button {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
+        .qr-code {
+            width: 100px;
+            height: 100px;
+            background: #f0f0f0;
+            border: 2px solid #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: #666;
         }
         
-        .company-details {
-            font-size: 11px;
-            line-height: 1.3;
-        }
-        
-        /* Single row layout styles */
-        .employee-details .d-flex span {
-            margin-right: 20px;
-            margin-bottom: 5px;
-            font-size: 12px;
-            white-space: nowrap;
-            flex-shrink: 0;
-        }
-        
-        .employee-details .d-flex {
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-        
-        @media (max-width: 768px) {
-            .employee-details .d-flex {
-                flex-direction: column;
-                gap: 8px;
-            }
-            
-            .employee-details .d-flex span {
-                margin-right: 0;
-                font-size: 11px;
-            }
-            
-            .company-details {
-                font-size: 10px !important;
-                line-height: 1.2;
-            }
-        }
-        
-        /* Screen styles */
-        @media screen {
-            body {
-                background: #e9ecef;
-                padding: 20px;
-            }
-        }
-        
-        /* Print styles - Consolidated for better alignment */
+        /* Print styles */
         @media print {
-            .no-print { 
-                display: none !important; 
-            }
-            
-            body {
-                background: white !important;
-                padding: 0 !important;
-                margin: 0 !important;
-                font-size: 11px !important;
-            }
-            
-            .print-container,
-            .payslip-container {
-                width: 100% !important;
-                max-width: none !important;
-                margin: 0 !important;
-                padding: 0 !important;
-                box-shadow: none !important;
-                page-break-inside: avoid;
-            }
-            
-            .main-content {
-                padding: 0 !important;
-                margin: 0 !important;
-            }
-            
-            .container-fluid {
-                padding: 0 !important;
-                margin: 0 !important;
-            }
-            
-            .payslip-header {
-                padding: 15px !important;
-                margin: 0 !important;
-            }
-            
-            .payslip-details {
-                padding: 15px !important;
-            }
-            
-            .employee-details {
-                padding: 12px !important;
-                margin-bottom: 15px !important;
-            }
-            
-            .attendance-cards .card-body {
-                padding: 8px !important;
-            }
-            
-            .salary-table {
-                margin-bottom: 15px !important;
-            }
-            
-            .salary-table .table-responsive {
-                border: none !important;
-                overflow: visible !important;
-            }
-            
-            .salary-table table {
-                width: 100% !important;
-                border-collapse: collapse !important;
-                table-layout: fixed !important;
-                margin: 0 !important;
-            }
-            
-            .salary-table th {
-                background: #007bff !important;
-                color: white !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-                padding: 8px 6px !important;
-                border: 1px solid #000 !important;
-                font-size: 10px !important;
-                font-weight: bold !important;
-                text-align: center !important;
-                vertical-align: middle !important;
-                white-space: nowrap !important;
-            }
-            
-            .salary-table td {
-                padding: 6px 4px !important;
-                border: 1px solid #000 !important;
-                font-size: 9px !important;
-                text-align: center !important;
-                vertical-align: middle !important;
-                line-height: 1.2 !important;
-                white-space: nowrap !important;
-            }
-            
-            .salary-table .item-name {
-                text-align: left !important;
-                padding-left: 8px !important;
-            }
-            
-            .salary-table th:nth-child(1),
-            .salary-table td:nth-child(1) {
-                width: 35% !important;
-            }
-            
-            .salary-table th:nth-child(2),
-            .salary-table td:nth-child(2) {
-                width: 15% !important;
-            }
-            
-            .salary-table th:nth-child(3),
-            .salary-table td:nth-child(3) {
-                width: 35% !important;
-            }
-            
-            .salary-table th:nth-child(4),
-            .salary-table td:nth-child(4) {
-                width: 15% !important;
-            }
-            
-            /* Fix for total row styling in print */
-            .salary-table tr[style*="background-color"] td {
-                background-color: #f8f9fa !important;
-                font-weight: bold !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
-            
-            /* Ensure consistent table layout */
-            .salary-table th,
-            .salary-table td {
-                white-space: nowrap !important;
-                overflow: hidden !important;
-                text-overflow: ellipsis !important;
-            }
-            
-            .total-section {
-                padding: 12px !important;
-                margin-bottom: 15px !important;
-            }
-            
-            .footer-section {
-                margin-top: 20px !important;
-                padding-top: 15px !important;
-            }
-            
-            .company-logo {
-                max-width: 120px !important;
-                max-height: 50px !important;
-            }
-            
-            .payslip-title {
-                font-size: 22px !important;
-                margin-bottom: 8px !important;
-            }
-            
-            .signature-section {
-                margin-top: 30px !important;
-            }
-            
-            /* Ensure proper spacing */
-            .row {
-                margin: 0 !important;
-            }
-            
-            .col-md-3, .col-md-4, .col-md-6, .col-md-8, .col-md-9 {
-                padding: 0 8px !important;
-            }
-            
-            /* Fix Bootstrap column gutters for print */
-            .row > * {
-                padding-right: 8px !important;
-                padding-left: 8px !important;
-            }
-            
-            /* Employee details section alignment */
-            .employee-details .row > * {
-                padding-right: 6px !important;
-                padding-left: 6px !important;
-            }
-            
-            .employee-details .col-4 {
-                padding-right: 4px !important;
-            }
-            
-            .employee-details .col-8 {
-                padding-left: 4px !important;
-            }
-            
-            /* Single row layout for print */
-            .employee-details .d-flex {
-                gap: 10px !important;
-                justify-content: space-between !important;
-            }
-            
-            .employee-details .d-flex span {
-                font-size: 9px !important;
-                margin-right: 8px !important;
-                margin-bottom: 3px !important;
-                white-space: nowrap !important;
-            }
-            
-            .company-details {
-                font-size: 9px !important;
-                white-space: nowrap !important;
-            }
+            .no-print { display: none !important; }
+            body { background: white !important; padding: 0 !important; }
+            .payslip-container { box-shadow: none !important; max-width: none !important; }
+            .stat-card { break-inside: avoid; }
+            .salary-breakdown { break-inside: avoid; }
+            @page { margin: 15mm; size: A4; }
         }
         
-        @page {
-            margin: 10mm 15mm;
-            size: A4;
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .info-grid { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .payslip-header { padding: 20px; }
+            .net-amount { font-size: 28px; }
         }
         
-        <?php if (!$print_mode): ?>
-        .main-content {
-            padding: 20px;
+        /* Animation for screen viewing */
+        @media screen {
+            .payslip-container { animation: fadeInUp 0.6s ease-out; }
+            @keyframes fadeInUp {
+                from { opacity: 0; transform: translateY(30px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
         }
-        <?php endif; ?>
-    </style>
     </style>
 </head>
 
-<body>
-    <?php if (!$print_mode): ?>
-    <div class="main-content">
-        <?php include '../../layouts/sidebar.php'; ?>
-        
-        <div class="content">
-            <div class="container-fluid">
-                <!-- Action Buttons -->
-                <div class="d-flex justify-content-between align-items-center mb-4 no-print">
-                    <div>
-                        <h1 class="h3 mb-0">Generate Payslip</h1>
-                        <p class="text-muted">Employee payslip for <?= date('F Y', mktime(0, 0, 0, $monthNum, 1, $year)) ?></p>
-                    </div>
-                    <div>
-                        <button onclick="window.print()" class="btn btn-primary me-2">
-                            <i class="bi bi-printer"></i> Print
-                        </button>
-                        <button onclick="downloadPDF()" class="btn btn-success me-2">
-                            <i class="bi bi-file-pdf"></i> Download PDF
-                        </button>
-                        <a href="payroll.php" class="btn btn-outline-secondary">
-                            <i class="bi bi-arrow-left"></i> Back to Payroll
-                        </a>
-                    </div>
+<body class="<?= $templateClass ?>">
+    
+    <?php if (!($print_mode || $export_format === 'pdf')): ?>
+        <!-- Web View Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="h3 mb-0">💰 Payslip Details</h1>
+                <p class="text-muted"><?= htmlspecialchars($employeeName) ?> - <?= date('F Y', strtotime($month . '-01')) ?></p>
+            </div>
+            <div class="btn-group">
+                <a href="generate_payslip.php" class="btn btn-outline-primary">
+                    <i class="bi bi-arrow-left"></i> Back to Selection
+                </a>
+                <button onclick="window.print()" class="btn btn-success">
+                    <i class="bi bi-printer"></i> Print
+                </button>
+                <div class="dropdown">
+                    <button class="btn btn-info dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-download"></i> Export
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="?employee_id=<?= $employee_id ?>&month=<?= $month ?>&format=pdf&template=<?= $template ?>">PDF</a></li>
+                        <li><a class="dropdown-item" href="?employee_id=<?= $employee_id ?>&month=<?= $month ?>&format=excel&template=<?= $template ?>">Excel</a></li>
+                        <li><a class="dropdown-item" href="?employee_id=<?= $employee_id ?>&month=<?= $month ?>&format=csv&template=<?= $template ?>">CSV</a></li>
+                    </ul>
                 </div>
+            </div>
+        </div>
     <?php endif; ?>
 
-    <!-- Payslip Content -->
-    <div class="payslip-container print-container">
+    <!-- Advanced Payslip Content -->
+    <div class="payslip-container">
+        <!-- Watermark -->
+        <div class="watermark">PAYSLIP</div>
+        
         <!-- Header Section -->
         <div class="payslip-header">
             <div class="row align-items-center">
                 <div class="col-md-3">
-                    <img src="../../assets/img/logo.png" alt="Company Logo" class="company-logo" onerror="this.style.display='none'">
+                    <?php if (!empty($companySettings['company_logo'])): ?>
+                    <img src="<?= $companySettings['company_logo'] ?>" alt="Company Logo" class="company-logo" onerror="this.style.display='none'">
+                    <?php endif; ?>
                 </div>
-                <div class="col-md-9 text-end">
-                    <div class="payslip-title">SALARY SLIP</div>
-                    <div class="company-details">
-                        <strong><?= htmlspecialchars($companyName) ?></strong> | 
-                        <?= htmlspecialchars($companyAddress) ?> | 
-                        Phone: <?= htmlspecialchars($companyPhone) ?> | Email: <?= htmlspecialchars($companyEmail) ?>
+                <div class="col-md-6 text-center">
+                    <div class="payslip-title"><?= $companySettings['company_name'] ?></div>
+                    <div class="h5 text-primary">SALARY SLIP</div>
+                    <div class="text-muted"><?= date('F Y', strtotime($month . '-01')) ?></div>
+                </div>
+                <div class="col-md-3 text-end">
+                    <div class="qr-code">
+                        QR CODE<br>
+                        <small>Scan to Verify</small>
                     </div>
+                </div>
+            </div>
+            
+            <div class="mt-3 small text-muted text-center">
+                <?= $companySettings['company_address'] ?> | 
+                Phone: <?= $companySettings['company_phone'] ?> | 
+                Email: <?= $companySettings['company_email'] ?>
+            </div>
+        </div>
+        
+        <!-- Employee Information -->
+        <div class="p-4">
+            <h5 class="section-title">
+                <i class="bi bi-person-circle me-2"></i>Employee Information
+            </h5>
+            
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Employee ID</div>
+                    <div class="info-value"><?= htmlspecialchars($employeeCode) ?></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Employee Name</div>
+                    <div class="info-value"><?= htmlspecialchars($employeeName) ?></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Designation</div>
+                    <div class="info-value"><?= htmlspecialchars($position) ?></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Department</div>
+                    <div class="info-value"><?= htmlspecialchars($department) ?></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Date of Joining</div>
+                    <div class="info-value"><?= date('d M Y', strtotime($joiningDate)) ?></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Pay Period</div>
+                    <div class="info-value"><?= date('01 M Y', strtotime($month . '-01')) ?> to <?= date('t M Y', strtotime($month . '-01')) ?></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Bank Account</div>
+                    <div class="info-value"><?= htmlspecialchars($bankAccount) ?></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">PAN Number</div>
+                    <div class="info-value"><?= htmlspecialchars($panNumber) ?></div>
+                </div>
+            </div>
+            
+            <!-- Attendance Statistics -->
+            <h5 class="section-title">
+                <i class="bi bi-calendar-check me-2"></i>Attendance Summary
+            </h5>
+            
+            <div class="stats-grid">
+                <div class="stat-card primary">
+                    <div class="stat-icon"><i class="bi bi-calendar-check-fill"></i></div>
+                    <div class="stat-value"><?= $presentDays ?></div>
+                    <div class="stat-label">Days Present</div>
+                </div>
+                <div class="stat-card danger">
+                    <div class="stat-icon"><i class="bi bi-calendar-x-fill"></i></div>
+                    <div class="stat-value"><?= $absentDays ?></div>
+                    <div class="stat-label">Days Absent</div>
+                </div>
+                <div class="stat-card warning">
+                    <div class="stat-icon"><i class="bi bi-clock-fill"></i></div>
+                    <div class="stat-value"><?= $lateDays ?></div>
+                    <div class="stat-label">Late Days</div>
+                </div>
+                <div class="stat-card info">
+                    <div class="stat-icon"><i class="bi bi-stopwatch-fill"></i></div>
+                    <div class="stat-value"><?= number_format($overtimeHours, 1) ?>h</div>
+                    <div class="stat-label">Overtime Hours</div>
+                </div>
+                <div class="stat-card success">
+                    <div class="stat-icon"><i class="bi bi-hourglass-split"></i></div>
+                    <div class="stat-value"><?= number_format($totalWorkingHours, 1) ?>h</div>
+                    <div class="stat-label">Total Hours</div>
+                </div>
+            </div>
+            
+            <!-- Advanced Salary Breakdown -->
+            <h5 class="section-title">
+                <i class="bi bi-currency-rupee me-2"></i>Detailed Salary Breakdown
+            </h5>
+            
+            <div class="salary-breakdown">
+                <table class="table table-advanced">
+                    <thead>
+                        <tr>
+                            <th style="width: 35%;">EARNINGS</th>
+                            <th style="width: 15%;">AMOUNT (₹)</th>
+                            <th style="width: 35%;">DEDUCTIONS</th>
+                            <th style="width: 15%;">AMOUNT (₹)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="item-name">Basic Salary</td>
+                            <td class="amount"><?= number_format($earnedBasic, 2) ?></td>
+                            <td class="item-name">Provident Fund (<?= $payrollSettings['pf_rate'] ?>%)</td>
+                            <td class="amount"><?= number_format($pf, 2) ?></td>
+                        </tr>
+                        <tr>
+                            <td class="item-name">House Rent Allowance</td>
+                            <td class="amount"><?= number_format($earnedHRA, 2) ?></td>
+                            <td class="item-name">ESI (<?= $payrollSettings['esi_rate'] ?>%)</td>
+                            <td class="amount"><?= number_format($esi, 2) ?></td>
+                        </tr>
+                        <tr>
+                            <td class="item-name">Dearness Allowance</td>
+                            <td class="amount"><?= number_format($earnedDA, 2) ?></td>
+                            <td class="item-name">Professional Tax</td>
+                            <td class="amount"><?= number_format($professionalTax, 2) ?></td>
+                        </tr>
+                        <tr>
+                            <td class="item-name">Other Allowances</td>
+                            <td class="amount"><?= number_format($earnedAllowances, 2) ?></td>
+                            <td class="item-name">Income Tax (TDS)</td>
+                            <td class="amount"><?= number_format($incomeTax, 2) ?></td>
+                        </tr>
+                        <tr>
+                            <td class="item-name">Overtime Pay (<?= number_format($overtimeHours, 1) ?>h × ₹<?= number_format($perHourSalary * $payrollSettings['overtime_multiplier'], 2) ?>)</td>
+                            <td class="amount"><?= number_format($overtimePay, 2) ?></td>
+                            <td class="item-name">Absent Days Deduction</td>
+                            <td class="amount"><?= number_format($absentDeduction, 2) ?></td>
+                        </tr>
+                        <?php if ($attendanceBonus > 0): ?>
+                        <tr>
+                            <td class="item-name">Attendance Bonus</td>
+                            <td class="amount"><?= number_format($attendanceBonus, 2) ?></td>
+                            <td class="item-name">Late Day Penalty</td>
+                            <td class="amount"><?= number_format($lateDeduction, 2) ?></td>
+                        </tr>
+                        <?php else: ?>
+                        <tr>
+                            <td class="item-name">-</td>
+                            <td class="amount">-</td>
+                            <td class="item-name">Late Day Penalty</td>
+                            <td class="amount"><?= number_format($lateDeduction, 2) ?></td>
+                        </tr>
+                        <?php endif; ?>
+                        
+                        <tr class="total-row">
+                            <td class="item-name"><strong>GROSS EARNINGS</strong></td>
+                            <td class="amount"><strong><?= number_format($totalEarnings, 2) ?></strong></td>
+                            <td class="item-name"><strong>TOTAL DEDUCTIONS</strong></td>
+                            <td class="amount"><strong><?= number_format($totalDeductions, 2) ?></strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Net Salary Section -->
+            <div class="net-salary-section">
+                <h5 class="mb-0">NET SALARY FOR <?= strtoupper(date('F Y', strtotime($month . '-01'))) ?></h5>
+                <div class="net-amount">₹ <?= number_format($netSalary, 2) ?></div>
+                <div class="amount-words">
+                    <strong>In Words:</strong> <?= ucwords(convertNumberToWords($netSalary)) ?> Rupees Only
+                </div>
+                <div class="mt-3">
+                    <small>Gross Earnings: ₹<?= number_format($totalEarnings, 2) ?> | Total Deductions: ₹<?= number_format($totalDeductions, 2) ?></small>
                 </div>
             </div>
         </div>
         
-        <!-- Employee Details Section -->
-        <div class="payslip-details">
-            <div class="employee-details">
-                <div class="row">
-                    <div class="col-md-12">
-                        <h5 class="mb-2"><i class="bi bi-person-circle text-primary" style="font-size: 0.9rem; margin-right: 0.4rem;"></i> Employee Information</h5>
-                        <div class="d-flex flex-wrap justify-content-between align-items-center mb-2">
-                            <span><strong>Employee ID:</strong> <?= htmlspecialchars($employee['employee_id'] ?? 'N/A') ?></span>
-                            <span><strong>Name:</strong> <?= htmlspecialchars($employee['name'] ?? 'N/A') ?></span>
-                            <span><strong>Department:</strong> <?= htmlspecialchars($employee['department'] ?? 'N/A') ?></span>
-                            <span><strong>Designation:</strong> <?= htmlspecialchars($employee['designation'] ?? 'N/A') ?></span>
-                        </div>
-                        <h5 class="mb-2"><i class="bi bi-calendar-event text-primary" style="font-size: 0.9rem; margin-right: 0.4rem;"></i> Pay Period</h5>
-                        <div class="d-flex flex-wrap justify-content-between align-items-center mb-2">
-                            <span><strong>Month:</strong> <?= strtoupper(date('F Y', mktime(0, 0, 0, $monthNum, 1, $year))) ?></span>
-                            <span><strong>Pay Date:</strong> <?= date('d M Y') ?></span>
-                            <span><strong>Bank Account:</strong> <?= htmlspecialchars($employee['bank_account'] ?? 'N/A') ?></span>
-                            <span><strong>PAN:</strong> <?= htmlspecialchars($employee['pan_number'] ?? 'N/A') ?></span>
-                        </div>
-                    </div>
+        <!-- Footer Section -->
+        <div class="footer-section">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 class="section-title">Important Notes</h6>
+                    <ul class="list-unstyled small">
+                        <li>• This is a system-generated payslip and does not require a physical signature.</li>
+                        <li>• PF and ESI deductions are as per government regulations.</li>
+                        <li>• Overtime is calculated at <?= $payrollSettings['overtime_multiplier'] ?>x the hourly rate.</li>
+                        <li>• Professional Tax is applicable for gross salary above ₹<?= number_format($payrollSettings['professional_tax_limit']) ?>.</li>
+                        <li>• Income tax is calculated as per current tax slabs.</li>
+                        <li>• For any queries, contact HR department.</li>
+                    </ul>
                 </div>
-            </div>
-            
-            <!-- Attendance Summary Cards -->
-            <div class="attendance-cards">
-                <h5 class="mb-2"><i class="bi bi-clock-history text-primary" style="font-size: 0.9rem; margin-right: 0.4rem;"></i> Attendance Summary</h5>
-                <div class="row g-2">
-                    <div class="col-md-3">
-                        <div class="card border-primary">
-                            <div class="card-body text-center p-2">
-                                <i class="bi bi-calendar-check-fill text-primary" style="font-size: 1.2rem;"></i>
-                                <h5 class="mt-1 mb-0 text-primary"><?= $presentDays ?></h5>
-                                <small class="text-muted">Days Present</small>
+                <div class="col-md-6">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <div class="signature-area">
+                                Employee Signature
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="signature-area">
+                                Authorized Signatory
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <div class="card border-danger">
-                            <div class="card-body text-center p-2">
-                                <i class="bi bi-calendar-x-fill text-danger" style="font-size: 1.2rem;"></i>
-                                <h5 class="mt-1 mb-0 text-danger"><?= $absentDays ?></h5>
-                                <small class="text-muted">Days Absent</small>
-                            </div>
-                        </div>
+                    
+                    <div class="text-center mt-4">
+                        <small class="text-muted">
+                            Generated on <?= date('d M Y, h:i A') ?> | 
+                            Payslip ID: PAY<?= $employee_id ?><?= date('Ym', strtotime($month . '-01')) ?>
+                        </small>
                     </div>
-                    <div class="col-md-3">
-                        <div class="card border-info">
-                            <div class="card-body text-center p-2">
-                                <i class="bi bi-clock-fill text-info" style="font-size: 1.2rem;"></i>
-                                <h5 class="mt-1 mb-0 text-info"><?= number_format($overtimeHours, 1) ?>h</h5>
-                                <small class="text-muted">Overtime Hours</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card border-warning">
-                            <div class="card-body text-center p-2">
-                                <i class="bi bi-currency-rupee text-warning" style="font-size: 1.2rem;"></i>
-                                <h5 class="mt-1 mb-0 text-warning"><?= number_format($perDaySalary, 2) ?></h5>
-                                <small class="text-muted">Per Day Salary</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Salary Breakdown -->
-            <div class="salary-table">
-                <h5 class="mb-2"><i class="bi bi-currency-rupee text-primary" style="font-size: 0.9rem; margin-right: 0.4rem;"></i> Salary Breakdown</h5>
-                <div class="table-responsive">
-                    <table class="table table-bordered">
-                        <colgroup>
-                            <col style="width: 35%;">
-                            <col style="width: 15%;">
-                            <col style="width: 35%;">
-                            <col style="width: 15%;">
-                        </colgroup>
-                        <thead>
-                            <tr>
-                                <th class="item-name">EARNINGS</th>
-                                <th>AMOUNT (₹)</th>
-                                <th class="item-name">DEDUCTIONS</th>
-                                <th>AMOUNT (₹)</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td class="item-name">Basic Salary</td>
-                                <td><?= number_format($earnedBasic, 2) ?></td>
-                                <td class="item-name">Provident Fund (PF)</td>
-                                <td><?= number_format($pf, 2) ?></td>
-                            </tr>
-                            <tr>
-                                <td class="item-name">House Rent Allowance</td>
-                                <td><?= number_format($earnedHRA, 2) ?></td>
-                                <td class="item-name">Professional Tax</td>
-                                <td><?= number_format($professionalTax, 2) ?></td>
-                            </tr>
-                            <tr>
-                                <td class="item-name">Other Allowances</td>
-                                <td><?= number_format($earnedAllowances, 2) ?></td>
-                                <td class="item-name">Income Tax</td>
-                                <td><?= number_format($incomeTax, 2) ?></td>
-                            </tr>
-                            <tr>
-                                <td class="item-name">Overtime Pay</td>
-                                <td><?= number_format($overtimePay, 2) ?></td>
-                                <td class="item-name">Absent Days Deduction</td>
-                                <td><?= number_format($absentDeduction, 2) ?></td>
-                            </tr>
-                            <tr style="background-color: #f8f9fa; font-weight: bold;">
-                                <td class="item-name">GROSS EARNINGS</td>
-                                <td><?= number_format($grossEarnings, 2) ?></td>
-                                <td class="item-name">TOTAL DEDUCTIONS</td>
-                                <td><?= number_format($totalDeductions, 2) ?></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            
-            <!-- Net Salary Section -->
-            <div class="total-section">
-                <div class="row">
-                    <div class="col-md-8">
-                        <h5 class="text-primary mb-2">Net Salary</h5>
-                        <div class="amount-words">
-                            <strong>In Words:</strong> <?= ucwords(convertNumberToWords($netSalary)) ?> Rupees Only
-                        </div>
-                    </div>
-                    <div class="col-md-4 text-end">
-                        <h5 class="text-primary">Net Amount</h5>
-                        <h3 class="text-success mb-0">₹ <?= number_format($netSalary, 2) ?></h3>
-                        <small class="text-muted">(Gross Earnings - Total Deductions)</small>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Footer Section -->
-            <div class="footer-section">
-                <div class="row">
-                    <div class="col-md-6">
-                        <h6 class="text-primary mb-2">Terms & Conditions:</h6>
-                        <ul class="list-unstyled small">
-                            <li>• This is a computer-generated payslip and does not require a signature.</li>
-                            <li>• PF and ESI deductions are as per government regulations.</li>
-                            <li>• Overtime is calculated at 1.5x the hourly rate for hours worked beyond 8 hours per day.</li>
-                            <li>• Professional Tax is applicable for gross salary above ₹10,000 per month.</li>
-                        </ul>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="signature-section">
-                            <div class="row text-center">
-                                <div class="col-6">
-                                    <div style="border-top: 1px solid #000; margin-top: 60px; padding-top: 8px;">
-                                        <strong>Employee Signature</strong>
-                                    </div>
-                                </div>
-                                <div class="col-6">
-                                    <div style="border-top: 1px solid #000; margin-top: 60px; padding-top: 8px;">
-                                        <strong>Authorized Signatory</strong>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Generation Info -->
-                <div class="text-center mt-4 pt-3" style="border-top: 1px solid #dee2e6;">
-                    <small class="text-muted">
-                        Generated on <?= date('d M Y, h:i A') ?> | 
-                        This is a system generated document
-                    </small>
                 </div>
             </div>
         </div>
@@ -790,10 +1162,20 @@ if (!$print_mode) {
         </div>
     </div>
     
-    <!-- Print Button (Only visible on screen) -->
-    <button onclick="window.print()" class="btn btn-primary print-button no-print">
-        <i class="bi bi-printer"></i> Print Payslip
-    </button>
+    <!-- Floating Action Button -->
+    <div class="position-fixed bottom-0 end-0 p-3 no-print" style="z-index: 1000;">
+        <div class="btn-group-vertical">
+            <button onclick="window.print()" class="btn btn-primary btn-sm mb-2" title="Print">
+                <i class="bi bi-printer"></i>
+            </button>
+            <button onclick="downloadPDF()" class="btn btn-success btn-sm mb-2" title="Download PDF">
+                <i class="bi bi-file-pdf"></i>
+            </button>
+            <button onclick="sendEmail()" class="btn btn-warning btn-sm" title="Send Email">
+                <i class="bi bi-envelope"></i>
+            </button>
+        </div>
+    </div>
     <?php endif; ?>
 
     <!-- Scripts -->
@@ -802,81 +1184,191 @@ if (!$print_mode) {
     <?php endif; ?>
     
     <script>
+        // Advanced PDF download with loading state
         function downloadPDF() {
-            // Open print-friendly version for PDF generation
-            const printUrl = window.location.href + (window.location.href.includes('?') ? '&' : '?') + 'print=1';
+            const employee_id = <?= $employee_id ?>;
+            const month = '<?= $month ?>';
+            const template = '<?= $template ?>';
+            
+            // Show loading indicator
+            const downloadBtn = document.querySelector('[onclick="downloadPDF()"]');
+            if (downloadBtn) {
+                const originalText = downloadBtn.innerHTML;
+                downloadBtn.innerHTML = '<i class="bi bi-hourglass-split bi-spin"></i> Generating...';
+                downloadBtn.disabled = true;
+                
+                setTimeout(() => {
+                    downloadBtn.innerHTML = originalText;
+                    downloadBtn.disabled = false;
+                }, 3000);
+            }
+            
+            // Open print-friendly version
+            const printUrl = `generate_payslip.php?employee_id=${employee_id}&month=${month}&template=${template}&print=1&format=pdf`;
             window.open(printUrl, '_blank');
         }
         
-        // Improve print layout
-        function preparePrint() {
-            // Ensure all images are loaded before printing
+        // Excel export
+        function downloadExcel() {
+            const employee_id = <?= $employee_id ?>;
+            const month = '<?= $month ?>';
+            window.open(`generate_payslip.php?employee_id=${employee_id}&month=${month}&format=excel`, '_blank');
+        }
+        
+        // Enhanced email functionality
+        function sendEmail() {
+            const employee_id = <?= $employee_id ?>;
+            const month = '<?= $month ?>';
+            
+            if (confirm('Send this payslip to employee\'s registered email address?')) {
+                const emailBtn = document.querySelector('[onclick="sendEmail()"]');
+                if (emailBtn) {
+                    const originalText = emailBtn.innerHTML;
+                    emailBtn.innerHTML = '<i class="bi bi-hourglass-split bi-spin"></i> Sending...';
+                    emailBtn.disabled = true;
+                    
+                    fetch('send_payslip_email.php', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                        body: `employee_id=${employee_id}&month=${month}&template=<?= $template ?>`
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert(`✓ Email sent successfully to ${data.employee_name} (${data.employee_email})`);
+                        } else {
+                            alert('⚠️ ' + data.error);
+                        }
+                    })
+                    .catch(error => {
+                        alert('📧 Email functionality ready for implementation.');
+                    })
+                    .finally(() => {
+                        emailBtn.innerHTML = originalText;
+                        emailBtn.disabled = false;
+                    });
+                }
+            }
+        }
+        
+        // Share functionality
+        function sharePayslip() {
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Payslip - <?= $employeeName ?>',
+                    text: 'Payslip for <?= date('F Y', strtotime($month . '-01')) ?>',
+                    url: window.location.href
+                });
+            } else {
+                // Fallback to copy URL
+                navigator.clipboard.writeText(window.location.href).then(() => {
+                    alert('📋 Payslip URL copied to clipboard!');
+                });
+            }
+        }
+        
+        // Enhanced print functionality
+        function enhancedPrint() {
+            // Hide non-printable elements
+            const noPrintElements = document.querySelectorAll('.no-print');
+            noPrintElements.forEach(el => el.style.display = 'none');
+            
+            // Wait for images to load
             const images = document.querySelectorAll('img');
             let loadedImages = 0;
             
+            function checkAllImagesLoaded() {
+                loadedImages++;
+                if (loadedImages === images.length || images.length === 0) {
+                    setTimeout(() => {
+                        window.print();
+                        setTimeout(() => {
+                            noPrintElements.forEach(el => el.style.display = '');
+                        }, 1000);
+                    }, 500);
+                }
+            }
+            
             if (images.length === 0) {
-                window.print();
+                checkAllImagesLoaded();
                 return;
             }
             
             images.forEach(img => {
                 if (img.complete) {
-                    loadedImages++;
+                    checkAllImagesLoaded();
                 } else {
-                    img.onload = img.onerror = () => {
-                        loadedImages++;
-                        if (loadedImages === images.length) {
-                            setTimeout(() => window.print(), 500);
-                        }
-                    };
+                    img.onload = img.onerror = checkAllImagesLoaded;
                 }
             });
-            
-            if (loadedImages === images.length) {
-                setTimeout(() => window.print(), 500);
-            }
         }
         
         // Auto-print if in print mode
         <?php if ($print_mode): ?>
         window.onload = function() {
-            preparePrint();
+            enhancedPrint();
         };
         <?php endif; ?>
         
-        // Override print button to use improved function
+        // Keyboard shortcuts
         <?php if (!$print_mode): ?>
-        document.addEventListener('DOMContentLoaded', function() {
-            const printButtons = document.querySelectorAll('[onclick*="window.print"]');
-            printButtons.forEach(btn => {
-                btn.onclick = preparePrint;
-            });
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'p') {
+                e.preventDefault();
+                enhancedPrint();
+            }
+            if (e.ctrlKey && e.key === 's') {
+                e.preventDefault();
+                downloadPDF();
+            }
+            if (e.ctrlKey && e.key === 'e') {
+                e.preventDefault();
+                sendEmail();
+            }
         });
         <?php endif; ?>
+        
+        // Initialize tooltips if Bootstrap is available
+        if (typeof bootstrap !== 'undefined') {
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        }
     </script>
 
-    <?php if (!$print_mode) include '../../layouts/footer.php'; ?>
+    <?php if ($print_mode || $export_format === 'pdf') { ?>
 </body>
 </html>
+    <?php } else { ?>
+        </div>
+    </div>
+    
+    <!-- Include Payroll Modals -->
+    <?php include 'payroll_modals.html'; ?>
+    
+    <!-- Include Payroll Modal JavaScript -->
+    <script src="../../assets/js/payroll_modals.js"></script>
+    
+    <?php include '../../layouts/footer.php'; ?>
+    <?php } ?>
 
 <?php
-// Function to convert number to words
+// Enhanced number to words conversion function
 function convertNumberToWords($number) {
     $number = (int) $number;
     
-    $ones = array(
+    if ($number == 0) return 'zero';
+    
+    $ones = [
         '', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine',
         'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen',
         'seventeen', 'eighteen', 'nineteen'
-    );
+    ];
     
-    $tens = array(
+    $tens = [
         '', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'
-    );
-    
-    if ($number == 0) {
-        return 'zero';
-    }
+    ];
     
     $result = '';
     
@@ -922,4 +1414,10 @@ function convertNumberToWords($number) {
     
     return trim($result);
 }
+
+// Log successful generation
+error_log("Payslip successfully generated for Employee: $employee_id, Month: $month");
+
+// Clean up output buffer
+ob_end_flush();
 ?>

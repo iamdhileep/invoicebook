@@ -2,12 +2,12 @@
 $page_title = "HRMS Dashboard";
 
 // Include authentication and database
-require_once '../auth_check.php';
-require_once '../db.php';
+require_once 'auth_check.php';
+require_once 'db.php';
 
 // Include layouts
-require_once 'hrms_header_simple.php';
-require_once 'hrms_sidebar_simple.php';
+require_once 'HRMS/hrms_header_simple.php';
+require_once 'HRMS/hrms_sidebar_simple.php';
 
 // Initialize dashboard statistics with proper error handling
 $stats = [

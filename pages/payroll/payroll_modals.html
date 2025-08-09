@@ -1,0 +1,272 @@
+<!-- Payroll Modals for generate_payslip.php -->
+
+<!-- Bulk Payslip Generation Modal -->
+<div class="modal fade" id="bulkPayslipModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-files"></i> Bulk Payslip Generation
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="bulkPayslipForm">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Select Department</label>
+                            <select class="form-select" name="department" id="bulkDepartment">
+                                <option value="">All Departments</option>
+                                <option value="IT">IT</option>
+                                <option value="HR">HR</option>
+                                <option value="Finance">Finance</option>
+                                <option value="Marketing">Marketing</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Pay Period</label>
+                            <input type="month" class="form-control" name="pay_period" id="bulkPayPeriod" value="<?= date('Y-m') ?>">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Select Employees</label>
+                            <div id="employeeList" class="border rounded p-3" style="max-height: 300px; overflow-y: auto;">
+                                <div class="text-center">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading employees...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" onclick="processBulkPayslips()">
+                    <i class="bi bi-play-circle"></i> Generate Payslips
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Payroll Summary Modal -->
+<div class="modal fade" id="payrollSummaryModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-bar-chart"></i> Payroll Summary
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Period</label>
+                        <input type="month" class="form-control" id="summaryPeriod" value="<?= date('Y-m') ?>" onchange="loadPayrollSummary()">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Department</label>
+                        <select class="form-select" id="summaryDepartment" onchange="loadPayrollSummary()">
+                            <option value="">All Departments</option>
+                            <option value="IT">IT</option>
+                            <option value="HR">HR</option>
+                            <option value="Finance">Finance</option>
+                            <option value="Marketing">Marketing</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Actions</label><br>
+                        <button class="btn btn-outline-success btn-sm" onclick="exportSummary()">
+                            <i class="bi bi-download"></i> Export
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="summaryContent">
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading summary...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Template Selection Modal -->
+<div class="modal fade" id="templateModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-file-earmark-text"></i> Payslip Templates
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="card border-primary template-card" data-template="modern">
+                            <div class="card-body text-center">
+                                <i class="bi bi-file-earmark-richtext display-4 text-primary mb-3"></i>
+                                <h5>Modern Template</h5>
+                                <p class="text-muted">Clean and professional design with company branding</p>
+                                <button class="btn btn-outline-primary btn-sm">Preview</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card border-success template-card" data-template="classic">
+                            <div class="card-body text-center">
+                                <i class="bi bi-file-earmark display-4 text-success mb-3"></i>
+                                <h5>Classic Template</h5>
+                                <p class="text-muted">Traditional payslip layout with detailed breakdown</p>
+                                <button class="btn btn-outline-success btn-sm">Preview</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card border-warning template-card" data-template="minimal">
+                            <div class="card-body text-center">
+                                <i class="bi bi-file-earmark-text display-4 text-warning mb-3"></i>
+                                <h5>Minimal Template</h5>
+                                <p class="text-muted">Simple and clean design for easy reading</p>
+                                <button class="btn btn-outline-warning btn-sm">Preview</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card border-danger template-card" data-template="detailed">
+                            <div class="card-body text-center">
+                                <i class="bi bi-file-earmark-break display-4 text-danger mb-3"></i>
+                                <h5>Detailed Template</h5>
+                                <p class="text-muted">Comprehensive layout with all salary components</p>
+                                <button class="btn btn-outline-danger btn-sm">Preview</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="applyTemplate()">
+                    <i class="bi bi-check-circle"></i> Apply Selected Template
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Payroll Settings Modal -->
+<div class="modal fade" id="payrollSettingsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-gear"></i> Payroll Settings
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="payrollSettingsForm">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Basic Salary %</label>
+                            <input type="number" class="form-control" name="basic_salary_percentage" value="60" step="0.1">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">HRA %</label>
+                            <input type="number" class="form-control" name="hra_percentage" value="20" step="0.1">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">DA %</label>
+                            <input type="number" class="form-control" name="da_percentage" value="10" step="0.1">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Allowances %</label>
+                            <input type="number" class="form-control" name="allowances_percentage" value="10" step="0.1">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">PF Rate %</label>
+                            <input type="number" class="form-control" name="pf_rate" value="12" step="0.1">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">ESI Rate %</label>
+                            <input type="number" class="form-control" name="esi_rate" value="1.75" step="0.01">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Professional Tax Limit</label>
+                            <input type="number" class="form-control" name="professional_tax_limit" value="10000">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Professional Tax Amount</label>
+                            <input type="number" class="form-control" name="professional_tax_amount" value="200">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning" onclick="savePayrollSettings()">
+                    <i class="bi bi-save"></i> Save Settings
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Export Options Modal -->
+<div class="modal fade" id="exportModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-download"></i> Export Payslips
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="exportForm">
+                    <div class="mb-3">
+                        <label class="form-label">Export Format</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="export_format" value="pdf" id="exportPDF" checked>
+                            <label class="form-check-label" for="exportPDF">PDF</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="export_format" value="excel" id="exportExcel">
+                            <label class="form-check-label" for="exportExcel">Excel</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="export_format" value="csv" id="exportCSV">
+                            <label class="form-check-label" for="exportCSV">CSV</label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Period</label>
+                        <input type="month" class="form-control" name="export_period" value="<?= date('Y-m') ?>">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Department</label>
+                        <select class="form-select" name="export_department">
+                            <option value="">All Departments</option>
+                            <option value="IT">IT</option>
+                            <option value="HR">HR</option>
+                            <option value="Finance">Finance</option>
+                            <option value="Marketing">Marketing</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" onclick="processExport()">
+                    <i class="bi bi-download"></i> Export
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

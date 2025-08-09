@@ -174,7 +174,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Get all users
-$users_query = "SELECT * FROM users ORDER BY created_at DESC";
+$users_query = "SELECT 
+    id, username, email, role, 
+    COALESCE(permissions, '') as permissions, 
+    created_at, status 
+    FROM users ORDER BY created_at DESC";
 $users_result = $conn->query($users_query);
 $users = $users_result->fetch_all(MYSQLI_ASSOC);
 
@@ -276,7 +280,8 @@ include 'layouts/header.php';
                                                 </td>
                                                 <td>
                                                     <?php 
-                                                    $user_permissions = explode(',', $user_row['permissions']);
+                                                    $permissions = $user_row['permissions'] ?? '';
+                                                    $user_permissions = !empty($permissions) ? explode(',', $permissions) : [];
                                                     foreach ($user_permissions as $perm):
                                                         if (!empty($perm)):
                                                     ?>
@@ -284,7 +289,10 @@ include 'layouts/header.php';
                                                     <?php 
                                                         endif;
                                                     endforeach; 
+                                                    if (empty($user_permissions)):
                                                     ?>
+                                                        <span class="text-muted">No permissions set</span>
+                                                    <?php endif; ?>
                                                 </td>
                                                 <td><?= date('M j, Y', strtotime($user_row['created_at'])) ?></td>
                                                 <td>

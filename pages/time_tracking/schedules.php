@@ -51,10 +51,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // Get all employees
 $employees = [];
-$empQuery = "SELECT id, name FROM employees ORDER BY name";
+$empQuery = "SELECT employee_id as id, name FROM employees ORDER BY name";
 $empResult = $conn->query($empQuery);
-while ($row = $empResult->fetch_assoc()) {
-    $employees[] = $row;
+if ($empResult) {
+    while ($row = $empResult->fetch_assoc()) {
+        $employees[] = $row;
+    }
 }
 
 // Get schedule for selected employee

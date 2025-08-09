@@ -8,6 +8,52 @@ if (!isset($_SESSION['admin'])) {
 include 'db.php';
 $page_title = 'Advanced Payroll Calculator';
 
+// Ensure hr_departments table exists
+$conn->query("CREATE TABLE IF NOT EXISTS hr_departments (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)");
+
+// Check if hr_departments has data, if not, add sample departments
+$deptCount = $conn->query("SELECT COUNT(*) as count FROM hr_departments")->fetch_assoc()['count'];
+if ($deptCount == 0) {
+    $conn->query("INSERT INTO hr_departments (name, description) VALUES 
+        ('Information Technology', 'IT Department'),
+        ('Human Resources', 'HR Department'), 
+        ('Sales', 'Sales Department'),
+        ('Marketing', 'Marketing Department'),
+        ('Operations', 'Operations Department'),
+        ('Finance', 'Finance Department')");
+}
+
+// Ensure hr_employees table has required columns
+$conn->query("ALTER TABLE hr_employees 
+    ADD COLUMN IF NOT EXISTS department VARCHAR(100),
+    ADD COLUMN IF NOT EXISTS position VARCHAR(100)");
+
+// Update NULL values in department and position columns
+$conn->query("UPDATE hr_employees SET 
+    department = CASE 
+        WHEN department IS NULL OR department = '' THEN 
+            CASE department_id
+                WHEN 1 THEN 'Information Technology'
+                WHEN 2 THEN 'Human Resources' 
+                WHEN 3 THEN 'Sales'
+                WHEN 4 THEN 'Marketing'
+                WHEN 5 THEN 'Operations'
+                WHEN 6 THEN 'Finance'
+                ELSE 'General'
+            END
+        ELSE department
+    END,
+    position = CASE 
+        WHEN position IS NULL OR position = '' THEN 'Employee'
+        ELSE position
+    END
+    WHERE status = 'active'");
+
 // Set timezone
 date_default_timezone_set('Asia/Kolkata');
 
@@ -37,40 +83,61 @@ $payrollConfig = [
 ];
 
 // Get employees with salary details
+// Get employees for payroll processing
 $employees = $conn->query("
     SELECT 
-        employee_id, 
-        name, 
-        employee_code, 
-        position, 
-        monthly_salary,
-        phone,
-        created_at
-    FROM employees 
-    ORDER BY name ASC
+        e.id,
+        e.employee_id, 
+        e.first_name, 
+        e.last_name, 
+        e.salary,
+        e.phone,
+        e.created_at,
+        e.department_id,
+        COALESCE(e.department, d.name, 'N/A') as department,
+        COALESCE(e.position, 'N/A') as position
+    FROM hr_employees e
+    LEFT JOIN hr_departments d ON e.department_id = d.id
+    WHERE e.status = 'active'
+    ORDER BY e.first_name ASC
 ");
+
+// Fallback if JOIN fails - try simple query
+if (!$employees || $employees->num_rows == 0) {
+    $employees = $conn->query("
+        SELECT 
+            id,
+            employee_id, 
+            first_name, 
+            last_name, 
+            salary,
+            phone,
+            created_at,
+            department_id,
+            COALESCE(department, 'N/A') as department,
+            COALESCE(position, 'N/A') as position
+        FROM hr_employees 
+        WHERE status = 'active'
+        ORDER BY first_name ASC
+    ");
+}
 
 // Function to get attendance details
 function getAttendanceDetails($conn, $empId, $month, $year) {
     $query = "
         SELECT 
-            COUNT(CASE WHEN status = 'Present' THEN 1 END) as present_days,
-            COUNT(CASE WHEN status = 'Absent' THEN 1 END) as absent_days,
-            COUNT(CASE WHEN status = 'Late' THEN 1 END) as late_days,
-            COUNT(CASE WHEN status = 'Half Day' THEN 1 END) as half_days,
+            COUNT(CASE WHEN status = 'present' THEN 1 END) as present_days,
+            COUNT(CASE WHEN status = 'absent' THEN 1 END) as absent_days,
+            COUNT(CASE WHEN status = 'late' THEN 1 END) as late_days,
+            COUNT(CASE WHEN status = 'half_day' THEN 1 END) as half_days,
             SUM(CASE 
-                WHEN status IN ('Present', 'Late') AND time_in IS NOT NULL AND time_out IS NOT NULL 
-                THEN TIME_TO_SEC(TIMEDIFF(time_out, time_in))/3600 
+                WHEN status IN ('present', 'late') AND clock_in IS NOT NULL AND clock_out IS NOT NULL 
+                THEN total_hours
                 ELSE 0 
             END) as total_hours,
-            SUM(CASE 
-                WHEN status IN ('Present', 'Late') AND time_in IS NOT NULL AND time_out IS NOT NULL 
-                AND TIME_TO_SEC(TIMEDIFF(time_out, time_in))/3600 > 8
-                THEN (TIME_TO_SEC(TIMEDIFF(time_out, time_in))/3600) - 8
-                ELSE 0 
-            END) as overtime_hours
-        FROM attendance 
-        WHERE employee_id = ? AND MONTH(attendance_date) = ? AND YEAR(attendance_date) = ?
+            COALESCE(SUM(overtime_hours), 0) as overtime_hours
+        FROM hr_attendance 
+        WHERE employee_id = ? AND MONTH(date) = ? AND YEAR(date) = ?
     ";
     
     $stmt = $conn->prepare($query);
@@ -102,7 +169,7 @@ function calculateIncomeTax($annualIncome, $config) {
 
 // Function to calculate comprehensive payroll
 function calculatePayroll($emp, $attendance, $daysInMonth, $config) {
-    $basic_salary = $emp['monthly_salary'];
+    $basic_salary = $emp['salary'] ?: 25000;
     $daily_rate = $basic_salary / $daysInMonth;
     
     // Calculate working days
@@ -288,9 +355,15 @@ include 'layouts/sidebar.php';
     if ($employees && $employees->num_rows > 0) {
         $employees->data_seek(0);
         while ($emp = $employees->fetch_assoc()) {
-            $attendance = getAttendanceDetails($conn, $emp['employee_id'], $currentMonth, $currentYear);
+            $attendance = getAttendanceDetails($conn, $emp['id'], $currentMonth, $currentYear);
             $payroll = calculatePayroll($emp, $attendance, $daysInMonth, $payrollConfig);
-            $payroll['employee'] = $emp;
+            $payroll['employee'] = [
+                'employee_id' => $emp['id'],
+                'name' => $emp['first_name'] . ' ' . $emp['last_name'],
+                'employee_code' => $emp['employee_id'],
+                'department' => $emp['department'] ?? 'N/A',
+                'position' => $emp['position'] ?? 'N/A'
+            ];
             $payroll['attendance'] = $attendance;
             $payrollData[] = $payroll;
             
@@ -520,72 +593,50 @@ function printPayslips() {
 }
 
 function viewPayslip(employeeId) {
-    // Load payslip content via AJAX
+    // Show loading state
     document.getElementById('payslipContent').innerHTML = `
-        <div class="text-center">
-            <div class="spinner-border" role="status">
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
                 <span class="visually-hidden">Loading...</span>
             </div>
-            <p class="mt-2">Loading payslip...</p>
+            <p class="mt-3 text-muted">Loading payslip details...</p>
         </div>
     `;
     
+    // Show modal
     new bootstrap.Modal(document.getElementById('payslipModal')).show();
     
-    // Simulate loading (replace with actual AJAX call)
-    setTimeout(() => {
-        document.getElementById('payslipContent').innerHTML = `
-            <div class="payslip">
-                <div class="text-center mb-4">
-                    <h4>Company Name</h4>
-                    <p>Payslip for <?= date('F Y', mktime(0, 0, 0, $currentMonth, 1, $currentYear)) ?></p>
+    // Load actual payslip data via AJAX
+    const month = <?= $currentMonth ?>;
+    const year = <?= $currentYear ?>;
+    
+    fetch(`ajax_payslip.php?employee_id=${employeeId}&month=${month}&year=${year}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('payslipContent').innerHTML = data.html;
+            } else {
+                document.getElementById('payslipContent').innerHTML = `
+                    <div class="text-center py-5">
+                        <i class="bi bi-exclamation-triangle fs-1 text-warning"></i>
+                        <h5 class="mt-3 text-muted">Error Loading Payslip</h5>
+                        <p class="text-muted">${data.error || 'Unable to load payslip data'}</p>
+                        <button class="btn btn-primary" onclick="viewPayslip(${employeeId})">Try Again</button>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('payslipContent').innerHTML = `
+                <div class="text-center py-5">
+                    <i class="bi bi-wifi-off fs-1 text-danger"></i>
+                    <h5 class="mt-3 text-muted">Connection Error</h5>
+                    <p class="text-muted">Please check your internet connection and try again.</p>
+                    <button class="btn btn-primary" onclick="viewPayslip(${employeeId})">Retry</button>
                 </div>
-                <div class="row">
-                    <div class="col-6">
-                        <strong>Employee ID:</strong> EMP${employeeId}<br>
-                        <strong>Name:</strong> Employee Name<br>
-                        <strong>Position:</strong> Position<br>
-                    </div>
-                    <div class="col-6">
-                        <strong>Pay Period:</strong> <?= date('F Y', mktime(0, 0, 0, $currentMonth, 1, $currentYear)) ?><br>
-                        <strong>Working Days:</strong> <?= $daysInMonth ?><br>
-                        <strong>Present Days:</strong> XX<br>
-                    </div>
-                </div>
-                <hr>
-                <div class="row">
-                    <div class="col-6">
-                        <h6>Earnings</h6>
-                        <table class="table table-sm">
-                            <tr><td>Basic Salary</td><td class="text-end">₹XX,XXX</td></tr>
-                            <tr><td>HRA</td><td class="text-end">₹X,XXX</td></tr>
-                            <tr><td>DA</td><td class="text-end">₹X,XXX</td></tr>
-                            <tr><td>Allowances</td><td class="text-end">₹X,XXX</td></tr>
-                            <tr><td>Overtime</td><td class="text-end">₹XXX</td></tr>
-                            <tr class="table-success"><td><strong>Gross Salary</strong></td><td class="text-end"><strong>₹XX,XXX</strong></td></tr>
-                        </table>
-                    </div>
-                    <div class="col-6">
-                        <h6>Deductions</h6>
-                        <table class="table table-sm">
-                            <tr><td>PF</td><td class="text-end">₹X,XXX</td></tr>
-                            <tr><td>ESI</td><td class="text-end">₹XXX</td></tr>
-                            <tr><td>Income Tax</td><td class="text-end">₹XXX</td></tr>
-                            <tr><td>Professional Tax</td><td class="text-end">₹XXX</td></tr>
-                            <tr><td>Others</td><td class="text-end">₹XXX</td></tr>
-                            <tr class="table-danger"><td><strong>Total Deductions</strong></td><td class="text-end"><strong>₹X,XXX</strong></td></tr>
-                        </table>
-                    </div>
-                </div>
-                <hr>
-                <div class="row">
-                    <div class="col-12">
-                        <h5 class="text-center">Net Pay: <span class="text-success">₹XX,XXX</span></h5>
-                    </div>
-                </div>
-            </div>
-        `;
-    }, 1000);
+            `;
+        });
 }
 
 function downloadPayslip(employeeId) {

@@ -1,35 +1,83 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HR Analytics Dashboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
+<?php
+session_start();
+if (!isset($_SESSION['admin'])) {
+    header("Location: login.php");
+    exit;
+}
+
+include 'db.php';
+$page_title = 'HR Analytics Dashboard';
+
+// Include global layouts
+include 'layouts/header.php';
+include 'layouts/sidebar.php';
+?>
+
+<!-- Custom styles for Analytics Dashboard -->
+<style>
         .metric-card {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border: none;
             border-radius: 15px;
             color: white;
-            transition: transform 0.3s ease;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
         .metric-card:hover {
-            transform: translateY(-5px);
+            transform: translateY(-8px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+        .metric-card .card-body {
+            padding: 1.5rem;
+        }
+        .metric-card i {
+            opacity: 0.8;
+            margin-bottom: 0.75rem !important;
+        }
+        .metric-card h3 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        .metric-card p {
+            font-size: 1rem;
+            opacity: 0.9;
+            margin-bottom: 0.25rem !important;
+        }
+        .metric-card small {
+            opacity: 0.8;
+            font-size: 0.85rem;
         }
         .chart-container {
             position: relative;
             height: 300px;
             background: white;
-            border-radius: 10px;
+            border-radius: 15px;
             padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            border: 1px solid rgba(0,0,0,0.05);
+            transition: box-shadow 0.3s ease;
+        }
+        .chart-container:hover {
+            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+        }
+        .chart-container h5 {
+            color: #495057;
+            font-weight: 600;
+            margin-bottom: 1rem;
         }
         .activity-item {
             border-left: 3px solid #007bff;
             padding-left: 15px;
             margin-bottom: 15px;
+            background: #f8f9fa;
+            padding: 12px 15px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+        .activity-item:hover {
+            background: #e9ecef;
+            border-left-color: #0056b3;
         }
         .activity-time {
             font-size: 0.8em;
@@ -53,42 +101,59 @@
             100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); }
         }
         .upcoming-event {
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 10px;
-            margin-bottom: 10px;
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
             border-left: 4px solid #ffc107;
+            box-shadow: 0 2px 8px rgba(255, 193, 7, 0.2);
+            transition: all 0.2s ease;
         }
-    </style>
-</head>
-<body class="bg-light">
-    <?php
-    session_start();
-    require_once 'auth_check.php';
-    require_once 'db.php';
-    ?>
+        .upcoming-event:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+        }
+        .card {
+            border-radius: 15px;
+            border: 1px solid rgba(0,0,0,0.05);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+        }
+        .card:hover {
+            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+        }
+        .card-header {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            border-radius: 15px 15px 0 0 !important;
+            font-weight: 600;
+        }
+</style>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="main-content">
     <div class="container-fluid">
         <!-- Header -->
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h1 class="h3 mb-0">
-                        <span class="real-time-indicator"></span>
-                        HR Analytics Dashboard
-                    </h1>
-                    <div class="d-flex gap-2">
-                        <button class="btn btn-outline-primary" onclick="refreshDashboard()">
-                            <i class="fas fa-sync-alt"></i> Refresh
-                        </button>
-                        <button class="btn btn-primary" onclick="exportReport()">
-                            <i class="fas fa-download"></i> Export Report
-                        </button>
-                    </div>
-                </div>
-                <small class="text-muted">Last updated: <span id="lastUpdated">Loading...</span></small>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="h3 mb-0">
+                    <span class="real-time-indicator"></span>
+                    📊 HR Analytics Dashboard
+                </h1>
+                <p class="text-muted">Real-time insights and analytics for your HR operations</p>
+            </div>
+            <div>
+                <button class="btn btn-outline-primary me-2" onclick="refreshDashboard()">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+                <button class="btn btn-primary" onclick="exportReport()">
+                    <i class="fas fa-download"></i> Export Report
+                </button>
             </div>
         </div>
+        
+        <small class="text-muted mb-4 d-block">Last updated: <span id="lastUpdated">Loading...</span></small>
 
         <!-- Key Metrics Row -->
         <div class="row mb-4" id="metricsRow">
@@ -149,26 +214,107 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         let attendanceChart, departmentChart;
+        let dashboardCache = null;
+        let lastFetch = 0;
+        const CACHE_DURATION = 2 * 60 * 1000; // 2 minutes cache
         
-        // Load dashboard data
-        async function loadDashboardData() {
+        // Show loading state
+        function showLoading() {
+            const metricsRow = document.getElementById('metricsRow');
+            metricsRow.innerHTML = `
+                <div class="col-12 text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Loading dashboard data...</p>
+                </div>
+            `;
+        }
+        
+        // Show error state
+        function showError(message) {
+            const metricsRow = document.getElementById('metricsRow');
+            metricsRow.innerHTML = `
+                <div class="col-12 text-center">
+                    <div class="alert alert-warning" role="alert">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        ${message}
+                        <button class="btn btn-sm btn-outline-primary ms-2" onclick="loadDashboardData(true)">
+                            Retry
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Load dashboard data with caching and timeout
+        async function loadDashboardData(forceRefresh = false) {
+            const now = Date.now();
+            
+            // Use cache if available and not expired
+            if (!forceRefresh && dashboardCache && (now - lastFetch) < CACHE_DURATION) {
+                updateInterface(dashboardCache);
+                return;
+            }
+            
+            showLoading();
+            
             try {
-                const response = await fetch('api/dashboard_data.php');
+                // Set a timeout for the fetch request
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+                
+                const response = await fetch('api/dashboard_data.php', {
+                    signal: controller.signal,
+                    headers: {
+                        'Cache-Control': 'no-cache'
+                    }
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
                 const data = await response.json();
                 
                 if (data.success) {
-                    updateMetrics(data.statistics);
-                    updateCharts(data.weekly_trend, data.department_attendance);
-                    updateDepartmentStatus(data.department_attendance);
-                    updateRecentActivities(data.recent_activities);
-                    updateUpcomingEvents(data.upcoming_events);
-                    document.getElementById('lastUpdated').textContent = new Date(data.timestamp).toLocaleString();
+                    dashboardCache = data;
+                    lastFetch = now;
+                    updateInterface(data);
                 } else {
-                    console.error('Error loading dashboard data:', data.message);
+                    throw new Error(data.message || 'Unknown API error');
                 }
+                
             } catch (error) {
                 console.error('Error fetching dashboard data:', error);
+                
+                if (error.name === 'AbortError') {
+                    showError('Request timeout. The server may be busy. Please try again.');
+                } else if (error.message.includes('fetch')) {
+                    showError('Network error. Please check your connection.');
+                } else {
+                    showError(`Error: ${error.message}`);
+                }
+                
+                // If we have cached data, show it as fallback
+                if (dashboardCache) {
+                    setTimeout(() => {
+                        updateInterface(dashboardCache);
+                        document.getElementById('lastUpdated').textContent = 'Showing cached data';
+                    }, 2000);
+                }
             }
+        }
+        
+        function updateInterface(data) {
+            updateMetrics(data.statistics);
+            updateCharts(data.weekly_trend, data.department_attendance);
+            updateDepartmentStatus(data.department_attendance);
+            updateRecentActivities(data.recent_activities);
+            updateUpcomingEvents(data.upcoming_events);
+            document.getElementById('lastUpdated').textContent = new Date(data.timestamp).toLocaleString();
         }
 
         function updateMetrics(stats) {
@@ -322,19 +468,82 @@
         }
 
         function refreshDashboard() {
-            loadDashboardData();
+            loadDashboardData(true); // Force refresh
         }
 
         function exportReport() {
-            // Simple export functionality
-            window.open('api/export_dashboard_report.php', '_blank');
+            // Create basic CSV export if the API doesn't exist
+            try {
+                window.open('api/export_dashboard_report.php', '_blank');
+            } catch (error) {
+                // Fallback: client-side export
+                exportDashboardData();
+            }
+        }
+        
+        function exportDashboardData() {
+            if (!dashboardCache) {
+                alert('No data to export. Please wait for the dashboard to load.');
+                return;
+            }
+            
+            const csvData = [
+                ['Metric', 'Value'],
+                ['Total Employees', dashboardCache.statistics.employees.total_employees],
+                ['Active Employees', dashboardCache.statistics.employees.active_employees],
+                ['Present Today', dashboardCache.statistics.attendance_today.present_today],
+                ['Absent Today', dashboardCache.statistics.attendance_today.absent_today],
+                ['Attendance Rate', dashboardCache.statistics.attendance_today.attendance_rate + '%'],
+                ['Pending Leaves', dashboardCache.statistics.leaves.pending_leaves]
+            ];
+            
+            const csvContent = csvData.map(row => row.join(',')).join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'dashboard_report_' + new Date().toISOString().split('T')[0] + '.csv';
+            a.click();
+            window.URL.revokeObjectURL(url);
         }
 
-        // Auto-refresh every 5 minutes
-        setInterval(loadDashboardData, 5 * 60 * 1000);
+        // Optimize auto-refresh: only refresh if page is visible
+        let refreshInterval;
+        
+        function startAutoRefresh() {
+            if (refreshInterval) clearInterval(refreshInterval);
+            refreshInterval = setInterval(() => {
+                if (!document.hidden) {
+                    loadDashboardData();
+                }
+            }, 5 * 60 * 1000); // 5 minutes
+        }
+        
+        function stopAutoRefresh() {
+            if (refreshInterval) clearInterval(refreshInterval);
+        }
 
-        // Initial load
-        document.addEventListener('DOMContentLoaded', loadDashboardData);
+        // Handle page visibility changes
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                stopAutoRefresh();
+            } else {
+                startAutoRefresh();
+                // Refresh data when page becomes visible again
+                if (dashboardCache && (Date.now() - lastFetch) > CACHE_DURATION) {
+                    loadDashboardData();
+                }
+            }
+        });
+
+        // Initial load and start auto-refresh
+        document.addEventListener('DOMContentLoaded', () => {
+            loadDashboardData();
+            startAutoRefresh();
+        });
     </script>
-</body>
-</html>
+
+    </div>
+</div>
+
+<?php include 'layouts/footer.php'; ?>

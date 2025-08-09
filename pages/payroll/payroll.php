@@ -6,6 +6,12 @@ if (!isset($_SESSION['admin'])) {
 }
 
 include '../../db.php';
+
+// Check database connection
+if (!$conn) {
+    die("Database connection failed: " . mysqli_connect_error());
+}
+
 $page_title = 'Payroll Management';
 
 // Get current month and year
@@ -158,6 +164,15 @@ include '../../layouts/sidebar.php';
                     <button class="btn btn-outline-danger btn-sm" onclick="printPayroll()">
                         <i class="bi bi-printer"></i> Print
                     </button>
+                    <a href="bulk_payslips.php?month=<?= $monthYear ?>" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-file-earmark-pdf"></i> Bulk Payslips
+                    </a>
+                    <a href="payslip_history.php" class="btn btn-outline-info btn-sm">
+                        <i class="bi bi-clock-history"></i> History
+                    </a>
+                    <a href="payroll_settings.php" class="btn btn-outline-warning btn-sm">
+                        <i class="bi bi-gear"></i> Settings
+                    </a>
                 </div>
             </div>
             <div class="card-body p-3">

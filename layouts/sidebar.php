@@ -244,7 +244,7 @@ if (strpos($_SERVER['SCRIPT_NAME'] ?? '', '/pages/') === false && strpos($_SERVE
 /* Text Color Utilities */
 .text-purple { color: #8b5cf6 !important; }
 </style>
-?>
+
 
 <!-- Sidebar -->
 <nav class="sidebar animate-fade-in-up" id="sidebar">
@@ -329,6 +329,88 @@ if (strpos($_SERVER['SCRIPT_NAME'] ?? '', '/pages/') === false && strpos($_SERVE
             <a href="<?= $basePath ?>pages/suppliers/suppliers.php" class="nav-link <?= $current_page === 'suppliers' ? 'active' : '' ?>">
                 <i class="bi bi-truck"></i>
                 <span>Suppliers</span></a>
+        </div>
+
+        <!-- Warehouse Management -->
+        <div class="nav-section">
+            <div class="nav-section-title">Warehouse</div>
+        </div>
+        <div class="nav-item">
+            <a href="<?= $basePath ?>pages/warehouse/warehouse_management.php" class="nav-link <?= strpos($current_path, 'warehouse') !== false ? 'active' : '' ?>">
+                <i class="bi bi-building"></i>
+                <span>Warehouse Operations</span></a>
+        </div>
+        <div class="nav-item">
+            <a href="<?= $basePath ?>pages/warehouse/warehouse_dashboard.php" class="nav-link <?= $current_page === 'warehouse_dashboard' ? 'active' : '' ?>">
+                <i class="bi bi-graph-up"></i>
+                <span>Analytics Dashboard</span></a>
+        </div>
+        <div class="nav-item">
+            <a href="<?= $basePath ?>pages/suppliers/purchase_orders.php" class="nav-link <?= $current_page === 'purchase_orders' ? 'active' : '' ?>">
+                <i class="bi bi-clipboard-data"></i>
+                <span>Purchase Orders</span></a>
+        </div>
+
+        <!-- Project Management -->
+        <div class="nav-section">
+            <div class="nav-section-title">Projects</div>
+        </div>
+        <div class="nav-item">
+            <a href="<?= $basePath ?>pages/projects/project_management.php" class="nav-link <?= strpos($current_path, 'projects') !== false ? 'active' : '' ?>">
+                <i class="bi bi-kanban"></i>
+                <span>Project Management</span></a>
+        </div>
+        <div class="nav-item">
+            <a href="<?= $basePath ?>pages/projects/project_dashboard.php" class="nav-link <?= $current_page === 'project_dashboard' ? 'active' : '' ?>">
+                <i class="bi bi-graph-up-arrow"></i>
+                <span>Project Analytics</span></a>
+        </div>
+
+        <!-- CRM & Customer Communications -->
+        <div class="nav-section">
+            <div class="nav-section-title">CRM & Communications</div>
+        </div>
+        <div class="nav-item">
+            <a href="<?= $basePath ?>pages/crm/crm_system.php" class="nav-link <?= strpos($current_path, 'crm') !== false ? 'active' : '' ?>">
+                <i class="bi bi-people"></i>
+                <span>CRM System</span></a>
+        </div>
+        <div class="nav-item">
+            <a href="<?= $basePath ?>pages/crm/crm_dashboard.php" class="nav-link <?= $current_page === 'crm_dashboard' ? 'active' : '' ?>">
+                <i class="bi bi-graph-up"></i>
+                <span>CRM Analytics</span></a>
+        </div>
+
+        <!-- Marketing & Customer Communications -->
+        <div class="nav-section">
+            <div class="nav-section-title">Marketing & Communications</div>
+        </div>
+        <div class="nav-item">
+            <a href="<?= $basePath ?>pages/marketing/marketing_system.php" class="nav-link <?= strpos($current_path, 'marketing') !== false ? 'active' : '' ?>">
+                <i class="bi bi-megaphone"></i>
+                <span>Marketing System</span>
+                <span class="badge bg-warning ms-auto">NEW</span></a>
+        </div>
+        <div class="nav-item">
+            <a href="<?= $basePath ?>pages/marketing/marketing_dashboard.php" class="nav-link <?= $current_page === 'marketing_dashboard' ? 'active' : '' ?>">
+                <i class="bi bi-bar-chart-line"></i>
+                <span>Marketing Analytics</span></a>
+        </div>
+
+        <!-- Advanced Procurement & Supply Chain -->
+        <div class="nav-section">
+            <div class="nav-section-title">Procurement & Supply Chain</div>
+        </div>
+        <div class="nav-item">
+            <a href="<?= $basePath ?>pages/procurement/procurement_system.php" class="nav-link <?= strpos($current_path, 'procurement') !== false ? 'active' : '' ?>">
+                <i class="bi bi-cart-fill"></i>
+                <span>Procurement System</span>
+                <span class="badge bg-primary ms-auto">NEW</span></a>
+        </div>
+        <div class="nav-item">
+            <a href="<?= $basePath ?>pages/procurement/procurement_dashboard.php" class="nav-link <?= $current_page === 'procurement_dashboard' ? 'active' : '' ?>">
+                <i class="bi bi-graph-up-arrow"></i>
+                <span>Procurement Analytics</span></a>
         </div>
 
         <!-- Financial Management -->
@@ -494,6 +576,9 @@ if (strpos($_SERVER['SCRIPT_NAME'] ?? '', '/pages/') === false && strpos($_SERVE
                                 <a href="<?= $basePath ?>HRMS/tax_management.php" class="nav-link">
                                     <i class="bi bi-receipt"></i>
                                     <span>Tax Management</span></a>
+                                <a href="<?= $basePath ?>HRMS/benefits_management.php" class="nav-link">
+                                    <i class="bi bi-heart-pulse"></i>
+                                    <span>Benefits Management</span></a>
                             </div>
                         </div>
                     </div>
@@ -525,7 +610,7 @@ if (strpos($_SERVER['SCRIPT_NAME'] ?? '', '/pages/') === false && strpos($_SERVE
                             <span>Employee Offboarding</span></a>
                         <div class="collapse" id="offboardingSubmenu">
                             <div class="nav-submenu-inner">
-                                <a href="<?= $basePath ?>pages/employees/employees.php" class="nav-link">
+                                <a href="<?= $basePath ?>HRMS/offboarding_process.php" class="nav-link">
                                     <i class="bi bi-x-circle"></i>
                                     <span>Offboarding Process</span></a>
                                 <a href="<?= $basePath ?>HRMS/fnf_settlement.php" class="nav-link">
@@ -557,6 +642,9 @@ if (strpos($_SERVER['SCRIPT_NAME'] ?? '', '/pages/') === false && strpos($_SERVE
                                 <a href="<?= $basePath ?>HRMS/kpi_tracking.php" class="nav-link">
                                     <i class="bi bi-graph-up"></i>
                                     <span>KPI Tracking</span></a>
+                                <a href="<?= $basePath ?>HRMS/advanced_performance_review.php" class="nav-link">
+                                    <i class="bi bi-star-fill text-warning"></i>
+                                    <span>Advanced Performance Review</span></a>
                             </div>
                         </div>
                     </div>
@@ -597,10 +685,10 @@ if (strpos($_SERVER['SCRIPT_NAME'] ?? '', '/pages/') === false && strpos($_SERVE
                                 <a href="<?= $basePath ?>HRMS/asset_allocation.php" class="nav-link">
                                     <i class="bi bi-person-gear"></i>
                                     <span>Asset Allocation</span></a>
-                                <a href="<?= $basePath ?>item-stock.php" class="nav-link">
+                                <a href="<?= $basePath ?>HRMS/maintenance_schedule.php" class="nav-link">
                                     <i class="bi bi-tools"></i>
                                     <span>Maintenance Schedule</span></a>
-                                <a href="<?= $basePath ?>reports.php" class="nav-link">
+                                <a href="<?= $basePath ?>HRMS/asset_reports.php" class="nav-link">
                                     <i class="bi bi-clipboard-data"></i>
                                     <span>Asset Reports</span></a>
                             </div>
