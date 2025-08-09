@@ -15,6 +15,71 @@ if (file_exists($db_path)) {
 
 $page_title = 'Department Management - HRMS';
 
+// Function to initialize HRMS tables
+function initializeHRMSTables($conn) {
+    // Create hr_departments table
+    $create_departments = "CREATE TABLE IF NOT EXISTS `hr_departments` (
+        `id` int(11) NOT NULL AUTO_INCREMENT,
+        `department_name` varchar(255) NOT NULL,
+        `department_code` varchar(50) UNIQUE NOT NULL,
+        `head_of_department` int(11) NULL,
+        `budget` decimal(15,2) DEFAULT 0.00,
+        `description` text NULL,
+        `status` enum('active','inactive') DEFAULT 'active',
+        `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (`id`),
+        INDEX `idx_department_code` (`department_code`),
+        INDEX `idx_status` (`status`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+    
+    mysqli_query($conn, $create_departments);
+    
+    // Create hr_employees table
+    $create_employees = "CREATE TABLE IF NOT EXISTS `hr_employees` (
+        `id` int(11) NOT NULL AUTO_INCREMENT,
+        `employee_id` varchar(50) UNIQUE NOT NULL,
+        `first_name` varchar(100) NOT NULL,
+        `last_name` varchar(100) NOT NULL,
+        `email` varchar(255) UNIQUE NOT NULL,
+        `phone` varchar(20) NULL,
+        `department_id` int(11) NULL,
+        `position` varchar(100) NULL,
+        `salary` decimal(10,2) DEFAULT 0.00,
+        `hire_date` date NULL,
+        `status` enum('active','inactive','terminated') DEFAULT 'active',
+        `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (`id`),
+        INDEX `idx_employee_id` (`employee_id`),
+        INDEX `idx_department_id` (`department_id`),
+        INDEX `idx_status` (`status`),
+        FOREIGN KEY (`department_id`) REFERENCES `hr_departments`(`id`) ON DELETE SET NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+    
+    mysqli_query($conn, $create_employees);
+    
+    // Add some sample data if tables are empty
+    $dept_count = mysqli_query($conn, "SELECT COUNT(*) as count FROM hr_departments");
+    if ($dept_count && mysqli_fetch_assoc($dept_count)['count'] == 0) {
+        // Add sample departments
+        $sample_departments = [
+            ['Human Resources', 'HR', 50000.00, 'Manages employee relations, recruitment, and HR policies'],
+            ['Information Technology', 'IT', 100000.00, 'Handles all technology infrastructure and software development'],
+            ['Finance', 'FIN', 75000.00, 'Manages financial planning, accounting, and budgets'],
+            ['Marketing', 'MKT', 60000.00, 'Handles marketing campaigns, brand management, and sales support'],
+            ['Operations', 'OPS', 80000.00, 'Manages daily business operations and process improvements']
+        ];
+        
+        foreach ($sample_departments as $dept) {
+            mysqli_query($conn, "INSERT INTO hr_departments (department_name, department_code, budget, description) VALUES ('{$dept[0]}', '{$dept[1]}', {$dept[2]}, '{$dept[3]}')");
+        }
+    }
+}
+
+// Initialize tables if they don't exist
+initializeHRMSTables($conn);
+
 // Handle AJAX requests
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     header('Content-Type: application/json');
@@ -66,9 +131,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $head_of_department = intval($_POST['head_of_department']);
             $budget = floatval($_POST['budget']);
             $description = mysqli_real_escape_string($conn, $_POST['description']);
-            $status = mysqli_real_escape_string($conn, $_POST['status']);
             
-            // Check if department code exists for other departments
+            // Check if department code already exists (excluding current department)
             $existing = mysqli_query($conn, "SELECT id FROM hr_departments WHERE department_code = '$department_code' AND id != $id");
             if ($existing && mysqli_num_rows($existing) > 0) {
                 echo json_encode(['success' => false, 'message' => 'Department code already exists!']);
@@ -76,12 +140,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             }
             
             $query = "UPDATE hr_departments SET 
-                      department_name = '$department_name',
-                      department_code = '$department_code',
-                      head_of_department = $head_of_department,
-                      budget = $budget,
-                      description = '$description',
-                      status = '$status'
+                      department_name = '$department_name', 
+                      department_code = '$department_code', 
+                      head_of_department = $head_of_department, 
+                      budget = $budget, 
+                      description = '$description' 
                       WHERE id = $id";
             
             if (mysqli_query($conn, $query)) {
@@ -95,61 +158,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $id = intval($_POST['id']);
             
             // Check if department has employees
-            $employeeCheck = mysqli_query($conn, "SELECT COUNT(*) as count FROM hr_employees WHERE department_id = $id AND status = 'active'");
-            $empCount = mysqli_fetch_assoc($employeeCheck)['count'];
+            $employees_check = mysqli_query($conn, "SELECT COUNT(*) as count FROM hr_employees WHERE department_id = $id AND status = 'active'");
+            $employee_count = 0;
+            if ($employees_check) {
+                $result = mysqli_fetch_assoc($employees_check);
+                $employee_count = $result ? $result['count'] : 0;
+            }
             
-            if ($empCount > 0) {
-                echo json_encode(['success' => false, 'message' => "Cannot delete department with $empCount active employees!"]);
+            if ($employee_count > 0) {
+                echo json_encode(['success' => false, 'message' => "Cannot delete department. It has $employee_count active employees."]);
                 exit;
             }
             
             $query = "UPDATE hr_departments SET status = 'inactive' WHERE id = $id";
             
             if (mysqli_query($conn, $query)) {
-                echo json_encode(['success' => true, 'message' => 'Department deactivated successfully!']);
+                echo json_encode(['success' => true, 'message' => 'Department deleted successfully!']);
             } else {
                 echo json_encode(['success' => false, 'message' => 'Error: ' . mysqli_error($conn)]);
             }
-            exit;
-
-        case 'get_department_stats':
-            $id = intval($_POST['id']);
-            
-            // Get department statistics
-            $stats = [];
-            
-            // Employee count by status
-            $empStats = mysqli_query($conn, "
-                SELECT status, COUNT(*) as count 
-                FROM hr_employees 
-                WHERE department_id = $id 
-                GROUP BY status
-            ");
-            $stats['employees'] = [];
-            while ($row = mysqli_fetch_assoc($empStats)) {
-                $stats['employees'][$row['status']] = $row['count'];
-            }
-            
-            // Average salary
-            $salaryQuery = mysqli_query($conn, "
-                SELECT AVG(salary) as avg_salary, SUM(salary) as total_salary 
-                FROM hr_employees 
-                WHERE department_id = $id AND status = 'active'
-            ");
-            $salaryData = mysqli_fetch_assoc($salaryQuery);
-            $stats['avg_salary'] = round($salaryData['avg_salary'] ?? 0, 2);
-            $stats['total_salary'] = $salaryData['total_salary'] ?? 0;
-            
-            // Recent hires (last 30 days)
-            $recentHires = mysqli_query($conn, "
-                SELECT COUNT(*) as count 
-                FROM hr_employees 
-                WHERE department_id = $id 
-                AND date_of_joining >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-            ");
-            $stats['recent_hires'] = mysqli_fetch_assoc($recentHires)['count'];
-            
-            echo json_encode(['success' => true, 'stats' => $stats]);
             exit;
     }
 }
@@ -189,19 +216,31 @@ $departments_query = "
 $departments = mysqli_query($conn, $departments_query);
 
 // Get total counts for statistics
-$total_departments = mysqli_query($conn, "SELECT COUNT(*) as count FROM hr_departments WHERE status = 'active'");
-$total_dept_count = mysqli_fetch_assoc($total_departments)['count'];
+$total_departments_query = mysqli_query($conn, "SELECT COUNT(*) as count FROM hr_departments WHERE status = 'active'");
+$total_dept_count = 0;
+if ($total_departments_query) {
+    $result = mysqli_fetch_assoc($total_departments_query);
+    $total_dept_count = $result ? $result['count'] : 0;
+}
 
-$total_employees = mysqli_query($conn, "
+$total_employees_query = mysqli_query($conn, "
     SELECT COUNT(*) as count 
     FROM hr_employees e 
     JOIN hr_departments d ON e.department_id = d.id 
     WHERE e.status = 'active' AND d.status = 'active'
 ");
-$total_emp_count = mysqli_fetch_assoc($total_employees)['count'];
+$total_emp_count = 0;
+if ($total_employees_query) {
+    $result = mysqli_fetch_assoc($total_employees_query);
+    $total_emp_count = $result ? $result['count'] : 0;
+}
 
-$total_budget = mysqli_query($conn, "SELECT SUM(budget) as total FROM hr_departments WHERE status = 'active'");
-$total_budget_amount = mysqli_fetch_assoc($total_budget)['total'] ?? 0;
+$total_budget_query = mysqli_query($conn, "SELECT SUM(budget) as total FROM hr_departments WHERE status = 'active'");
+$total_budget_amount = 0;
+if ($total_budget_query) {
+    $result = mysqli_fetch_assoc($total_budget_query);
+    $total_budget_amount = $result ? ($result['total'] ?? 0) : 0;
+}
 
 // Get employees for HOD dropdown
 $employees = mysqli_query($conn, "SELECT id, first_name, last_name, employee_id FROM hr_employees WHERE status = 'active' ORDER BY first_name");
@@ -227,238 +266,218 @@ if (file_exists($sidebar_path)) {
     <div class="content">
         <div class="container-fluid">
             <!-- Page Header -->
-            <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
-                    <h1 class="h4 mb-1 fw-bold text-primary">🏢 Department Management</h1>
-                    <p class="text-muted small mb-0">
-                        <i class="bi bi-building"></i> 
-                        Manage organizational departments and structures
-                        <span class="badge bg-light text-dark ms-2"><?= $total_dept_count ?> Active Departments</span>
-                    </p>
+                    <h1 class="h3 mb-0">Department Management</h1>
+                    <p class="text-muted mb-0">Manage organizational departments and structure</p>
                 </div>
-                <div class="d-flex gap-2">
-                    <button class="btn btn-outline-success btn-sm" onclick="exportDepartments()" title="Export Department Data">
-                        <i class="bi bi-download"></i> Export
-                    </button>
-                    <button class="btn btn-outline-primary btn-sm" onclick="printDepartments()" title="Print Directory">
-                        <i class="bi bi-printer"></i> Print
-                    </button>
-                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addDepartmentModal" title="Add New Department">
-                        <i class="bi bi-plus-circle"></i> Add Department
-                    </button>
-                    <a href="index.php" class="btn btn-outline-secondary btn-sm" title="Back to HRMS">
-                        <i class="bi bi-arrow-left"></i> Back
-                    </a>
-                </div>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#departmentModal">
+                    <i class="bi bi-plus-circle"></i> Add Department
+                </button>
             </div>
 
             <!-- Statistics Cards -->
-            <div class="row g-2 mb-3">
-                <div class="col-xl-3 col-lg-6 col-md-6">
-                    <div class="card border-0 h-100" style="background: linear-gradient(135deg, #e8f4fd 0%, #cce7ff 100%);">
-                        <div class="card-body text-center p-3">
-                            <div class="mb-2">
-                                <i class="bi bi-building-fill fs-3" style="color: #0d6efd;"></i>
+            <div class="row g-4 mb-4">
+                <div class="col-md-3">
+                    <div class="card border-0 bg-primary text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0">Total Departments</h6>
+                                    <h4 class="mb-0"><?php echo $total_dept_count; ?></h4>
+                                </div>
+                                <i class="bi bi-building fs-3"></i>
                             </div>
-                            <h5 class="mb-1 fw-bold" style="color: #0d6efd;"><?= $total_dept_count ?></h5>
-                            <small class="text-muted">Active Departments</small>
                         </div>
                     </div>
                 </div>
-
-                <div class="col-xl-3 col-lg-6 col-md-6">
-                    <div class="card border-0 h-100" style="background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);">
-                        <div class="card-body text-center p-3">
-                            <div class="mb-2">
-                                <i class="bi bi-people-fill fs-3" style="color: #7b1fa2;"></i>
+                <div class="col-md-3">
+                    <div class="card border-0 bg-success text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0">Total Employees</h6>
+                                    <h4 class="mb-0"><?php echo $total_emp_count; ?></h4>
+                                </div>
+                                <i class="bi bi-people-fill fs-3"></i>
                             </div>
-                            <h5 class="mb-1 fw-bold" style="color: #7b1fa2;"><?= $total_emp_count ?></h5>
-                            <small class="text-muted">Total Employees</small>
                         </div>
                     </div>
                 </div>
-
-                <div class="col-xl-3 col-lg-6 col-md-6">
-                    <div class="card border-0 h-100" style="background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);">
-                        <div class="card-body text-center p-3">
-                            <div class="mb-2">
-                                <i class="bi bi-currency-rupee fs-3" style="color: #388e3c;"></i>
+                <div class="col-md-3">
+                    <div class="card border-0 bg-info text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0">Total Budget</h6>
+                                    <h4 class="mb-0">$<?php echo number_format($total_budget_amount, 0); ?></h4>
+                                </div>
+                                <i class="bi bi-currency-dollar fs-3"></i>
                             </div>
-                            <h5 class="mb-1 fw-bold" style="color: #388e3c;">₹<?= number_format($total_budget_amount) ?></h5>
-                            <small class="text-muted">Total Budget</small>
                         </div>
                     </div>
                 </div>
-
-                <div class="col-xl-3 col-lg-6 col-md-6">
-                    <div class="card border-0 h-100" style="background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);">
-                        <div class="card-body text-center p-3">
-                            <div class="mb-2">
-                                <i class="bi bi-graph-up fs-3" style="color: #f57c00;"></i>
+                <div class="col-md-3">
+                    <div class="card border-0 bg-warning text-dark">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0">Avg Budget/Dept</h6>
+                                    <h4 class="mb-0">$<?php echo $total_dept_count > 0 ? number_format($total_budget_amount / $total_dept_count, 0) : 0; ?></h4>
+                                </div>
+                                <i class="bi bi-calculator fs-3"></i>
                             </div>
-                            <h5 class="mb-1 fw-bold" style="color: #f57c00;"><?= round($total_emp_count / max($total_dept_count, 1), 1) ?></h5>
-                            <small class="text-muted">Avg Employees/Dept</small>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Search and Filter Section -->
-            <div class="card border-0 shadow-sm mb-3">
-                <div class="card-body p-3">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <div class="input-group">
-                                <span class="input-group-text bg-light border-end-0">
-                                    <i class="bi bi-search text-muted"></i>
-                                </span>
-                                <input type="text" class="form-control border-start-0" 
-                                       placeholder="Search departments by name or code..." 
-                                       value="<?= htmlspecialchars($search) ?>" 
-                                       onkeyup="searchDepartments(this.value)">
-                            </div>
+            <!-- Filters and Search -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <form method="GET" class="row g-3">
+                        <div class="col-md-4">
+                            <label for="search" class="form-label">Search Departments</label>
+                            <input type="text" class="form-control" id="search" name="search" 
+                                   placeholder="Search by name or code..." value="<?php echo htmlspecialchars($search); ?>">
                         </div>
                         <div class="col-md-3">
-                            <select class="form-select" onchange="filterByStatus(this.value)">
-                                <option value="all" <?= $status === 'all' ? 'selected' : '' ?>>All Status</option>
-                                <option value="active" <?= $status === 'active' ? 'selected' : '' ?>>Active</option>
-                                <option value="inactive" <?= $status === 'inactive' ? 'selected' : '' ?>>Inactive</option>
+                            <label for="status" class="form-label">Status</label>
+                            <select class="form-select" id="status" name="status">
+                                <option value="all" <?php echo $status === 'all' ? 'selected' : ''; ?>>All Status</option>
+                                <option value="active" <?php echo $status === 'active' ? 'selected' : ''; ?>>Active</option>
+                                <option value="inactive" <?php echo $status === 'inactive' ? 'selected' : ''; ?>>Inactive</option>
                             </select>
                         </div>
-                        <div class="col-md-3">
-                            <button class="btn btn-outline-secondary w-100" onclick="resetFilters()">
-                                <i class="bi bi-arrow-clockwise"></i> Reset Filters
-                            </button>
+                        <div class="col-md-2">
+                            <label>&nbsp;</label>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-outline-primary">
+                                    <i class="bi bi-search"></i> Filter
+                                </button>
+                            </div>
                         </div>
-                    </div>
+                        <div class="col-md-2">
+                            <label>&nbsp;</label>
+                            <div class="d-grid">
+                                <a href="department_management.php" class="btn btn-outline-secondary">
+                                    <i class="bi bi-arrow-clockwise"></i> Reset
+                                </a>
+                            </div>
+                        </div>
+                    </form>
                 </div>
             </div>
 
-            <!-- Departments Grid -->
-            <div class="row g-3" id="departmentsGrid">
-                <?php if ($departments && mysqli_num_rows($departments) > 0): ?>
-                    <?php while ($dept = mysqli_fetch_assoc($departments)): ?>
-                        <div class="col-xl-4 col-lg-6 col-md-6">
-                            <div class="card border-0 shadow-sm h-100 department-card">
-                                <div class="card-header bg-gradient text-white p-3" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                                    <div class="d-flex justify-content-between align-items-start">
-                                        <div>
-                                            <h6 class="mb-1 fw-bold"><?= htmlspecialchars($dept['department_name']) ?></h6>
-                                            <small class="opacity-75">Code: <?= htmlspecialchars($dept['department_code']) ?></small>
-                                        </div>
-                                        <div class="dropdown">
-                                            <button class="btn btn-link text-white p-0" data-bs-toggle="dropdown">
-                                                <i class="bi bi-three-dots-vertical"></i>
-                                            </button>
-                                            <ul class="dropdown-menu">
-                                                <li><a class="dropdown-item" href="#" onclick="viewDepartment(<?= $dept['id'] ?>)">
-                                                    <i class="bi bi-eye"></i> View Details</a></li>
-                                                <li><a class="dropdown-item" href="#" onclick="editDepartment(<?= $dept['id'] ?>)">
-                                                    <i class="bi bi-pencil"></i> Edit</a></li>
-                                                <li><a class="dropdown-item" href="#" onclick="showDepartmentStats(<?= $dept['id'] ?>)">
-                                                    <i class="bi bi-bar-chart"></i> Statistics</a></li>
-                                                <li><hr class="dropdown-divider"></li>
-                                                <li><a class="dropdown-item text-danger" href="#" onclick="deleteDepartment(<?= $dept['id'] ?>)">
-                                                    <i class="bi bi-trash"></i> Deactivate</a></li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="card-body p-3">
-                                    <div class="row g-2 mb-3">
-                                        <div class="col-6">
-                                            <div class="text-center">
-                                                <div class="h5 mb-0 text-primary fw-bold"><?= $dept['employee_count'] ?></div>
-                                                <small class="text-muted">Employees</small>
+            <!-- Departments Table -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">Departments List</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Department</th>
+                                    <th>Code</th>
+                                    <th>Head of Department</th>
+                                    <th>Employees</th>
+                                    <th>Budget</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if ($departments && mysqli_num_rows($departments) > 0): ?>
+                                    <?php while ($dept = mysqli_fetch_assoc($departments)): ?>
+                                        <tr>
+                                            <td>
+                                                <div>
+                                                    <div class="fw-medium"><?php echo htmlspecialchars($dept['department_name']); ?></div>
+                                                    <div class="text-muted small"><?php echo htmlspecialchars($dept['description'] ?? ''); ?></div>
+                                                </div>
+                                            </td>
+                                            <td><span class="badge bg-secondary"><?php echo htmlspecialchars($dept['department_code']); ?></span></td>
+                                            <td><?php echo htmlspecialchars($dept['hod_name'] ?? 'Not assigned'); ?></td>
+                                            <td><?php echo intval($dept['employee_count']); ?></td>
+                                            <td>$<?php echo number_format($dept['budget'], 0); ?></td>
+                                            <td>
+                                                <?php if ($dept['status'] === 'active'): ?>
+                                                    <span class="badge bg-success">Active</span>
+                                                <?php else: ?>
+                                                    <span class="badge bg-secondary">Inactive</span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm" role="group">
+                                                    <button type="button" class="btn btn-outline-primary" 
+                                                            onclick="editDepartment(<?php echo $dept['id']; ?>)">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline-danger" 
+                                                            onclick="deleteDepartment(<?php echo $dept['id']; ?>, '<?php echo htmlspecialchars($dept['department_name']); ?>')">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <?php endwhile; ?>
+                                <?php else: ?>
+                                    <tr>
+                                        <td colspan="7" class="text-center py-5">
+                                            <div class="text-muted">
+                                                <i class="bi bi-building fs-1"></i>
+                                                <div class="mt-2">No departments found</div>
+                                                <small>Click "Add Department" to create your first department</small>
                                             </div>
-                                        </div>
-                                        <div class="col-6">
-                                            <div class="text-center">
-                                                <div class="h6 mb-0 text-success fw-bold">₹<?= number_format($dept['budget']) ?></div>
-                                                <small class="text-muted">Budget</small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="mb-2">
-                                        <small class="text-muted d-block">Head of Department:</small>
-                                        <div class="fw-semibold"><?= $dept['hod_name'] ?: 'Not Assigned' ?></div>
-                                    </div>
-                                    
-                                    <?php if ($dept['description']): ?>
-                                    <div class="mb-2">
-                                        <small class="text-muted d-block">Description:</small>
-                                        <div class="small"><?= htmlspecialchars(substr($dept['description'], 0, 100)) ?><?= strlen($dept['description']) > 100 ? '...' : '' ?></div>
-                                    </div>
-                                    <?php endif; ?>
-                                    
-                                    <div class="d-flex justify-content-between align-items-center mt-3">
-                                        <span class="badge <?= $dept['status'] === 'active' ? 'bg-success' : 'bg-secondary' ?> px-2 py-1">
-                                            <?= ucfirst($dept['status']) ?>
-                                        </span>
-                                        <?php if ($dept['avg_salary']): ?>
-                                        <small class="text-muted">
-                                            Avg Salary: ₹<?= number_format($dept['avg_salary']) ?>
-                                        </small>
-                                        <?php endif; ?>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    <?php endwhile; ?>
-                <?php else: ?>
-                    <div class="col-12">
-                        <div class="text-center py-5">
-                            <div class="mb-3">
-                                <i class="bi bi-building" style="font-size: 3rem; color: #dee2e6;"></i>
-                            </div>
-                            <h5 class="text-muted">No departments found</h5>
-                            <p class="text-muted">Create your first department to get started.</p>
-                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDepartmentModal">
-                                <i class="bi bi-plus-circle"></i> Add Department
-                            </button>
-                        </div>
+                                        </td>
+                                    </tr>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
                     </div>
-                <?php endif; ?>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Add Department Modal -->
-<div class="modal fade" id="addDepartmentModal" tabindex="-1">
+<!-- Department Modal -->
+<div class="modal fade" id="departmentModal" tabindex="-1" aria-labelledby="departmentModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title">
-                    <i class="bi bi-plus-circle"></i> Add New Department
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            <div class="modal-header">
+                <h5 class="modal-title" id="departmentModalLabel">Add Department</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <form id="addDepartmentForm">
+            <form id="departmentForm">
+                <div class="modal-body">
                     <div class="row g-3">
-                        <div class="col-md-8">
-                            <label for="department_name" class="form-label">Department Name</label>
+                        <div class="col-md-6">
+                            <label for="department_name" class="form-label">Department Name *</label>
                             <input type="text" class="form-control" id="department_name" name="department_name" required>
                         </div>
-                        <div class="col-md-4">
-                            <label for="department_code" class="form-label">Department Code</label>
-                            <input type="text" class="form-control" id="department_code" name="department_code" required maxlength="10">
+                        <div class="col-md-6">
+                            <label for="department_code" class="form-label">Department Code *</label>
+                            <input type="text" class="form-control" id="department_code" name="department_code" required>
+                            <div class="form-text">Unique identifier (e.g., HR, IT, FIN)</div>
                         </div>
                         <div class="col-md-6">
                             <label for="head_of_department" class="form-label">Head of Department</label>
-                            <select class="form-select" id="head_of_department" name="head_of_department" required>
-                                <option value="">Select HOD</option>
-                                <?php
-                                mysqli_data_seek($employees, 0);
-                                while ($emp = mysqli_fetch_assoc($employees)): ?>
-                                    <option value="<?= $emp['id'] ?>"><?= htmlspecialchars($emp['first_name'] . ' ' . $emp['last_name']) ?> (<?= $emp['employee_id'] ?>)</option>
-                                <?php endwhile; ?>
+                            <select class="form-select" id="head_of_department" name="head_of_department">
+                                <option value="0">Select Employee</option>
+                                <?php if ($employees && mysqli_num_rows($employees) > 0): ?>
+                                    <?php while ($emp = mysqli_fetch_assoc($employees)): ?>
+                                        <option value="<?php echo $emp['id']; ?>">
+                                            <?php echo htmlspecialchars($emp['first_name'] . ' ' . $emp['last_name'] . ' (' . $emp['employee_id'] . ')'); ?>
+                                        </option>
+                                    <?php endwhile; ?>
+                                <?php endif; ?>
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label for="budget" class="form-label">Annual Budget (₹)</label>
+                            <label for="budget" class="form-label">Budget ($)</label>
                             <input type="number" class="form-control" id="budget" name="budget" step="0.01" min="0">
                         </div>
                         <div class="col-12">
@@ -466,215 +485,91 @@ if (file_exists($sidebar_path)) {
                             <textarea class="form-control" id="description" name="description" rows="3"></textarea>
                         </div>
                     </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="addDepartment()">
-                    <i class="bi bi-check-circle"></i> Add Department
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Edit Department Modal -->
-<div class="modal fade" id="editDepartmentModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header bg-warning text-dark">
-                <h5 class="modal-title">
-                    <i class="bi bi-pencil-square"></i> Edit Department
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form id="editDepartmentForm">
-                    <input type="hidden" id="edit_department_id" name="id">
-                    <div class="row g-3">
-                        <div class="col-md-8">
-                            <label for="edit_department_name" class="form-label">Department Name</label>
-                            <input type="text" class="form-control" id="edit_department_name" name="department_name" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="edit_department_code" class="form-label">Department Code</label>
-                            <input type="text" class="form-control" id="edit_department_code" name="department_code" required maxlength="10">
-                        </div>
-                        <div class="col-md-6">
-                            <label for="edit_head_of_department" class="form-label">Head of Department</label>
-                            <select class="form-select" id="edit_head_of_department" name="head_of_department" required>
-                                <option value="">Select HOD</option>
-                                <?php
-                                mysqli_data_seek($employees, 0);
-                                while ($emp = mysqli_fetch_assoc($employees)): ?>
-                                    <option value="<?= $emp['id'] ?>"><?= htmlspecialchars($emp['first_name'] . ' ' . $emp['last_name']) ?> (<?= $emp['employee_id'] ?>)</option>
-                                <?php endwhile; ?>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="edit_budget" class="form-label">Annual Budget (₹)</label>
-                            <input type="number" class="form-control" id="edit_budget" name="budget" step="0.01" min="0">
-                        </div>
-                        <div class="col-md-6">
-                            <label for="edit_status" class="form-label">Status</label>
-                            <select class="form-select" id="edit_status" name="status" required>
-                                <option value="active">Active</option>
-                                <option value="inactive">Inactive</option>
-                            </select>
-                        </div>
-                        <div class="col-12">
-                            <label for="edit_description" class="form-label">Description</label>
-                            <textarea class="form-control" id="edit_description" name="description" rows="3"></textarea>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-warning" onclick="updateDepartment()">
-                    <i class="bi bi-check-circle"></i> Update Department
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Department Statistics Modal -->
-<div class="modal fade" id="departmentStatsModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header bg-info text-white">
-                <h5 class="modal-title">
-                    <i class="bi bi-bar-chart"></i> Department Statistics
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body" id="departmentStatsContent">
-                <div class="text-center">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
                 </div>
-            </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="submitBtn">Add Department</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
 
 <script>
-// Department management functions
-function searchDepartments(query) {
-    const url = new URL(window.location);
-    if (query) {
-        url.searchParams.set('search', query);
-    } else {
-        url.searchParams.delete('search');
-    }
-    window.location.href = url;
-}
+let editingDepartmentId = null;
 
-function filterByStatus(status) {
-    const url = new URL(window.location);
-    if (status && status !== 'all') {
-        url.searchParams.set('status', status);
-    } else {
-        url.searchParams.delete('status');
-    }
-    window.location.href = url;
-}
-
-function resetFilters() {
-    window.location.href = window.location.pathname;
-}
-
-function addDepartment() {
-    const form = document.getElementById('addDepartmentForm');
-    const formData = new FormData(form);
-    formData.append('action', 'add_department');
+document.getElementById('departmentForm').addEventListener('submit', function(e) {
+    e.preventDefault();
     
-    fetch(window.location.href, {
+    const formData = new FormData(this);
+    const action = editingDepartmentId ? 'update_department' : 'add_department';
+    formData.append('action', action);
+    
+    if (editingDepartmentId) {
+        formData.append('id', editingDepartmentId);
+    }
+    
+    fetch('department_management.php', {
         method: 'POST',
         body: formData
     })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            bootstrap.Modal.getInstance(document.getElementById('addDepartmentModal')).hide();
             showAlert('success', data.message);
-            setTimeout(() => location.reload(), 1500);
+            bootstrap.Modal.getInstance(document.getElementById('departmentModal')).hide();
+            setTimeout(() => location.reload(), 1000);
         } else {
             showAlert('danger', data.message);
         }
     })
     .catch(error => {
-        showAlert('danger', 'Error adding department');
         console.error('Error:', error);
+        showAlert('danger', 'An error occurred. Please try again.');
     });
-}
+});
 
 function editDepartment(id) {
+    editingDepartmentId = id;
+    
     const formData = new FormData();
     formData.append('action', 'get_department');
     formData.append('id', id);
     
-    fetch(window.location.href, {
+    fetch('department_management.php', {
         method: 'POST',
         body: formData
     })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            const dept = data.data;
-            document.getElementById('edit_department_id').value = dept.id;
-            document.getElementById('edit_department_name').value = dept.department_name;
-            document.getElementById('edit_department_code').value = dept.department_code;
-            document.getElementById('edit_head_of_department').value = dept.head_of_department;
-            document.getElementById('edit_budget').value = dept.budget;
-            document.getElementById('edit_description').value = dept.description || '';
-            document.getElementById('edit_status').value = dept.status;
+            document.getElementById('departmentModalLabel').textContent = 'Edit Department';
+            document.getElementById('submitBtn').textContent = 'Update Department';
             
-            new bootstrap.Modal(document.getElementById('editDepartmentModal')).show();
+            document.getElementById('department_name').value = data.data.department_name;
+            document.getElementById('department_code').value = data.data.department_code;
+            document.getElementById('head_of_department').value = data.data.head_of_department || 0;
+            document.getElementById('budget').value = data.data.budget;
+            document.getElementById('description').value = data.data.description || '';
+            
+            new bootstrap.Modal(document.getElementById('departmentModal')).show();
         } else {
             showAlert('danger', data.message);
         }
     })
     .catch(error => {
-        showAlert('danger', 'Error loading department details');
         console.error('Error:', error);
+        showAlert('danger', 'Error loading department data.');
     });
 }
 
-function updateDepartment() {
-    const form = document.getElementById('editDepartmentForm');
-    const formData = new FormData(form);
-    formData.append('action', 'update_department');
-    
-    fetch(window.location.href, {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            bootstrap.Modal.getInstance(document.getElementById('editDepartmentModal')).hide();
-            showAlert('success', data.message);
-            setTimeout(() => location.reload(), 1500);
-        } else {
-            showAlert('danger', data.message);
-        }
-    })
-    .catch(error => {
-        showAlert('danger', 'Error updating department');
-        console.error('Error:', error);
-    });
-}
-
-function deleteDepartment(id) {
-    if (confirm('Are you sure you want to deactivate this department? This action cannot be undone.')) {
+function deleteDepartment(id, name) {
+    if (confirm(`Are you sure you want to delete the department "${name}"?\n\nThis action cannot be undone.`)) {
         const formData = new FormData();
         formData.append('action', 'delete_department');
         formData.append('id', id);
         
-        fetch(window.location.href, {
+        fetch('department_management.php', {
             method: 'POST',
             body: formData
         })
@@ -682,130 +577,51 @@ function deleteDepartment(id) {
         .then(data => {
             if (data.success) {
                 showAlert('success', data.message);
-                setTimeout(() => location.reload(), 1500);
+                setTimeout(() => location.reload(), 1000);
             } else {
                 showAlert('danger', data.message);
             }
         })
         .catch(error => {
-            showAlert('danger', 'Error deactivating department');
             console.error('Error:', error);
+            showAlert('danger', 'An error occurred. Please try again.');
         });
     }
 }
 
-function showDepartmentStats(id) {
-    const modal = new bootstrap.Modal(document.getElementById('departmentStatsModal'));
-    modal.show();
-    
-    const formData = new FormData();
-    formData.append('action', 'get_department_stats');
-    formData.append('id', id);
-    
-    fetch(window.location.href, {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            const stats = data.stats;
-            let content = `
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <div class="card bg-primary text-white">
-                            <div class="card-body text-center">
-                                <h4>${(stats.employees.active || 0)}</h4>
-                                <small>Active Employees</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card bg-secondary text-white">
-                            <div class="card-body text-center">
-                                <h4>${(stats.employees.inactive || 0)}</h4>
-                                <small>Inactive Employees</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card bg-success text-white">
-                            <div class="card-body text-center">
-                                <h4>₹${Number(stats.avg_salary || 0).toLocaleString()}</h4>
-                                <small>Average Salary</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card bg-warning text-dark">
-                            <div class="card-body text-center">
-                                <h4>${stats.recent_hires || 0}</h4>
-                                <small>Recent Hires (30 days)</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-12">
-                        <div class="card bg-info text-white">
-                            <div class="card-body text-center">
-                                <h4>₹${Number(stats.total_salary || 0).toLocaleString()}</h4>
-                                <small>Total Salary Cost</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            document.getElementById('departmentStatsContent').innerHTML = content;
-        } else {
-            document.getElementById('departmentStatsContent').innerHTML = '<div class="alert alert-danger">Error loading statistics</div>';
-        }
-    })
-    .catch(error => {
-        document.getElementById('departmentStatsContent').innerHTML = '<div class="alert alert-danger">Error loading statistics</div>';
-        console.error('Error:', error);
-    });
-}
-
-function exportDepartments() {
-    window.open(window.location.href + '?export=csv', '_blank');
-}
-
-function printDepartments() {
-    window.print();
-}
+// Reset modal when hidden
+document.getElementById('departmentModal').addEventListener('hidden.bs.modal', function () {
+    editingDepartmentId = null;
+    document.getElementById('departmentModalLabel').textContent = 'Add Department';
+    document.getElementById('submitBtn').textContent = 'Add Department';
+    document.getElementById('departmentForm').reset();
+});
 
 function showAlert(type, message) {
     const alertDiv = document.createElement('div');
-    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
     alertDiv.innerHTML = `
         ${message}
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     `;
     
-    const container = document.querySelector('.container-fluid');
-    container.insertBefore(alertDiv, container.firstChild);
+    document.body.appendChild(alertDiv);
     
     setTimeout(() => {
-        alertDiv.remove();
+        if (alertDiv && alertDiv.parentNode) {
+            alertDiv.remove();
+        }
     }, 5000);
 }
-
-// Auto-generate department code based on name
-document.getElementById('department_name')?.addEventListener('input', function() {
-    const name = this.value;
-    const code = name.split(' ').map(word => word.charAt(0).toUpperCase()).join('').substring(0, 10);
-    document.getElementById('department_code').value = code;
-});
-
-// Print styles
-const style = document.createElement('style');
-style.textContent = `
-    @media print {
-        .btn, .dropdown, .modal { display: none !important; }
-        .card { break-inside: avoid; }
-        .department-card { margin-bottom: 20px; }
-    }
-`;
-document.head.appendChild(style);
 </script>
 
-<?php include '../layouts/footer.php'; ?>
+<?php 
+// Include footer with dynamic path resolution
+$footer_path = dirname(__DIR__) . "/layouts/footer.php";
+if (file_exists($footer_path)) {
+    include $footer_path;
+} else {
+    include "../layouts/footer.php"; // Fallback
+}
+?>

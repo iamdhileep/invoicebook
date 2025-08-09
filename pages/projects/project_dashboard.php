@@ -1,7 +1,18 @@
 <?php
 session_start();
 if (!isset($_SESSION['admin'])) {
-    header("Location: ../../login.php");
+    // Check if admin login page exists
+    if (file_exists('../../admin/login.php')) {
+        header("Location: ../../admin/login.php");
+    } else {
+        echo "<div class='container mt-5'>
+                <div class='alert alert-warning'>
+                    <h4>Authentication Required</h4>
+                    <p>Please login as admin to access the project dashboard.</p>
+                    <p><a href='quick_login.php?admin_id=1' class='btn btn-primary'>Quick Admin Login</a></p>
+                </div>
+              </div>";
+    }
     exit;
 }
 
@@ -314,10 +325,17 @@ function loadDashboard() {
         fetch(`project_api.php?action=dashboard_charts&range=${dateRange}`).then(r => r.json()),
         fetch(`project_api.php?action=team_workload`).then(r => r.json())
     ]).then(([statsData, chartsData, workloadData]) => {
+        // Check if setup is needed
+        if (statsData.stats && statsData.stats.projects.total_projects === 0 && 
+            chartsData.charts && chartsData.charts.project_status.data.every(d => d === 0)) {
+            showSetupMessage();
+            return;
+        }
+        
         dashboardData = {
             stats: statsData.stats,
             charts: chartsData.charts,
-            workload: workloadData.workload
+            workload: workloadData.workload || workloadData.team_workload
         };
         
         renderDashboard();
@@ -326,7 +344,7 @@ function loadDashboard() {
     }).catch(error => {
         console.error('Error loading dashboard:', error);
         $('#loadingSpinner').hide();
-        showAlert('Error loading dashboard data', 'error');
+        showSetupMessage();
     });
 }
 
@@ -710,7 +728,67 @@ function showAlert(message, type) {
     `;
     
     $('body').append(alertHtml);
-    setTimeout(() => $('.alert').alert('close'), 5000);
+}
+
+function showSetupMessage() {
+    $('#loadingSpinner').hide();
+    $('#dashboardContent').hide();
+    
+    const setupHtml = `
+        <div class="container-fluid">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="card border-warning">
+                        <div class="card-header bg-warning text-dark">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-exclamation-triangle"></i> Project Management Setup Required
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="mb-4">
+                                The project management system requires database tables to be created before you can start using it.
+                                This is a one-time setup process that will create all necessary tables and sample data.
+                            </p>
+                            
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <h6>Required Tables:</h6>
+                                    <ul class="list-unstyled">
+                                        <li><i class="bi bi-folder text-primary"></i> projects</li>
+                                        <li><i class="bi bi-list-task text-success"></i> project_tasks</li>
+                                        <li><i class="bi bi-people text-info"></i> project_team</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Additional Features:</h6>
+                                    <ul class="list-unstyled">
+                                        <li><i class="bi bi-clock text-warning"></i> time_logs</li>
+                                        <li><i class="bi bi-activity text-secondary"></i> project_activities</li>
+                                        <li><i class="bi bi-diagram-3 text-primary"></i> task_dependencies</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <div class="text-center">
+                                <a href="setup_project_database.php" class="btn btn-warning btn-lg">
+                                    <i class="bi bi-gear-fill"></i> Run Database Setup
+                                </a>
+                            </div>
+                            
+                            <hr>
+                            <small class="text-muted">
+                                <strong>Note:</strong> This setup will create database tables with sample data. 
+                                You can safely run this multiple times if needed.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    $('body').append(setupHtml);
+    $('body').append(setupHtml);
 }
 </script>
 

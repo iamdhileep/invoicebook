@@ -1,7 +1,18 @@
 <?php
 session_start();
 if (!isset($_SESSION['admin']) && !isset($_SESSION['user_id'])) {
-    header("Location: ../../login.php");
+    // Check if admin login page exists, otherwise show auth message
+    if (file_exists('../../admin/login.php')) {
+        header("Location: ../../admin/login.php");
+    } else {
+        echo "<div class='container mt-5'>
+                <div class='alert alert-warning'>
+                    <h4>Authentication Required</h4>
+                    <p>Please login to access the User Activity Monitor.</p>
+                    <p><a href='../projects/quick_login.php?admin_id=1' class='btn btn-primary'>Quick Admin Login</a></p>
+                </div>
+              </div>";
+    }
     exit;
 }
 
@@ -292,6 +303,52 @@ function clearOldLogs($conn, $days) {
     } else {
         return ['success' => false, 'message' => 'Error clearing old logs'];
     }
+}
+
+function exportActivityLog($conn, $params) {
+    // Get activity logs based on filters
+    $logs = getActivityLogs($conn, $params);
+    
+    if (!$logs['success']) {
+        return ['success' => false, 'message' => 'Error retrieving activity logs'];
+    }
+    
+    // Generate CSV content
+    $filename = 'activity_log_' . date('Y-m-d_H-i-s') . '.csv';
+    
+    // Set headers for CSV download
+    header('Content-Type: text/csv');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+    header('Expires: 0');
+    
+    // Create CSV output
+    $output = fopen('php://output', 'w');
+    
+    // CSV headers
+    fputcsv($output, [
+        'ID', 'User ID', 'Username', 'Full Name', 'Email', 
+        'Activity', 'Details', 'IP Address', 'User Agent', 'Timestamp'
+    ]);
+    
+    // CSV data rows
+    foreach ($logs['logs'] as $log) {
+        fputcsv($output, [
+            $log['id'],
+            $log['user_id'],
+            $log['username'] ?? 'Unknown',
+            $log['full_name'] ?? 'N/A',
+            $log['email'] ?? 'N/A',
+            $log['activity'],
+            $log['details'] ?? '',
+            $log['ip_address'] ?? 'Unknown',
+            $log['user_agent'] ?? 'Unknown',
+            $log['created_at']
+        ]);
+    }
+    
+    fclose($output);
+    exit; // Important: exit to prevent additional output
 }
 
 function logActivity($conn, $activity, $details = null) {
